@@ -1,4 +1,4 @@
-## Preamble
+## Packages
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -7,84 +7,51 @@ import xarray as xr
 ## Import Data
 data = pd.read_csv("20190403-00-22-supermag.csv")
 readings = ['N', 'E', 'Z']
-stations = data['IAGA'].unique()
-num_st = stations.size
-times = data['Date_UTC'].unique()
-
-times.size
-data['Date_UTC'].size
 
 
-da = xr.DataArray(data = data[readings].iloc[0:num_st],
-                      coords = [stations, readings],
-                      dims = ['station', 'reading']
-                      )
+## Function to restructure the SuperMAG data as a Dataset (xarray)
+#       inputs: data- SuperMAG data as a pandas dataframe using read_csv
+#               meas- vector of characters representing measurements, default is ['N', 'E', 'Z']
+def mag_data_to_Dataset(data, readings=None):
+        if readings is None:
+                readings = ['N', 'E', 'Z']
 
-for i in range(1,times.size):
-        print(i)
-        temp_da = xr.DataArray(data = data[readings].iloc[i*num_st:(i+1)*num_st],
-                              coords = [stations, readings],
-                              dims = ['station', 'reading']
+        stations = data['IAGA'].unique()
+        num_st = stations.size
+        times = data['Date_UTC'].unique()
+        cols = np.append('Date_UTC', readings)
+
+        # initialize DataArray (so we can append things to it later)
+        temp_data = data[cols].loc[data['IAGA'] == stations[0]]
+        temp_times = temp_data['Date_UTC'].unique()
+        da = xr.DataArray(data = temp_data[readings],
+                              coords = [temp_times, readings],
+                              dims = ['time', 'reading']
                               )
-        da = xr.concat([da, temp_da], dim = 'time')
-        da = da.transpose('station', 'reading', 'time')
 
-ds = xr.Dataset(
-                data_vars = {'readings': (['station', 'reading', 'time'], da)},
-                coords = {'station': stations,
-                          'reading': readings,
-                          'time': times}
-                )
-ds
+        # loop through the stations and append each to master DataArray
+        for i in stations[1:]:
+                temp_data = data[cols].loc[data['IAGA'] == i]
+                temp_times = temp_data['Date_UTC'].unique()
+                temp_da = xr.DataArray(data = temp_data[readings],
+                                       coords = [temp_times, readings],
+                                       dims = ['time', 'reading']
+                                       )
+                da = xr.concat([da, temp_da], dim = 'station')
+                da = da.transpose('time', 'reading', 'station')
 
+        ds = xr.Dataset(data_vars = {'readings': (['time', 'reading', 'station'], da)},
+                        coords = {'time': times,
+                                  'reading': readings,
+                                  'station': stations}
+                        )
 
-
-
-data1 = xr.DataArray(data = data[['N', 'E', 'Z']].iloc[0:9],
-                      coords = [stations, readings],
-                      dims = ['station', 'reading']
-                      )
-data1
-
-data2 = xr.DataArray(data = data[['N', 'E', 'Z']].iloc[9:18],
-                      coords = [stations, readings],
-                      dims = ['station', 'reading']
-                      )
-data2
-
-ready_data = xr.concat([data1, temp_da], dim='time')
-ready_data = ready_data.transpose('station', 'reading', 'time')
-ready_data
-
-times = data['Date_UTC'].unique()
-times[0:2]
+        return ds
 
 
-ds = xr.Dataset(
-                data_vars = {'readings': (['station', 'reading', 'time'], ready_data)},
-                coords = {'station': stations,
-                          'reading': readings,
-                          'time': times[0:2]}
-                )
-ds
+## Testing
+test_ds1 = mag_data_to_Dataset(data=data, readings=readings)
+test_ds1
 
-
-
-
-temp1 = 15 + 8 * np.random.randn(9, 3)
-temp = xr.DataArray(temp1)
-temp = xr.concat([temp], dim='time')
-temp = temp.transpose('dim_0', 'dim_1', 'time')
-precip1 = 10 * np.random.rand(9, 3)
-precip = xr.DataArray(precip1)
-precip = xr.concat([precip], dim='time')
-precip = precip.transpose('dim_0', 'dim_1', 'time')
-
-lon = [[-99.83, -99.32, -99.83, -99.32], [-99.83, -99.32, -99.79, -99.23], [-99.83, -99.32, -99.79, -99.23]]
-lat = [[42.25, 42.21, 42.25, 42.21], [42.25, 42.21, 42.63, 42.59], [42.25, 42.21, 42.63, 42.59]]
-
-tempds = xr.Dataset(
-                     data_vars={'temperature': (['x', 'y', 'time'],  temp),
-                                'precipitation': (['x', 'y', 'time'], precip)}
-                     )
-tempds
+test_ds2 = mag_data_to_Dataset(data=data)
+test_ds2
