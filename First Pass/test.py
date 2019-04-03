@@ -4,14 +4,9 @@ import pandas as pd
 import xarray as xr
 
 
-## Import Data
-data = pd.read_csv("20190403-00-22-supermag.csv")
-readings = ['N', 'E', 'Z']
-
-
 ## Function to restructure the SuperMAG data as a Dataset (xarray)
-#       inputs: data- SuperMAG data as a pandas dataframe using read_csv
-#               meas- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#       inputs: data- SuperMAG data as a pandas dataframe imported using read_csv
+#               readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
 def mag_data_to_Dataset(data, readings=None):
         if readings is None:
                 readings = ['N', 'E', 'Z']
@@ -50,6 +45,9 @@ def mag_data_to_Dataset(data, readings=None):
 
 
 ## Testing
+data = pd.read_csv("20190403-00-22-supermag.csv")
+readings = ['N', 'E', 'Z']
+
 test_ds1 = mag_data_to_Dataset(data=data, readings=readings)
 test_ds1
 
