@@ -1,7 +1,7 @@
 ## Packages
 import numpy as np
 import pandas as pd
-import xarray as xr
+import xarray as xr # if gives error, just rerun
 
 
 ## Function to restructure the SuperMAG data as a Dataset (xarray)
