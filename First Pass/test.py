@@ -95,7 +95,7 @@ def mag_data_to_Dataset(data, readings=None, MLAT=None):
 #       output: series of plots, one per station, of the readings
 
 def plot_mag_data(ds):
-        ds.readings.plot.line(x='time', col='station', col_wrap=1)
+        ds.readings.plot.line(x='time', hue='reading', col='station', col_wrap=1)
 
 
 
