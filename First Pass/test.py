@@ -101,7 +101,8 @@ def plot_mag_data(ds):
 
 
 ## Testing
-data = pd.read_csv("20190403-00-22-supermag.csv")
+data = pd.read_csv("First Pass/20190403-00-22-supermag.csv")
+# data = pd.read_csv("20190403-00-22-supermag.csv")
 readings = ['N', 'E', 'Z']
 
 
