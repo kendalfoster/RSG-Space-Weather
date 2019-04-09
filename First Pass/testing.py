@@ -10,20 +10,26 @@ import lib.supermag as sm
 
 
 ## Restructure SuperMAG Data
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv")
+ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
 ds1
 
 ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            readings = ['N', 'E', 'Z'])
+                            readings = ['N', 'E', 'Z'],
+                            MLT = True, MLAT = True)
 ds2
 
 ds3 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLAT = False)
-ds3 # should be different order of stations to all the others
+                            MLT = False, MLAT = True)
+ds3 # exclude MLT data
 
 ds4 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLAT = True)
-ds4
+                            MLT = True, MLAT = False)
+ds4 # exclude MLAT data, order of stations should be different compared to above
+
+ds4 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            MLT = False, MLAT = False)
+ds4 # exclude MLT and MLAT data, order of stations should also be different
 
 ## Plot SuperMAG Data
 sm.plot_mag_data(ds=ds1)
