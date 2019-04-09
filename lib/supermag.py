@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 
 
 ## Function to restructure the SuperMAG data as a Dataset (xarray)
-#       inputs: data- SuperMAG data as a pandas dataframe imported using read_csv
+#       inputs: data- SuperMAG data as a pandas dataframe imported using pandas.read_csv
 #               readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #               MLAT- input False if the magnetic latitude column is NOT included, default is inclusion of the column
-#       output: Dataset with the SuperMAG data easily accessible
+#       output: Dataset with the SuperMAG data easily accessible, time is first dimension (ie, axis=0 for numpy commands)
 
 def mag_data_to_Dataset(data, readings=None, MLAT=None):
         if readings is None:
@@ -96,27 +96,3 @@ def mag_data_to_Dataset(data, readings=None, MLAT=None):
 
 def plot_mag_data(ds):
         ds.readings.plot.line(x='time', hue='reading', col='station', col_wrap=1)
-
-
-
-
-## Testing
-data = pd.read_csv("First Pass/20190403-00-22-supermag.csv")
-# data = pd.read_csv("20190403-00-22-supermag.csv")
-readings = ['N', 'E', 'Z']
-
-
-ds1 = mag_data_to_Dataset(data=data, readings=readings)
-ds1
-
-ds2 = mag_data_to_Dataset(data=data)
-ds2
-
-ds3 = mag_data_to_Dataset(data=data, MLAT=False)
-ds3 # should be different order of stations to all the others
-
-ds4 = mag_data_to_Dataset(data=data, MLAT=True)
-ds4
-
-
-plot_mag_data(ds=ds2)
