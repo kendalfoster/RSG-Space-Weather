@@ -47,7 +47,7 @@ import lib.rcca as rcca
 data = pd.read_csv("First Pass/20190403-00-22-supermag.csv")
 
 ## Restructure SuperMAG Data
-ds = sm.mag_data_to_Dataset(data=data, readings=readings)
+ds = sm.mag_data_to_Dataset(data=data)
 
 blc_n = ds.readings.loc[dict(station = 'BLC')].loc[dict(reading = 'N')]
 blc_e = ds.readings.loc[dict(station = 'BLC')].loc[dict(reading = 'E')]
