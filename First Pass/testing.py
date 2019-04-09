@@ -4,30 +4,29 @@
 ########## supermag.py ##########
 import numpy as np
 import pandas as pd
-import xarray as xr # if gives error, just rerun
+import xarray as xr # if gives warning/error, just rerun
 import matplotlib.pyplot as plt
 import lib.supermag as sm
 
 
-## Import Data
-data = pd.read_csv("First Pass/20190403-00-22-supermag.csv")
-readings = ['N', 'E', 'Z']
-
 ## Restructure SuperMAG Data
-ds1 = sm.mag_data_to_Dataset(data=data, readings=readings)
+ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv")
 ds1
 
-ds2 = sm.mag_data_to_Dataset(data=data)
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            readings = ['N', 'E', 'Z'])
 ds2
 
-ds3 = sm.mag_data_to_Dataset(data=data, MLAT=False)
+ds3 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            MLAT = False)
 ds3 # should be different order of stations to all the others
 
-ds4 = sm.mag_data_to_Dataset(data=data, MLAT=True)
+ds4 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            MLAT = True)
 ds4
 
 ## Plot SuperMAG Data
-sm.plot_mag_data(ds=ds2)
+sm.plot_mag_data(ds=ds1)
 ###############################################################################
 
 
@@ -59,11 +58,15 @@ blc_z1 = np.reshape(blc_z.values, newshape=[len(blc_z.values),1])
 
 blc = ds.readings.loc[dict(station = 'BLC')]
 tal = ds.readings.loc[dict(station = 'TAL')]
+ran = ds.readings.loc[dict(station = 'RAN')]
 
 
-cca_ds = rcca.CCA(kernelcca = False, reg = 0., numCC = 2)
+cca_ds = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
 cca_ds.train([blc_n1, blc_e1, blc_z1])
 cca_ds.cancorrs
+
+
+cca_ds.train([blc_z1, blc_e1])
 
 
 # now turn the above into a function that operates on the whole dataset, ds
