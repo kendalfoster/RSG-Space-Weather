@@ -55,8 +55,8 @@ def mag_csv_to_Dataset(csv_file, readings=None, MLT=None, MLAT=None):
                 temp_data_mlt = data[cols_mlt].loc[data['IAGA'] == stations[0]]
                 temp_times_mlt = pd.to_datetime(temp_data_mlt['Date_UTC'].unique())
                 mlt = xr.DataArray(data = temp_data_mlt['MLT'],
-                                  coords = [temp_times_mlt],
-                                  dims = ['time'])
+                                   coords = [temp_times_mlt],
+                                   dims = ['time'])
                 # loop through the stations and append each to master DataArray
                 for i in stations[1:]:
                         temp_data_mlt = data[cols_mlt].loc[data['IAGA'] == i]
