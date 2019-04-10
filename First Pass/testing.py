@@ -92,25 +92,35 @@ True in rm_nan
 def inter_st_cca(ds):
     ds = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                                 MLT = True, MLAT = True)
+    readings = ['N', 'E', 'Z']
     # universally necessary things
     stations = ds.station
     num_st = len(stations)
+    num_read = len(readings)
 
     # setup (triangular) array for the correlation coefficients
     cca_coeffs = np.zeros(shape = (num_st, num_st), dtype = float)
 
     # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):
-        first_st = ds.measurements.loc[dict(station = stations[0])]
+        first_st = ds.measurements.loc[dict(station = stations[5])]
         False in np.isfinite(first_st)
         # test station for NaNs in the data (will mess up cca)
         first_st
         for j in range(i+1, num_st):
-            second_st = ds.measurements.loc[dict(station = stations[1])]
+            second_st = ds.measurements.loc[dict(station = stations[7])]
             False in np.isfinite(second_st)
             comb_st = xr.concat([first_st, second_st], dim='reading')
             comb_st
             False in np.isfinite(comb_st)
+            comb_st = comb_st.dropna(dim='time', how='any')
+            False in np.isfinite(comb_st)
+            first_st = comb_st[:, 0:num_read]
+            second_st = comb_st[:, 3:6]
+            first_st
+            second_st
+            comb_st
+            comb_st['station' == 'GIM'].shape
             # test stations for NaNs in the data (will mess up cca)
             # sew the two DataArrays together along time dimension, and drop all rows with nan values
                 # if Nans exist, remove the whole row of data from both stations and run cca
@@ -118,7 +128,7 @@ def inter_st_cca(ds):
                 # else run cca on original data
                 cca_coeffs[i,j] =
                 temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-                temp_cancorrs = temp_cca.train(comb_st).cancorrs
+                temp_cancorrs = temp_cca.train([first_st, second_st]).cancorrs[0]
                 temp_cancorrs
 
 
