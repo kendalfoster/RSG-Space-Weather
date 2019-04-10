@@ -101,17 +101,25 @@ def inter_st_cca(ds):
 
     # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):
-        first_st = ds.measurements.loc[dict(station = stations[7])]
+        first_st = ds.measurements.loc[dict(station = stations[0])]
+        False in np.isfinite(first_st)
         # test station for NaNs in the data (will mess up cca)
         first_st
         for j in range(i+1, num_st):
-            second_st = ds.measurements.loc[dict(station = stations[j])]
+            second_st = ds.measurements.loc[dict(station = stations[1])]
+            False in np.isfinite(second_st)
+            comb_st = xr.concat([first_st, second_st], dim='reading')
+            comb_st
+            False in np.isfinite(comb_st)
             # test stations for NaNs in the data (will mess up cca)
-
+            # sew the two DataArrays together along time dimension, and drop all rows with nan values
                 # if Nans exist, remove the whole row of data from both stations and run cca
 
                 # else run cca on original data
-                cca_coeffs[i,j] = rcca.CCA(kernelcca = False, reg = 0., numCC = 1).train([first_st, second_st]).cancorrs[0]
+                cca_coeffs[i,j] =
+                temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
+                temp_cancorrs = temp_cca.train(comb_st).cancorrs
+                temp_cancorrs
 
 
 
