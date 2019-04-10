@@ -1,4 +1,5 @@
 # need to be in RSG-Space-Weather folder
+pwd()
 
 ###############################################################################
 ########## supermag.py ##########
@@ -49,33 +50,72 @@ import lib.rcca as rcca
 
 
 ## Import Data
-data = pd.read_csv("First Pass/20190403-00-22-supermag.csv")
+ds = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
 
-## Restructure SuperMAG Data
-ds = sm.mag_data_to_Dataset(data=data)
-
-blc_n = ds.readings.loc[dict(station = 'BLC')].loc[dict(reading = 'N')]
-blc_e = ds.readings.loc[dict(station = 'BLC')].loc[dict(reading = 'E')]
-blc_z = ds.readings.loc[dict(station = 'BLC')].loc[dict(reading = 'Z')]
+blc_n = ds.measurements.loc[dict(station = 'BLC')].loc[dict(reading = 'N')]
+blc_e = ds.measurements.loc[dict(station = 'BLC')].loc[dict(reading = 'E')]
+blc_z = ds.measurements.loc[dict(station = 'BLC')].loc[dict(reading = 'Z')]
 
 blc_n1 = np.reshape(blc_n.values, newshape=[len(blc_n.values),1])
 blc_e1 = np.reshape(blc_e.values, newshape=[len(blc_e.values),1])
 blc_z1 = np.reshape(blc_z.values, newshape=[len(blc_z.values),1])
 
-blc = ds.readings.loc[dict(station = 'BLC')]
-tal = ds.readings.loc[dict(station = 'TAL')]
-ran = ds.readings.loc[dict(station = 'RAN')]
-
+blc = ds.measurements.loc[dict(station = 'BLC')]
+tal = ds.measurements.loc[dict(station = 'TAL')]
+ran = ds.measurements.loc[dict(station = 'RAN')]
+bsl = ds.measurements.loc[dict(station = 'BSL')]
 
 cca_ds = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-cca_ds.train([blc_n1, blc_e1, blc_z1])
-cca_ds.cancorrs
+cca_ds.train([blc, tal]).cancorrs[0]
 
 
-cca_ds.train([blc_z1, blc_e1])
+xr.concat([blc, bsl], dim = 'cca_st')
 
+aaa = xr.concat([blc,tal], dim = 'cca_st')
+ccc = rcca.CCA(kernelcca = False, reg = 0., numCC = 1).train(aaa).cancorrs[0]
+
+
+bbb = ds.measurements.loc[dict(station = stations[7])].values
+rm_nan = np.isfinite(bbb)
+rm_nan
+rm_nan[:,0]
+bbb[np.isfinite(bbb)].shape
+bbb[~rm_nan]
+
+x = [0,1,2,3]
+1 in x
+True in rm_nan
 
 # now turn the above into a function that operates on the whole dataset, ds
+
+def inter_st_cca(ds):
+    ds = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                                MLT = True, MLAT = True)
+    # universally necessary things
+    stations = ds.station
+    num_st = len(stations)
+
+    # setup (triangular) array for the correlation coefficients
+    cca_coeffs = np.zeros(shape = (num_st, num_st), dtype = float)
+
+    # shrinking nested for loops to get all the pairs of stations
+    for i in range(0, num_st-1):
+        first_st = ds.measurements.loc[dict(station = stations[7])]
+        # test station for NaNs in the data (will mess up cca)
+        first_st
+        for j in range(i+1, num_st):
+            second_st = ds.measurements.loc[dict(station = stations[j])]
+            # test stations for NaNs in the data (will mess up cca)
+
+                # if Nans exist, remove the whole row of data from both stations and run cca
+
+                # else run cca on original data
+                cca_coeffs[i,j] = rcca.CCA(kernelcca = False, reg = 0., numCC = 1).train([first_st, second_st]).cancorrs[0]
+
+
+
+ds.measurements.loc[dict(station = 'BLC')]
 
 
 
