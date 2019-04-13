@@ -3,8 +3,11 @@ import numpy as np
 import pandas as pd
 import xarray as xr # if gives error, just rerun
 import matplotlib.pyplot as plt
+import lib.rcca as rcca
 
 
+
+################################################################################
 ################################################################################
 ### Function to restructure the SuperMAG data as a Dataset (xarray)
 #       inputs: csv_file- SuperMAG data as csv file, downloaded from SuperMAG website
@@ -123,12 +126,57 @@ def mag_csv_to_Dataset(csv_file, readings=None, MLT=None, MLAT=None):
 
 
 
-
+################################################################################
 ################################################################################
 ### Function to plot the readings like on the SuperMAG website
-#       input: dataset output from mag_data_to_Dataset function
+#       input: ds- dataset output from mag_data_to_Dataset function
 #       output: series of plots, one per station, of the readings
 
 def plot_mag_data(ds):
         ds.measurements.plot.line(x='time', hue='reading', col='station', col_wrap=1)
 ################################################################################
+
+
+
+
+################################################################################
+################################################################################
+### Function to calculate the first canonical correlation coefficients
+#       input: ds- dataset output from mag_data_to_Dataset function
+#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#       output: DataArray of cca coefficients, dims are 'first_st' and 'second_st'
+
+def inter_st_cca(ds, readings=None):
+        # check if readings are provided
+        if readings is None:
+                readings = ['N', 'E', 'Z']
+
+        # universally necessary things
+        stations = ds.station
+        num_st = len(stations)
+        num_read = len(readings)
+
+        # setup (triangular) array for the correlation coefficients
+        cca_coeffs = np.zeros(shape = (num_st, num_st), dtype = float)
+
+        # shrinking nested for loops to get all the pairs of stations
+        for i in range(0, num_st-1):
+            first_st = ds.measurements.loc[dict(station = stations[i])]
+            for j in range(i+1, num_st):
+                second_st = ds.measurements.loc[dict(station = stations[j])]
+                # if False in np.isfinite(first_st) or False in np.isfinite(second_st):
+                comb_st = xr.concat([first_st, second_st], dim='reading')
+                # test stations for NaNs in the data (will mess up cca)
+                comb_st = comb_st.dropna(dim='time', how='any')
+                first_st = comb_st[:, 0:num_read]
+                second_st = comb_st[:, num_read:2*num_read]
+                # run cca
+                temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
+                cca_coeffs[i,j] = temp_cca.train([first_st, second_st]).cancorrs[0]
+
+        # build DataArray from the cca_coeffs array
+        da = xr.DataArray(data = cca_coeffs,
+                          coords = [stations, stations],
+                          dims = ['first_st', 'second_st'])
+
+        return da
