@@ -8,7 +8,7 @@ import lib.rcca as rcca
 
 
 ################################################################################
-################################################################################
+####################### Restructure ############################################
 ### Function to restructure the SuperMAG data as a Dataset (xarray)
 #       inputs: csv_file- SuperMAG data as csv file, downloaded from SuperMAG website
 #               readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
@@ -126,7 +126,7 @@ def mag_csv_to_Dataset(csv_file, readings=None, MLT=None, MLAT=None):
 
 
 ################################################################################
-################################################################################
+####################### Plotting ###############################################
 ### Function to plot the readings like on the SuperMAG website
 #       input: ds- dataset output from mag_data_to_Dataset function
 #       output: series of plots, one per station, of the readings
@@ -138,7 +138,7 @@ def plot_mag_data(ds):
 
 
 ################################################################################
-################################################################################
+####################### Canonical Correlation Analysis #########################
 ### Function to calculate the first canonical correlation coefficients between stations
 #       input: ds- dataset output from mag_data_to_Dataset function
 #              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
@@ -178,9 +178,9 @@ def inter_st_cca(ds, readings=None):
                       dims = ['first_st', 'second_st'])
 
     # convert the DataArray into a Dataset
-    ds = da.to_dataset(name = 'cca_coeffs')
+    res = da.to_dataset(name = 'cca_coeffs')
 
-    return ds
+    return res
 
 
 ### Function to calculate the first canonical correlation coefficients between readings in one station
@@ -215,7 +215,7 @@ def intra_st_cca(ds, station, readings=None):
             second_read = np.reshape(second_read, newshape=[len(second_read),1])
             # run cca
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-            cca_coeffs[i,j] = temp_cca.train([first_read, second_read]).cancorrs[0]
+            cca_coeffs[i,j] = abs(temp_cca.train([first_read, second_read]).cancorrs[0])
 
     # build DataArray from the cca_coeffs array
     da = xr.DataArray(data = cca_coeffs,
@@ -223,6 +223,33 @@ def intra_st_cca(ds, station, readings=None):
                       dims = ['first_read', 'second_read'])
 
     # convert the DataArray into a Dataset
-    ds = da.to_dataset(name = 'cca_coeffs')
+    res = da.to_dataset(name = 'cca_coeffs')
 
-    return (ds)
+    return res
+
+
+### Function to calculate the first canonical correlation coefficients between readings for all stations
+#       input: ds- dataset output from mag_data_to_Dataset function
+#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#       output: Dataset of cca coefficients
+#                   data- cca_coeffs
+#                   coordinates- 'first_read', 'second_read', 'station'
+def st_cca(ds, readings=None):
+    # universally necessary things
+    stations = ds.station.values
+    num_st = len(stations)
+
+    # initialize result Dataset (so we can append things to it later)
+    res = intra_st_cca(ds = ds, station = stations[0], readings = readings)
+
+    # loop through the stations and append each to master Dataset
+    for i in stations[1:]:
+        temp_ds = intra_st_cca(ds = ds, station = i, readings = readings)
+        res = xr.concat([res, temp_ds], dim = 'station')
+
+    # fix coordinates for 'station' dimension
+    res = res.assign_coords(station = stations)
+
+    return res
+
+################################################################################
