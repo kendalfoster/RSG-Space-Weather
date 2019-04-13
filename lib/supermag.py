@@ -179,4 +179,7 @@ def inter_st_cca(ds, readings=None):
                           coords = [stations, stations],
                           dims = ['first_st', 'second_st'])
 
-        return da
+        # convert the DataArray into a Dataset
+        ds = da.to_dataset(name='cca_coeffs')
+
+        return ds

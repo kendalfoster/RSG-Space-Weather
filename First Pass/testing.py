@@ -2,7 +2,7 @@
 pwd()
 
 ###############################################################################
-########## supermag.py ##########
+########## Restructuring and Plotting the SuperMAG Data ##########
 import numpy as np
 import pandas as pd
 import xarray as xr # if gives warning/error, just rerun
@@ -40,7 +40,7 @@ sm.plot_mag_data(ds=ds1)
 
 
 ###############################################################################
-########## rcca.py ##########
+########## Canonical Correlation Analysis ##########
 import numpy as np
 import pandas as pd
 import xarray as xr # if gives error, just rerun
@@ -121,15 +121,17 @@ def inter_st_cca(ds, readings=None):
                           coords = [stations, stations],
                           dims = ['first_st', 'second_st'])
 
-        return da
+        # convert the DataArray into a Dataset
+        ds = da.to_dataset(name='cca_coeffs')
+
+        return ds
 
 ds = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 test_coefs = sm.inter_st_cca(ds=ds)
 test_coefs
-xr.DataArray(data = test_coefs,
-             coords = [stations, stations],
-             dims = ['first_st', 'second_st'])
+
+
 
 
 ##### from GitHub example
