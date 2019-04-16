@@ -54,7 +54,7 @@ ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
 
 ## CCA between stations
 test_inter = sm.inter_st_cca(ds = ds1)
-test_inter
+test_inter.cca_coeffs
 
 ## CCA between readings in one station
 test_intra = sm.intra_st_cca(ds = ds1, station = 'BSL')

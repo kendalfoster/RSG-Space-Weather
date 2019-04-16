@@ -160,9 +160,9 @@ def inter_st_cca(ds, readings=None):
 
     # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):
-        first_st = ds.measurements.loc[dict(station = stations[0])]
+        first_st = ds.measurements.loc[dict(station = stations[i])]
         for j in range(i+1, num_st):
-            second_st = ds.measurements.loc[dict(station = stations[1])]
+            second_st = ds.measurements.loc[dict(station = stations[j])]
             # remove NaNs from data (will mess up cca)
             comb_st = xr.concat([first_st, second_st], dim = 'reading')
             comb_st = comb_st.dropna(dim = 'time', how = 'any')
