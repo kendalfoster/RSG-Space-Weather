@@ -18,7 +18,7 @@ import lib.rcca as rcca
 #                       time is first dimension (ie, axis=0 for numpy commands)
 #                       data is accessible in array format via output.measurements
 #
-def mag_csv_to_Dataset(csv_file, readings=None, MLT=None, MLAT=None):
+def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=None, MLAT=None):
     # get universally needed things
     data = pd.read_csv(csv_file)
     times = pd.to_datetime(data['Date_UTC'].unique())
@@ -26,10 +26,6 @@ def mag_csv_to_Dataset(csv_file, readings=None, MLT=None, MLAT=None):
     #-----------------------------------------------------------------------
     #---------- optional arguments -----------------------------------------
     #-----------------------------------------------------------------------
-
-    # check if readings are provided
-    if readings is None:
-        readings = ['N', 'E', 'Z']
 
     # if MLAT is included, sort and make Dataset
     if MLAT is True:
@@ -145,10 +141,7 @@ def plot_mag_data(ds):
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
 #                   coordinates- 'first_st', 'second_st'
-def inter_st_cca(ds, readings=None):
-    # check if readings are provided
-    if readings is None:
-        readings = ['N', 'E', 'Z']
+def inter_st_cca(ds, readings=['N', 'E', 'Z']):
 
     # universally necessary things
     stations = ds.station
@@ -190,10 +183,7 @@ def inter_st_cca(ds, readings=None):
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
 #                   coordinates- 'first_read', 'second_read'
-def intra_st_cca(ds, station, readings=None):
-    # check if readings are provided
-    if readings is None:
-        readings = ['N', 'E', 'Z']
+def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
 
     # universally necessary things
     num_read = len(readings)
@@ -234,7 +224,7 @@ def intra_st_cca(ds, station, readings=None):
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
 #                   coordinates- 'first_read', 'second_read', 'station'
-def st_cca(ds, readings=None):
+def st_cca(ds, readings=['N', 'E', 'Z']):
     # universally necessary things
     stations = ds.station.values
     num_st = len(stations)
