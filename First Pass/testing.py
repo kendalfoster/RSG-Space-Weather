@@ -1,6 +1,6 @@
 # need to be in RSG-Space-Weather folder
 pwd()
-
+jack
 ###############################################################################
 ########## Restructuring and Plotting the SuperMAG Data ##########
 import numpy as np
