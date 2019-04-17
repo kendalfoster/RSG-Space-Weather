@@ -241,5 +241,70 @@ def st_cca(ds, readings=['N', 'E', 'Z']):
     res = res.assign_coords(station = stations)
 
     return res
+################################################################################
 
+
+
+
+################################################################################
+################################ Thresholding ##################################
+### Function to calculate the threshold for each station pair
+#       input: ds- dataset output from mag_data_to_Dataset function
+#       output: Dataset of thresholds
+#                   data- thresholds
+#                   coordinates- 'first_st', 'second_st'
+def mag_thresh_kf(ds):
+    thr = inter_st_cca(ds=ds)
+    thr = thr.rename(dict(cca_coeffs = 'thresholds'))
+    return thr
+
+
+### Function to calculate the threshold for each station pair
+#       input: ds- dataset output from mag_data_to_Dataset function
+#              n0- the desired expected degree of each node (station)
+#       output: Dataset of thresholds
+#                   data- thresholds
+#                   coordinates- 'first_st', 'second_st'
+def mag_thresh_dods(ds, n0=0.25):
+    # univeral constants
+    stations = ds.station.values
+    num_st = len(stations)
+    ct_mat = inter_st_cca(ds=ds)
+    ct_vec = np.linspace(start=0, stop=1, num=101)
+
+    # initialize
+    arr = np.zeros(shape = (len(ct_vec), num_st))
+    # iterate through all possible ct values
+    for i in range(len(ct_vec)):
+        temp = ct_mat.where(ct_mat > ct_vec[i], 0) # it looks opposite, but it's right
+        temp = temp.where(temp <= ct_vec[i], 1)
+        for j in range(num_st):
+            arr[i,j] = sum(temp.loc[dict(first_st = stations[j])].cca_coeffs.values) + sum(temp.loc[dict(second_st = stations[j])].cca_coeffs.values)
+    # normalize
+    arr = arr/(num_st-1)
+
+    # find indices roughly equal to n0 and get their values
+    idx = np.zeros(num_st, dtype=int)
+    thr = np.zeros(num_st)
+    for i in range(num_st):
+        idx[i] = int(np.where(arr[:,i] <= n0)[0][0])
+        thr[i] = ct_vec[idx[i]]
+
+    # create threshold matrix using smaller threshold in each pair
+    threshold = np.ones(shape = (num_st, num_st))
+    for i in range(num_st):
+        for j in range(i+1, num_st):
+            if thr[i] < thr[j]:
+                threshold[i,j] = thr[i]
+                threshold[j,i] = thr[i]
+            else:
+                threshold[i,j] = thr[j]
+                threshold[j,i] = thr[j]
+
+    # restructure into Dataset
+    res = xr.Dataset(data_vars = {'thresholds': (['first_st', 'second_st'], threshold)},
+                     coords = {'first_st': stations,
+                               'second_st': stations})
+
+    return res
 ################################################################################

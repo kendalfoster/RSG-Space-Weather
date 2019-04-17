@@ -81,38 +81,11 @@ import lib.rcca as rcca
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
-ct = 0.7
-ct_mat = sm.inter_st_cca(ds=ds1)
-ct_mat.cca_coeffs.values
-ct_mat.where(ct_mat > ct, 0).cca_coeffs.values
+## KF Threshold
+thresh_kf = sm.mag_thresh_kf(ds = ds1)
+thresh_kf.thresholds.values
 
-def mag_thresh(ds, n0=0.25, readings=['N', 'E', 'Z']):
-    ct_mat = sm.inter_st_cca(ds=ds, readings=readings)
-    ct_vec = np.linspace(start=0, stop=1, num=101)
-
-    # iterate through all possible ct values
-    res = ct_mat.where(ct_mat > ct_vec[0], 0)
-    for i in ct_vec[1:]:
-        res = xr.concat([res, ct_mat.where(ct_mat > i, 0)], dim = 'C_T')
-        # sum over row and column to get degrees of each station
-
-    res = res.assign_coords(C_T = ct_vec)
-
-res.cca_coeffs.loc[0.75].values
-
-## Alternate Method ##
-# for each possible threshold, C_T
-    # for each time in times
-    # calculate inter_st_cca with universal threshold, C_T
-    # stack to get 3-dimensional Dataset
-    # take mean over time dimension for each (i,j) pair in the CCA matrix
-        # mean is sum((i,j) pair over dim='time') / (num_st - 1)
-        # (now it's back to 2 dims)
-    # stack the (now) 2 dim Dataset to make a 3-dim Dataset
-        # (3rd dim is values of C_T)
-# now we have Dataset of threshold values, where dims = first_st, second_st, C_T
-    # for every station pair (i,j)
-    # find 'C_T' index whose value equals n_0
-    # use that value of C_T for the station pair (i,j)
-    # store these threshold values in a 2-dim Dataset?
+## Dods-style Threshold
+thresh_dods = sm.mag_thresh_dods(ds = ds1, n0 = 0.25)
+thresh_dods.thresholds.values
 ###############################################################################
