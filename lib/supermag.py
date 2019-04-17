@@ -4,6 +4,8 @@ import pandas as pd
 import xarray as xr # if gives error, just rerun
 import matplotlib.pyplot as plt
 import lib.rcca as rcca
+import sys
+import os
 
 
 
@@ -163,9 +165,11 @@ def inter_st_cca(ds, readings=['N', 'E', 'Z']):
             comb_st = comb_st.dropna(dim = 'time', how = 'any')
             first_st = comb_st[:, 0:num_read]
             second_st = comb_st[:, num_read:2*num_read]
-            # run cca
+            # run cca, suppress rcca output
+            sys.stdout = open(os.devnull, "w")
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
             cca_coeffs[i,j] = temp_cca.train([first_st, second_st]).cancorrs[0]
+            sys.stdout = sys.__stdout__
 
     # build DataArray from the cca_coeffs array
     da = xr.DataArray(data = cca_coeffs,
@@ -205,9 +209,11 @@ def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
         for j in range(i+1, num_read):
             second_read = read.loc[dict(reading = readings[j])].values
             second_read = np.reshape(second_read, newshape=[len(second_read),1])
-            # run cca
+            # run cca, suppress rcca output
+            sys.stdout = open(os.devnull, "w")
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
             cca_coeffs[i,j] = abs(temp_cca.train([first_read, second_read]).cancorrs[0])
+            sys.stdout = sys.__stdout__
 
     # build DataArray from the cca_coeffs array
     da = xr.DataArray(data = cca_coeffs,
