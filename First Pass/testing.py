@@ -106,12 +106,12 @@ import lib.rcca as rcca
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
-
-ds2 = ds1.measurements.loc[dict(station = 'TAL')]
-ds2 = ds2[dict(time=slice(0,10))]
-ds2.values
-ds2_roll = ds2.rolling(time=3).construct(window_dim='window').dropna('time')
-ds2_roll
+ds1_win = sm.window(ds = ds1)
+ds1_win
+ds1_win_60 = sm.window(ds = ds1, win_len = 60)
+ds1_win_60
+ds1_win_slice = sm.window(ds = ds1[dict(time=slice(0,10))], win_len = 3)
+ds1_win_slice.measurements.loc[dict(station = 'TAL')]
 ###############################################################################
 
 

@@ -9,16 +9,18 @@ import lib.rcca as rcca
 
 ################################################################################
 ####################### Restructure ############################################
-### Function to restructure the SuperMAG data as a Dataset (xarray)
+### Function to restructure the SuperMAG data as an xarray.Dataset
 #       inputs: csv_file- SuperMAG data as csv file, downloaded from SuperMAG website
 #               readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#               MLAT- input True if the magnetic latitude column is included, default is non-inclusion of the column
-#               MLT- input True if the magnetic local time column is included, default is non-inclusion of the column
+#               MLT- input False if the magnetic local time column is NOT included, default is True
+#               MLAT- input False if the magnetic latitude column is NOT included, default is True
 #       output: Dataset with the SuperMAG data easily accessible,
-#                       time is first dimension (ie, axis=0 for numpy commands)
-#                       data is accessible in array format via output.measurements
-#
-def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=None, MLAT=None):
+#                   data_vars- measurements, mlts, mlats
+#                   coordinates- time, reading, station
+#                 ----time is first dimension (ie, axis=0 for numpy commands)
+#                 ----data in DataArray format via output.measurements
+#                 ----data in array format via output.measurements.values
+def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=True, MLAT=True):
     # get universally needed things
     data = pd.read_csv(csv_file)
     times = pd.to_datetime(data['Date_UTC'].unique())
@@ -124,7 +126,7 @@ def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=None, MLAT=None):
 ################################################################################
 ####################### Plotting ###############################################
 ### Function to plot the readings like on the SuperMAG website
-#       input: ds- dataset output from mag_data_to_Dataset function
+#       input: ds- dataset output from mag_csv_to_Dataset function
 #       output: series of plots, one per station, of the readings
 def plot_mag_data(ds):
     ds.measurements.plot.line(x='time', hue='reading', col='station', col_wrap=1)
@@ -136,7 +138,7 @@ def plot_mag_data(ds):
 ################################################################################
 ####################### Canonical Correlation Analysis #########################
 ### Function to calculate the first canonical correlation coefficients between stations
-#       input: ds- dataset output from mag_data_to_Dataset function
+#       input: ds- dataset output from mag_csv_to_Dataset function
 #              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
@@ -177,7 +179,7 @@ def inter_st_cca(ds, readings=['N', 'E', 'Z']):
 
 
 ### Function to calculate the first canonical correlation coefficients between readings in one station
-#       input: ds- dataset output from mag_data_to_Dataset function
+#       input: ds- dataset output from mag_csv_to_Dataset function
 #              station- 3 letter code for the station as a string, ex: 'BLC'
 #              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
@@ -219,7 +221,7 @@ def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
 
 
 ### Function to calculate the first canonical correlation coefficients between readings for all stations
-#       input: ds- dataset output from mag_data_to_Dataset function
+#       input: ds- dataset output from mag_csv_to_Dataset function
 #              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
@@ -247,9 +249,9 @@ def st_cca(ds, readings=['N', 'E', 'Z']):
 
 
 ################################################################################
-################################ Thresholding ##################################
+####################### Thresholding ###########################################
 ### Function to calculate the threshold for each station pair
-#       input: ds- dataset output from mag_data_to_Dataset function
+#       input: ds- dataset output from mag_csv_to_Dataset function
 #       output: Dataset of thresholds
 #                   data- thresholds
 #                   coordinates- 'first_st', 'second_st'
@@ -260,7 +262,7 @@ def mag_thresh_kf(ds):
 
 
 ### Function to calculate the threshold for each station pair
-#       input: ds- dataset output from mag_data_to_Dataset function
+#       input: ds- dataset output from mag_csv_to_Dataset function
 #              n0- the desired expected degree of each node (station)
 #       output: Dataset of thresholds
 #                   data- thresholds
@@ -307,4 +309,23 @@ def mag_thresh_dods(ds, n0=0.25):
                                'second_st': stations})
 
     return res
+################################################################################
+
+
+
+
+################################################################################
+####################### Windowing ##############################################
+### Function to window the data at a given window length
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              win_len- length of the window, default is 128
+#       output: Dataset with extra dimension from windowing
+#                   data_vars- measurements, mlts, mlats
+#                   coordinates- time, reading, station, window
+def window(ds, win_len=128):
+    # create a rolling object
+    ds_roll = ds.rolling(time=win_len).construct(window_dim='window').dropna('time')
+    # fix window coordinates
+    ds_roll = ds_roll.assign_coords(window = range(win_len))
+    return ds_roll
 ################################################################################
