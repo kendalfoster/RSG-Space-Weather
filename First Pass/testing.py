@@ -89,3 +89,43 @@ thresh_kf.thresholds.values
 thresh_dods = sm.mag_thresh_dods(ds = ds1, n0 = 0.25)
 thresh_dods.thresholds.values
 ###############################################################################
+
+
+
+
+###############################################################################
+########## Windowing ##########
+import numpy as np
+import pandas as pd
+import xarray as xr # if gives error, just rerun
+import matplotlib.pyplot as plt
+import lib.supermag as sm
+import lib.rcca as rcca
+
+## Import and Restructure SuperMAG Data
+ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
+
+
+ds2 = ds1.measurements.loc[dict(station = 'TAL')]
+ds2 = ds2[dict(time=slice(0,10))]
+ds2.values
+ds2_roll = ds2.rolling(time=3).construct(window_dim='window').dropna('time')
+ds2_roll
+###############################################################################
+
+
+
+
+###############################################################################
+########## Converting Numpy Arrays to xarray Datasets ##########
+george = np.ones(shape=(2,3,4))
+george_ds = xr.Dataset(data_vars = {'measurements': (['time', 'reading', 'station'], george)},
+                       coords = {'time': [2011,2012],
+                                 'reading': ['N', 'E', 'Z'],
+                                 'station': ['TAL', 'BLC', 'EKS', 'BLS']})
+george_ds
+# each coord requires
+    # 1) a name that matches a dimension name from data_vars
+    # 2) a vector whose length matches the 'length' of the data along the specified dimension
+###############################################################################
