@@ -194,34 +194,41 @@ george_da2ds.measurements
 
 
 #------------------ Concatenating xarray Data Structures -----------------------
-# concatenation allows for "stacking" arrays of different lengths, filling with NAs
+# concatenation allows for "stacking" arrays of different lengths, filling with nans
 
-# Numpy Array
-jorge = np.ones(shape = (2,3))
+# define some vectors for later ease
+times = [2011, 2012, 2013, 2014]
+readings = ['N', 'E', 'Z']
+stations = ['TAL', 'BLC', 'EKS', 'BLS', 'EKP']
+
+# Numpy Arrays
+jorge1 = np.ones(shape = (4,3))
+jorge = np.zeros(shape = (3,2))
 
 ### Concatenate "Stack" DataArrays
 # Numpy array -> xarray DataArray
-jorge_da = xr.DataArray(data = jorge,
+jorge_da = xr.DataArray(data = jorge1,
                         coords = [times, readings],
                         dims = ['time', 'reading'])
 for i in stations[1:]:
     temp = xr.DataArray(data = jorge,
-                        coords = [times, readings],
+                        coords = [times[1:], readings[:2]],
                         dims = ['time', 'reading'])
     jorge_da = xr.concat([jorge_da, temp], dim = 'station')
+
 jorge_da = jorge_da.assign_coords(station = stations)
 jorge_da2ds = jorge_da.to_dataset(name = 'measurements')
 jorge_da2ds
 
 ### Concatenate "Stack" Datasets
 # Numpy array -> xarray Dataset
-jorge_ds = xr.Dataset(data_vars = {'measurements': (['time', 'reading'], jorge)},
+jorge_ds = xr.Dataset(data_vars = {'measurements': (['time', 'reading'], jorge1)},
                       coords = {'time': times,
                                 'reading': readings})
 for i in stations[1:]:
     temp = xr.Dataset(data_vars = {'measurements': (['time', 'reading'], jorge)},
-                          coords = {'time': times,
-                                    'reading': readings})
+                          coords = {'time': times[1:],
+                                    'reading': readings[:2]})
     jorge_ds = xr.concat([jorge_ds, temp], dim = 'station')
 jorge_ds = jorge_ds.assign_coords(station = stations)
 jorge_ds
