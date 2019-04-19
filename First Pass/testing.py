@@ -22,7 +22,7 @@ ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
 ds1
 
 ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            readings = ['N', 'E', 'Z'],
+                            components = ['N', 'E', 'Z'],
                             MLT = True, MLAT = True)
 ds2
 
@@ -37,9 +37,6 @@ ds4 # exclude MLAT data, order of stations should be different compared to above
 ds4 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = False, MLAT = False)
 ds4 # exclude MLT and MLAT data, order of stations should also be different
-
-## Plot SuperMAG Data
-sm.plot_mag_data(ds=ds1)
 ################################################################################
 
 
@@ -93,11 +90,11 @@ ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
 test_inter = sm.inter_st_cca(ds = ds1)
 test_inter.cca_coeffs
 
-## CCA between readings in one station
+## CCA between components in one station
 test_intra = sm.intra_st_cca(ds = ds1, station = 'BSL')
 test_intra
 
-## CCA between readings for all stations
+## CCA between components for all stations
 test_all = sm.st_cca(ds = ds1)
 test_all
 ################################################################################
@@ -109,14 +106,14 @@ test_all
 ########## Phase Coherence (Correlation) ##########
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
-ds1 = ds1[dict(time=slice(0,158))]
+ds1 = ds1[dict(time=slice(0,148))]
 
 ds1_win = sm.window(ds = ds1)
 ds1_win = ds1_win.rename(dict(win_rel_time = 'time'))
-ds1_win = ds1_win.transpose('time', 'reading', 'station', 'win_start')
+ds1_win = ds1_win.transpose('time', 'component', 'station', 'win_start')
 ds1_win = ds1_win.dropna(dim = 'time', how = 'any')
-first = ds1_win.measurements.loc[dict(station = 'TAL')].loc[dict(reading = 'N')]
-second = ds1_win.measurements.loc[dict(station = 'BLC')].loc[dict(reading = 'N')]
+first = ds1_win.measurements.loc[dict(station = 'TAL')].loc[dict(component = 'N')]
+second = ds1_win.measurements.loc[dict(station = 'BLC')].loc[dict(component = 'N')]
 
 ds1_max_phase_corr = sm.max_phase_corr(first_da = first, second_da = second)
 ds1_max_phase_corr
@@ -162,6 +159,7 @@ thresh_dods.thresholds.values
 ########## Constructing the Network ##########
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
+ds1 = ds1[dict(time=slice(0,148))]
 
 con_ds1 = sm.construct_network(ds = ds1, win_len = 128, n0 = 0.25)
 con_ds2 = sm.construct_network(ds = ds1)

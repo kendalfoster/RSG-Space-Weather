@@ -18,16 +18,16 @@ import lib.rcca as rcca
 ####################### Restructure ############################################
 ### Function to restructure the SuperMAG data as an xarray.Dataset
 #       inputs: csv_file- SuperMAG data as csv file, downloaded from SuperMAG website
-#               readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#               components- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #               MLT- input False if the magnetic local time column is NOT included, default is True
 #               MLAT- input False if the magnetic latitude column is NOT included, default is True
 #       output: Dataset with the SuperMAG data easily accessible,
 #                   data_vars- measurements, mlts, mlats
-#                   coordinates- time, reading, station
+#                   coordinates- time, component, station
 #                 ----time is first dimension (ie, axis=0 for numpy commands)
 #                 ----data in DataArray format via output.measurements
 #                 ----data in array format via output.measurements.values
-def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=True, MLAT=True):
+def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
     # get universally needed things
     data = pd.read_csv(csv_file)
     times = pd.to_datetime(data['Date_UTC'].unique())
@@ -50,7 +50,7 @@ def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=True, MLAT=True):
         # build MLAT Dataset, for merging later
         ds_mlat = xr.Dataset(data_vars = {'mlats': (['station'], mlats)},
                              coords = {'time': times,
-                                       'reading': readings,
+                                       'component': components,
                                        'station': stations})
     elif MLAT is not True:
         stations = data['IAGA'].unique()
@@ -76,7 +76,7 @@ def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=True, MLAT=True):
         # build MLT Dataset, for merging later
         ds_mlt = xr.Dataset(data_vars = {'mlts': (['time', 'station'], mlt)},
                             coords = {'time': times,
-                                      'reading': readings,
+                                      'component': components,
                                       'station': stations})
 
 
@@ -86,27 +86,27 @@ def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=True, MLAT=True):
     #-----------------------------------------------------------------------
 
     # initialize DataArray (so we can append things to it later)
-    cols = np.append('Date_UTC', readings)
+    cols = np.append('Date_UTC', components)
     temp_data = data[cols].loc[data['IAGA'] == stations[0]]
     temp_times = pd.to_datetime(temp_data['Date_UTC'].unique())
-    da = xr.DataArray(data = temp_data[readings],
-                      coords = [temp_times, readings],
-                      dims = ['time', 'reading'])
+    da = xr.DataArray(data = temp_data[components],
+                      coords = [temp_times, components],
+                      dims = ['time', 'component'])
 
     # loop through the stations and append each to master DataArray
     for i in stations[1:]:
         temp_data = data[cols].loc[data['IAGA'] == i]
         temp_times = pd.to_datetime(temp_data['Date_UTC'].unique())
-        temp_da = xr.DataArray(data = temp_data[readings],
-                               coords = [temp_times, readings],
-                               dims = ['time', 'reading'])
+        temp_da = xr.DataArray(data = temp_data[components],
+                               coords = [temp_times, components],
+                               dims = ['time', 'component'])
         da = xr.concat([da, temp_da], dim = 'station')
-        da = da.transpose('time', 'reading', 'station')
+        da = da.transpose('time', 'component', 'station')
 
-    # build Dataset from readings
-    ds = xr.Dataset(data_vars = {'measurements': (['time', 'reading', 'station'], da)},
+    # build Dataset from components
+    ds = xr.Dataset(data_vars = {'measurements': (['time', 'component', 'station'], da)},
                     coords = {'time': times,
-                              'reading': readings,
+                              'component': components,
                               'station': stations})
 
 
@@ -132,11 +132,11 @@ def mag_csv_to_Dataset(csv_file, readings=['N', 'E', 'Z'], MLT=True, MLAT=True):
 
 ################################################################################
 ####################### Plotting ###############################################
-### Function to plot the readings like on the SuperMAG website
+### Function to plot the components like on the SuperMAG website
 #       input: ds- dataset output from mag_csv_to_Dataset function
-#       output: series of plots, one per station, of the readings
+#       output: series of plots, one per station, of the components
 def plot_mag_data(ds):
-    ds.measurements.plot.line(x='time', hue='reading', col='station', col_wrap=1)
+    ds.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1)
 ################################################################################
 
 
@@ -149,10 +149,10 @@ def plot_mag_data(ds):
 #              type- type of detrending passed to scipy detrend, default linear
 #       output: Dataset with measurements detrended
 #                   data_vars- measurements
-#                   coordinates- time, reading, station
+#                   coordinates- time, component, station
 def mag_detrend(ds, type='linear'):
     stations = ds.station
-    readings = ds.reading
+    components = ds.component
 
     # initialize DataArray
     temp = ds.measurements.loc[dict(station = stations[0])]
@@ -160,8 +160,8 @@ def mag_detrend(ds, type='linear'):
     temp_times = temp.time
     det = scg.detrend(data=temp, axis=0, type=type)
     da = xr.DataArray(data = det,
-                      coords = [temp_times, readings],
-                      dims = ['time', 'reading'])
+                      coords = [temp_times, components],
+                      dims = ['time', 'component'])
 
     for i in range(1, len(stations)):
         temp = ds.measurements.loc[dict(station = stations[i])]
@@ -169,8 +169,8 @@ def mag_detrend(ds, type='linear'):
         temp_times = temp.time
         det = scg.detrend(data=temp, axis=0, type=type)
         temp_da = xr.DataArray(data = det,
-                               coords = [temp_times, readings],
-                               dims = ['time', 'reading'])
+                               coords = [temp_times, components],
+                               dims = ['time', 'component'])
         da = xr.concat([da, temp_da], dim = 'station')
 
     # fix coordinates
@@ -193,7 +193,7 @@ def mag_detrend(ds, type='linear'):
 #              win_len- length of the window, default is 128
 #       output: Dataset with extra dimension from windowing
 #                   data_vars- measurements, mlts, mlats
-#                   coordinates- time, reading, station, window
+#                   coordinates- time, component, station, window
 def window(ds, win_len=128):
     # create a rolling object
     ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna('time')
@@ -201,7 +201,7 @@ def window(ds, win_len=128):
     ds_roll = ds_roll.assign_coords(win_rel_time = range(win_len))
     ds_roll = ds_roll.rename(dict(time = 'win_start'))
     # ensure the coordinates are in the proper order
-    ds_roll = ds_roll.transpose('win_start', 'reading', 'station', 'win_rel_time')
+    ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_rel_time')
 
     return ds_roll
 ################################################################################
@@ -213,15 +213,15 @@ def window(ds, win_len=128):
 ####################### Canonical Correlation Analysis #########################
 ### Function to calculate the first canonical correlation coefficients between stations
 #       input: ds- dataset output from mag_csv_to_Dataset function
-#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
 #                   coordinates- 'first_st', 'second_st'
-def inter_st_cca(ds, readings=['N', 'E', 'Z']):
+def inter_st_cca(ds, components=['N', 'E', 'Z']):
     # universal constants
     stations = ds.station
     num_st = len(stations)
-    num_read = len(readings)
+    num_comp = len(components)
 
     # setup (triangular) array for the correlation coefficients
     cca_coeffs = np.zeros(shape = (num_st, num_st), dtype = float)
@@ -232,10 +232,10 @@ def inter_st_cca(ds, readings=['N', 'E', 'Z']):
         for j in range(i+1, num_st):
             second_st = ds.measurements.loc[dict(station = stations[j])]
             # remove NaNs from data (will mess up cca)
-            comb_st = xr.concat([first_st, second_st], dim = 'reading')
+            comb_st = xr.concat([first_st, second_st], dim = 'component')
             comb_st = comb_st.dropna(dim = 'time', how = 'any')
-            first_st = comb_st[:, 0:num_read]
-            second_st = comb_st[:, num_read:2*num_read]
+            first_st = comb_st[:, 0:num_comp]
+            second_st = comb_st[:, num_comp:2*num_comp]
             # run cca, suppress rcca output
             sys.stdout = open(os.devnull, "w")
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
@@ -253,42 +253,42 @@ def inter_st_cca(ds, readings=['N', 'E', 'Z']):
     return res
 
 
-### Function to calculate the first canonical correlation coefficients between readings in one station
+### Function to calculate the first canonical correlation coefficients between components in one station
 #       input: ds- dataset output from mag_csv_to_Dataset function
 #              station- 3 letter code for the station as a string, ex: 'BLC'
-#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
-#                   coordinates- 'first_read', 'second_read'
-def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
+#                   coordinates- 'first_comp', 'second_comp'
+def intra_st_cca(ds, station, components=['N', 'E', 'Z']):
     # universal constants
-    num_read = len(readings)
+    num_comp = len(components)
 
-    # get readings for the station
-    read = ds.measurements.loc[dict(station = station)]
+    # get components for the station
+    comp = ds.measurements.loc[dict(station = station)]
     # remove Nans from data (will mess up cca)
-    read = read.dropna(dim = 'time', how = 'any')
+    comp = comp.dropna(dim = 'time', how = 'any')
 
     # setup (triangular) array for the correlation coefficients
-    cca_coeffs = np.zeros(shape = (num_read, num_read), dtype = float)
+    cca_coeffs = np.zeros(shape = (num_comp, num_comp), dtype = float)
 
-    # shrinking nested for loops to get all the pairs of readings
-    for i in range(0, num_read-1):
-        first_read = read.loc[dict(reading = readings[i])].values
-        first_read = np.reshape(first_read, newshape=[len(first_read),1])
-        for j in range(i+1, num_read):
-            second_read = read.loc[dict(reading = readings[j])].values
-            second_read = np.reshape(second_read, newshape=[len(second_read),1])
+    # shrinking nested for loops to get all the pairs of components
+    for i in range(0, num_comp-1):
+        first_comp = comp.loc[dict(component = components[i])].values
+        first_comp = np.reshape(first_comp, newshape=[len(first_comp),1])
+        for j in range(i+1, num_comp):
+            second_comp = comp.loc[dict(component = components[j])].values
+            second_comp = np.reshape(second_comp, newshape=[len(second_comp),1])
             # run cca, suppress rcca output
             sys.stdout = open(os.devnull, "w")
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-            cca_coeffs[i,j] = abs(temp_cca.train([first_read, second_read]).cancorrs[0])
+            cca_coeffs[i,j] = abs(temp_cca.train([first_comp, second_comp]).cancorrs[0])
             sys.stdout = sys.__stdout__
 
     # build DataArray from the cca_coeffs array
     da = xr.DataArray(data = cca_coeffs,
-                      coords = [readings, readings],
-                      dims = ['first_read', 'second_read'])
+                      coords = [components, components],
+                      dims = ['first_comp', 'second_comp'])
 
     # convert the DataArray into a Dataset
     res = da.to_dataset(name = 'cca_coeffs')
@@ -296,23 +296,23 @@ def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
     return res
 
 
-### Function to calculate the first canonical correlation coefficients between readings for all stations
+### Function to calculate the first canonical correlation coefficients between components for all stations
 #       input: ds- dataset output from mag_csv_to_Dataset function
-#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
-#                   coordinates- 'first_read', 'second_read', 'station'
-def st_cca(ds, readings=['N', 'E', 'Z']):
+#                   coordinates- 'first_comp', 'second_comp', 'station'
+def st_cca(ds, components=['N', 'E', 'Z']):
     # universal constants
     stations = ds.station.values
     num_st = len(stations)
 
     # initialize result Dataset (so we can append things to it later)
-    res = intra_st_cca(ds = ds, station = stations[0], readings = readings)
+    res = intra_st_cca(ds = ds, station = stations[0], components = components)
 
     # loop through the stations and append each to master Dataset
     for i in stations[1:]:
-        temp_ds = intra_st_cca(ds = ds, station = i, readings = readings)
+        temp_ds = intra_st_cca(ds = ds, station = i, components = components)
         res = xr.concat([res, temp_ds], dim = 'station')
 
     # fix coordinates for 'station' dimension
@@ -353,45 +353,45 @@ def max_phase_corr(first_da, second_da):
     return max_corr
 
 
-### Function to calculate the phase correlation coefficients between readings between stations
+### Function to calculate the phase correlation coefficients between components between stations
 #       input: ds- dataset output from mag_csv_to_Dataset function
 #              win_len- length of the window, default is 128
-#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
-#                   coordinates- 'first_st', 'second_st', 'reading'
-def inter_st_phase_cca(ds, win_len=128, readings=['N', 'E', 'Z']):
+#                   coordinates- 'first_st', 'second_st', 'component'
+def inter_st_phase_cca(ds, win_len=128, components=['N', 'E', 'Z']):
     # universal constants
     stations = ds.station.values
     num_st = len(stations)
-    num_read = len(readings)
+    num_comp = len(components)
 
     # window the Dataset
     ds_win = window(ds = ds, win_len = win_len)
 
     # fix coordinates
     ds_win = ds_win.rename(dict(win_rel_time = 'time'))
-    ds_win = ds_win.transpose('time', 'reading', 'station', 'win_start')
+    ds_win = ds_win.transpose('time', 'component', 'station', 'win_start')
     # remove Nans from data (will mess up cca)
     ds_win = ds_win.dropna(dim = 'time', how = 'any')
 
     # initialize array
-    cca_coeffs = np.zeros(shape = (num_st, num_st, num_read))
+    cca_coeffs = np.zeros(shape = (num_st, num_st, num_comp))
 
     # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):
         first_st = ds_win.measurements.loc[dict(station = stations[i])]
         for j in range(i+1, num_st):
             second_st = ds_win.measurements.loc[dict(station = stations[j])]
-            # loop through the readings
-            for k in range(num_read):
-                cca_coeffs[0,1,k] = max_phase_corr(first_st.loc[dict(reading = readings[k])],
-                                                   second_st.loc[dict(reading = readings[k])])
+            # loop through the components
+            for k in range(num_comp):
+                cca_coeffs[i,j,k] = max_phase_corr(first_st.loc[dict(component = components[k])],
+                                                   second_st.loc[dict(component = components[k])])
 
     # build DataArray from the cca_coeffs array
     da = xr.DataArray(data = cca_coeffs,
-                      coords = [stations, stations, readings],
-                      dims = ['first_st', 'second_st', 'reading'])
+                      coords = [stations, stations, components],
+                      dims = ['first_st', 'second_st', 'component'])
 
     # convert the DataArray into a Dataset
     res = da.to_dataset(name = 'cca_coeffs')
@@ -400,44 +400,44 @@ def inter_st_phase_cca(ds, win_len=128, readings=['N', 'E', 'Z']):
 
 
 
-### Function to calculate the phase correlation coefficients between readings in one station
+### Function to calculate the phase correlation coefficients between components in one station
 #       input: ds- dataset output from mag_csv_to_Dataset function
 #              station- 3 letter code for the station as a string, ex: 'BLC'
 #              win_len- length of the window, default is 128
-#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
-#                   coordinates- 'first_read', 'second_read'
-def intra_st_phase_cca(ds, station, win_len=128, readings=['N', 'E', 'Z']):
+#                   coordinates- 'first_comp', 'second_comp'
+def intra_st_phase_cca(ds, station, win_len=128, components=['N', 'E', 'Z']):
     # universal constants
-    num_read = len(readings)
+    num_comp = len(components)
 
     # window the Dataset
     ds_win = window(ds = ds, win_len = win_len)
 
-    # get readings for the station
-    read = ds_win.measurements.loc[dict(station = station)]
+    # get components for the station
+    comp = ds_win.measurements.loc[dict(station = station)]
     # fix coordinates
-    read = read.rename(dict(win_rel_time = 'time'))
-    read = read.transpose('time', 'reading', 'win_start')
+    comp = comp.rename(dict(win_rel_time = 'time'))
+    comp = comp.transpose('time', 'component', 'win_start')
     # remove Nans from data (will mess up cca)
-    read = read.dropna(dim = 'time', how = 'any')
+    comp = comp.dropna(dim = 'time', how = 'any')
 
     # setup (triangular) array for the correlation coefficients
-    cca_coeffs = np.zeros(shape = (num_read, num_read), dtype = float)
+    cca_coeffs = np.zeros(shape = (num_comp, num_comp), dtype = float)
 
-    # shrinking nested for loops to get all the pairs of readings
-    for i in range(0, num_read-1):
-        first_read = read.loc[dict(reading = readings[i])]
-        for j in range(i+1, num_read):
-            second_read = read.loc[dict(reading = readings[j])]
-            # run phase correlation for this pair of readings
+    # shrinking nested for loops to get all the pairs of components
+    for i in range(0, num_comp-1):
+        first_comp = comp.loc[dict(component = components[i])]
+        for j in range(i+1, num_comp):
+            second_comp = comp.loc[dict(component = components[j])]
+            # run phase correlation for this pair of components
             max_corr = 0
-            for ii in range(len(first_read.win_start)):
-                first_det = scg.detrend(data=first_read[dict(win_start = ii)], axis=0)
+            for ii in range(len(first_comp.win_start)):
+                first_det = scg.detrend(data=first_comp[dict(win_start = ii)], axis=0)
                 first_det = np.reshape(first_det, newshape=[len(first_det),1])
-                for jj in range(len(second_read.win_start)):
-                    second_det = scg.detrend(data=second_read[dict(win_start = jj)], axis=0)
+                for jj in range(len(second_comp.win_start)):
+                    second_det = scg.detrend(data=second_comp[dict(win_start = jj)], axis=0)
                     second_det = np.reshape(second_det, newshape=[len(second_det),1])
                     # run cca, suppress rcca output
                     sys.stdout = open(os.devnull, "w")
@@ -452,8 +452,8 @@ def intra_st_phase_cca(ds, station, win_len=128, readings=['N', 'E', 'Z']):
 
     # build DataArray from the cca_coeffs array
     da = xr.DataArray(data = cca_coeffs,
-                      coords = [readings, readings],
-                      dims = ['first_read', 'second_read'])
+                      coords = [components, components],
+                      dims = ['first_comp', 'second_comp'])
 
     # convert the DataArray into a Dataset
     res = da.to_dataset(name = 'cca_coeffs')
@@ -461,24 +461,24 @@ def intra_st_phase_cca(ds, station, win_len=128, readings=['N', 'E', 'Z']):
     return res
 
 
-### Function to calculate the phase correlation coefficients between readings for all stations
+### Function to calculate the phase correlation coefficients between components for all stations
 #       input: ds- dataset output from mag_csv_to_Dataset function
 #              win_len- length of the window, default is 128
-#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
 #       output: Dataset of cca coefficients
 #                   data- cca_coeffs
-#                   coordinates- 'first_read', 'second_read', 'station'
-def st_phase_cca(ds, win_len=128, readings=['N', 'E', 'Z']):
+#                   coordinates- 'first_comp', 'second_comp', 'station'
+def st_phase_cca(ds, win_len=128, components=['N', 'E', 'Z']):
     # universal constants
     stations = ds.station.values
     num_st = len(stations)
 
     # initialize result Dataset (so we can append things to it later)
-    res = intra_st_phase_cca(ds = ds, station = stations[0], win_len=128, readings = readings)
+    res = intra_st_phase_cca(ds = ds, station = stations[0], win_len=128, components = components)
 
     # loop through the stations and append each to master Dataset
     for i in stations[1:]:
-        temp_ds = intra_st_phase_cca(ds = ds, station = i, readings = readings)
+        temp_ds = intra_st_phase_cca(ds = ds, station = i, components = components)
         res = xr.concat([res, temp_ds], dim = 'station')
 
     # fix coordinates for 'station' dimension
@@ -497,8 +497,8 @@ def st_phase_cca(ds, win_len=128, readings=['N', 'E', 'Z']):
 #       output: Dataset of thresholds
 #                   data- thresholds
 #                   coordinates- 'first_st', 'second_st'
-def mag_thresh_kf(ds, readings=['N', 'E', 'Z']):
-    thr = inter_st_cca(ds=ds, readings=readings)
+def mag_thresh_kf(ds, components=['N', 'E', 'Z']):
+    thr = inter_st_cca(ds=ds, components=components)
     thr = thr.rename(dict(cca_coeffs = 'thresholds'))
     return thr
 
@@ -509,11 +509,11 @@ def mag_thresh_kf(ds, readings=['N', 'E', 'Z']):
 #       output: Dataset of thresholds
 #                   data- thresholds
 #                   coordinates- 'first_st', 'second_st'
-def mag_thresh_dods(ds, n0=0.25, readings=['N', 'E', 'Z']):
+def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
     # univeral constants
     stations = ds.station.values
     num_st = len(stations)
-    ct_mat = inter_st_cca(ds=ds, readings=readings)
+    ct_mat = inter_st_cca(ds=ds, components=components)
     ct_vec = np.linspace(start=0, stop=1, num=101)
 
     # initialize
@@ -565,20 +565,20 @@ def mag_thresh_dods(ds, n0=0.25, readings=['N', 'E', 'Z']):
 #       output: Dataset of thresholds
 #                   data- thresholds
 #                   coordinates- 'first_st', 'second_st', 'win_start'
-def construct_network(ds, win_len=128, n0=0.25, readings=['N', 'E', 'Z']):
+def construct_network(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
     # run window over data
     ds_win = sm.window(ds=ds, win_len=win_len)
 
     # format Dataset
-    ds_win = ds_win.transpose('win_rel_time', 'reading', 'station', 'win_start')
+    ds_win = ds_win.transpose('win_rel_time', 'component', 'station', 'win_start')
     ds_win = ds_win.rename(dict(win_rel_time = 'time'))
 
     # get threshold values for each window
     det = sm.mag_detrend(ds = ds_win[dict(win_start = 0)])
-    net = sm.mag_thresh_dods(ds = det, n0=n0, readings=readings)
+    net = sm.mag_thresh_dods(ds = det, n0=n0, components=components)
     for i in range(1, len(ds_win.win_start)):
         det = sm.mag_detrend(ds = ds_win[dict(win_start = i)])
-        temp = sm.mag_thresh_dods(ds = det, n0=n0, readings=readings)
+        temp = sm.mag_thresh_dods(ds = det, n0=n0, components=components)
         net = xr.concat([net, temp], dim = 'win_start')
 
     # fix coordinates

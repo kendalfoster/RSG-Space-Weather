@@ -19,7 +19,7 @@ import lib.rcca as rcca
 #------------------ From Numpy Arrays ------------------------------------------
 # define some vectors for later ease
 times = [2011, 2012]
-readings = ['N', 'E', 'Z']
+components = ['N', 'E', 'Z']
 stations = ['TAL', 'BLC', 'EKS', 'BLS']
 
 # Numpy arrray
@@ -27,14 +27,14 @@ george = np.ones(shape = (2,3,4))
 
 # Numpy array -> xarray DataArray
 george_da = xr.DataArray(data = george,
-                         coords = [times, readings, stations],
-                         dims = ['time', 'reading', 'station'])
+                         coords = [times, components, stations],
+                         dims = ['time', 'component', 'station'])
 george_da
 
 # Numpy array -> xarray Dataset
-george_ds = xr.Dataset(data_vars = {'measurements': (['time', 'reading', 'station'], george)},
+george_ds = xr.Dataset(data_vars = {'measurements': (['time', 'component', 'station'], george)},
                        coords = {'time': times,
-                                 'reading': readings,
+                                 'component': components,
                                  'station': stations})
 george_ds
 # each coord requires
@@ -58,7 +58,7 @@ george_da2ds.measurements
 
 # define some vectors for later ease
 times = [2011, 2012, 2013, 2014]
-readings = ['N', 'E', 'Z']
+components = ['N', 'E', 'Z']
 stations = ['TAL', 'BLC', 'EKS', 'BLS', 'EKP']
 
 # Numpy Arrays
@@ -68,12 +68,12 @@ jorge = np.zeros(shape = (3,2))
 ### Concatenate "Stack" DataArrays
 # Numpy array -> xarray DataArray
 jorge_da = xr.DataArray(data = jorge1,
-                        coords = [times, readings],
-                        dims = ['time', 'reading'])
+                        coords = [times, components],
+                        dims = ['time', 'component'])
 for i in stations[1:]:
     temp = xr.DataArray(data = jorge,
-                        coords = [times[1:], readings[:2]],
-                        dims = ['time', 'reading'])
+                        coords = [times[1:], components[:2]],
+                        dims = ['time', 'component'])
     jorge_da = xr.concat([jorge_da, temp], dim = 'station')
 
 jorge_da = jorge_da.assign_coords(station = stations)
@@ -82,18 +82,18 @@ jorge_da2ds
 
 ### Concatenate "Stack" Datasets
 # Numpy array -> xarray Dataset
-jorge_ds = xr.Dataset(data_vars = {'measurements': (['time', 'reading'], jorge1)},
+jorge_ds = xr.Dataset(data_vars = {'measurements': (['time', 'component'], jorge1)},
                       coords = {'time': times,
-                                'reading': readings})
+                                'component': components})
 for i in stations[1:]:
-    temp = xr.Dataset(data_vars = {'measurements': (['time', 'reading'], jorge)},
+    temp = xr.Dataset(data_vars = {'measurements': (['time', 'component'], jorge)},
                           coords = {'time': times[1:],
-                                    'reading': readings[:2]})
+                                    'component': components[:2]})
     jorge_ds = xr.concat([jorge_ds, temp], dim = 'station')
 jorge_ds = jorge_ds.assign_coords(station = stations)
 jorge_ds
 
 ### Rearrange coordinates (supermag.py functions assume 'time' first)
-jorge_da2ds = jorge_da2ds.transpose('time', 'reading', 'station')
-jorge_ds = jorge_ds.transpose('time', 'reading', 'station')
+jorge_da2ds = jorge_da2ds.transpose('time', 'component', 'station')
+jorge_ds = jorge_ds.transpose('time', 'component', 'station')
 ################################################################################
