@@ -49,9 +49,7 @@ def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True
         mlats = [round(i[1],4) for i in mlat_arr]
         # build MLAT Dataset, for merging later
         ds_mlat = xr.Dataset(data_vars = {'mlats': (['station'], mlats)},
-                             coords = {'time': times,
-                                       'component': components,
-                                       'station': stations})
+                             coords = {'station': stations})
     elif MLAT is not True:
         stations = data['IAGA'].unique()
 
@@ -76,7 +74,6 @@ def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True
         # build MLT Dataset, for merging later
         ds_mlt = xr.Dataset(data_vars = {'mlts': (['time', 'station'], mlt)},
                             coords = {'time': times,
-                                      'component': components,
                                       'station': stations})
 
 
