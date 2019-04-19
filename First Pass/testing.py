@@ -106,10 +106,40 @@ test_all
 
 
 ################################################################################
+########## Phase Coherence (Correlation) ##########
+ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
+ds1 = ds1[dict(time=slice(0,158))]
+
+ds1_win = sm.window(ds = ds1)
+ds1_win = ds1_win.rename(dict(win_rel_time = 'time'))
+ds1_win = ds1_win.transpose('time', 'reading', 'station', 'win_start')
+ds1_win = ds1_win.dropna(dim = 'time', how = 'any')
+first = ds1_win.measurements.loc[dict(station = 'TAL')].loc[dict(reading = 'N')]
+second = ds1_win.measurements.loc[dict(station = 'BLC')].loc[dict(reading = 'N')]
+
+ds1_max_phase_corr = sm.max_phase_corr(first_da = first, second_da = second)
+ds1_max_phase_corr
+
+ds1_inter_phase_corr = sm.inter_st_phase_cca(ds = ds1)
+ds1_inter_phase_corr
+
+ds1_phase_corr_BSL = sm.intra_st_phase_cca(ds = ds1, station = 'BSL')
+ds1_phase_corr_BSL
+
+ds1_phase_corr = sm.st_phase_cca(ds = ds1)
+ds1_phase_corr
+################################################################################
+
+
+
+
+################################################################################
 ########## Thresholding ##########
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
+#--- Canonical Correlation ---
 ## KF Threshold
 thresh_kf = sm.mag_thresh_kf(ds = ds1)
 thresh_kf.thresholds.values
@@ -117,6 +147,12 @@ thresh_kf.thresholds.values
 ## Dods-style Threshold
 thresh_dods = sm.mag_thresh_dods(ds = ds1, n0 = 0.25)
 thresh_dods.thresholds.values
+
+#--- Phase Correlation ---
+## KF Threshold
+
+## Dods-style Threshold
+
 ################################################################################
 
 
@@ -136,13 +172,5 @@ con_ds2 = sm.construct_network(ds = ds1)
 
 ################################################################################
 ########## Visualizing the Network ##########
-
-################################################################################
-
-
-
-
-################################################################################
-########## Phase Coherence (Correlation) ##########
 
 ################################################################################

@@ -218,8 +218,7 @@ def window(ds, win_len=128):
 #                   data- cca_coeffs
 #                   coordinates- 'first_st', 'second_st'
 def inter_st_cca(ds, readings=['N', 'E', 'Z']):
-
-    # universally necessary things
+    # universal constants
     stations = ds.station
     num_st = len(stations)
     num_read = len(readings)
@@ -262,8 +261,7 @@ def inter_st_cca(ds, readings=['N', 'E', 'Z']):
 #                   data- cca_coeffs
 #                   coordinates- 'first_read', 'second_read'
 def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
-
-    # universally necessary things
+    # universal constants
     num_read = len(readings)
 
     # get readings for the station
@@ -274,7 +272,7 @@ def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
     # setup (triangular) array for the correlation coefficients
     cca_coeffs = np.zeros(shape = (num_read, num_read), dtype = float)
 
-    # shrinking nested for loops to get all the pairs of stations
+    # shrinking nested for loops to get all the pairs of readings
     for i in range(0, num_read-1):
         first_read = read.loc[dict(reading = readings[i])].values
         first_read = np.reshape(first_read, newshape=[len(first_read),1])
@@ -305,7 +303,7 @@ def intra_st_cca(ds, station, readings=['N', 'E', 'Z']):
 #                   data- cca_coeffs
 #                   coordinates- 'first_read', 'second_read', 'station'
 def st_cca(ds, readings=['N', 'E', 'Z']):
-    # universally necessary things
+    # universal constants
     stations = ds.station.values
     num_st = len(stations)
 
@@ -315,6 +313,172 @@ def st_cca(ds, readings=['N', 'E', 'Z']):
     # loop through the stations and append each to master Dataset
     for i in stations[1:]:
         temp_ds = intra_st_cca(ds = ds, station = i, readings = readings)
+        res = xr.concat([res, temp_ds], dim = 'station')
+
+    # fix coordinates for 'station' dimension
+    res = res.assign_coords(station = stations)
+
+    return res
+################################################################################
+
+
+
+
+################################################################################
+####################### Phase Correlation ######################################
+### Function to calculate the maximum phase correlation between two DataArrays
+#       input: first_da- 1-dimensional DataArray with coords 'time' and 'win_start'
+#              second_da- 1-dimensional DataArray with coords 'time' and 'win_start'
+#       output: maximum correlation via windowing (float)
+def max_phase_corr(first_da, second_da):
+    max_corr = 0
+    first_da = first_da.transpose('time', 'win_start')
+    second_da = second_da.transpose('time', 'win_start')
+
+    for i in range(len(first_da.win_start)):
+        first_det = scg.detrend(data=first_da[dict(win_start = i)], axis=0)
+        first_det = np.reshape(first_det, newshape=[len(first_det),1])
+        for j in range(len(second_da.win_start)):
+            second_det = scg.detrend(data=second_da[dict(win_start = j)], axis=0)
+            second_det = np.reshape(second_det, newshape=[len(second_det),1])
+            # run cca, suppress rcca output
+            sys.stdout = open(os.devnull, "w")
+            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
+            cur_corr = temp_cca.train([first_det, second_det]).cancorrs[0]
+            sys.stdout = sys.__stdout__
+            # check if this is bigger than max_corr
+            if cur_corr > max_corr:
+                max_corr = cur_corr
+
+    return max_corr
+
+
+### Function to calculate the phase correlation coefficients between readings between stations
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              win_len- length of the window, default is 128
+#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#       output: Dataset of cca coefficients
+#                   data- cca_coeffs
+#                   coordinates- 'first_st', 'second_st', 'reading'
+def inter_st_phase_cca(ds, win_len=128, readings=['N', 'E', 'Z']):
+    # universal constants
+    stations = ds.station.values
+    num_st = len(stations)
+    num_read = len(readings)
+
+    # window the Dataset
+    ds_win = window(ds = ds, win_len = win_len)
+
+    # fix coordinates
+    ds_win = ds_win.rename(dict(win_rel_time = 'time'))
+    ds_win = ds_win.transpose('time', 'reading', 'station', 'win_start')
+    # remove Nans from data (will mess up cca)
+    ds_win = ds_win.dropna(dim = 'time', how = 'any')
+
+    # initialize array
+    cca_coeffs = np.zeros(shape = (num_st, num_st, num_read))
+
+    # shrinking nested for loops to get all the pairs of stations
+    for i in range(0, num_st-1):
+        first_st = ds_win.measurements.loc[dict(station = stations[i])]
+        for j in range(i+1, num_st):
+            second_st = ds_win.measurements.loc[dict(station = stations[j])]
+            # loop through the readings
+            for k in range(num_read):
+                cca_coeffs[0,1,k] = max_phase_corr(first_st.loc[dict(reading = readings[k])],
+                                                   second_st.loc[dict(reading = readings[k])])
+
+    # build DataArray from the cca_coeffs array
+    da = xr.DataArray(data = cca_coeffs,
+                      coords = [stations, stations, readings],
+                      dims = ['first_st', 'second_st', 'reading'])
+
+    # convert the DataArray into a Dataset
+    res = da.to_dataset(name = 'cca_coeffs')
+
+    return res
+
+
+
+### Function to calculate the phase correlation coefficients between readings in one station
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              station- 3 letter code for the station as a string, ex: 'BLC'
+#              win_len- length of the window, default is 128
+#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#       output: Dataset of cca coefficients
+#                   data- cca_coeffs
+#                   coordinates- 'first_read', 'second_read'
+def intra_st_phase_cca(ds, station, win_len=128, readings=['N', 'E', 'Z']):
+    # universal constants
+    num_read = len(readings)
+
+    # window the Dataset
+    ds_win = window(ds = ds, win_len = win_len)
+
+    # get readings for the station
+    read = ds_win.measurements.loc[dict(station = station)]
+    # fix coordinates
+    read = read.rename(dict(win_rel_time = 'time'))
+    read = read.transpose('time', 'reading', 'win_start')
+    # remove Nans from data (will mess up cca)
+    read = read.dropna(dim = 'time', how = 'any')
+
+    # setup (triangular) array for the correlation coefficients
+    cca_coeffs = np.zeros(shape = (num_read, num_read), dtype = float)
+
+    # shrinking nested for loops to get all the pairs of readings
+    for i in range(0, num_read-1):
+        first_read = read.loc[dict(reading = readings[i])]
+        for j in range(i+1, num_read):
+            second_read = read.loc[dict(reading = readings[j])]
+            # run phase correlation for this pair of readings
+            max_corr = 0
+            for ii in range(len(first_read.win_start)):
+                first_det = scg.detrend(data=first_read[dict(win_start = ii)], axis=0)
+                first_det = np.reshape(first_det, newshape=[len(first_det),1])
+                for jj in range(len(second_read.win_start)):
+                    second_det = scg.detrend(data=second_read[dict(win_start = jj)], axis=0)
+                    second_det = np.reshape(second_det, newshape=[len(second_det),1])
+                    # run cca, suppress rcca output
+                    sys.stdout = open(os.devnull, "w")
+                    temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
+                    cur_corr = temp_cca.train([first_det, second_det]).cancorrs[0]
+                    sys.stdout = sys.__stdout__
+                    # check if this is bigger than max_corr
+                    if cur_corr > max_corr:
+                        max_corr = cur_corr
+            # store the maximum phase correlation in the output array
+            cca_coeffs[i,j] = max_corr
+
+    # build DataArray from the cca_coeffs array
+    da = xr.DataArray(data = cca_coeffs,
+                      coords = [readings, readings],
+                      dims = ['first_read', 'second_read'])
+
+    # convert the DataArray into a Dataset
+    res = da.to_dataset(name = 'cca_coeffs')
+
+    return res
+
+
+### Function to calculate the phase correlation coefficients between readings for all stations
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              win_len- length of the window, default is 128
+#              readings- vector of characters representing measurements, default is ['N', 'E', 'Z']
+#       output: Dataset of cca coefficients
+#                   data- cca_coeffs
+#                   coordinates- 'first_read', 'second_read', 'station'
+def st_phase_cca(ds, win_len=128, readings=['N', 'E', 'Z']):
+    # universal constants
+    stations = ds.station.values
+    num_st = len(stations)
+
+    # initialize result Dataset (so we can append things to it later)
+    res = intra_st_phase_cca(ds = ds, station = stations[0], win_len=128, readings = readings)
+
+    # loop through the stations and append each to master Dataset
+    for i in stations[1:]:
+        temp_ds = intra_st_phase_cca(ds = ds, station = i, readings = readings)
         res = xr.concat([res, temp_ds], dim = 'station')
 
     # fix coordinates for 'station' dimension
