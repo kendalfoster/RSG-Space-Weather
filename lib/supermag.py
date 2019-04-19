@@ -1,8 +1,12 @@
 ## Packages
 import numpy as np
 import pandas as pd
+import scipy.signal as scg
 import xarray as xr # if gives error, just rerun
 import matplotlib.pyplot as plt
+import sys
+import os
+import lib.supermag as sm
 import lib.rcca as rcca
 
 
@@ -125,6 +129,7 @@ def mag_csv_to_Dataset(csv_file, readings=None, MLT=None, MLAT=None):
 
 
 
+
 ################################################################################
 ####################### Plotting ###############################################
 ### Function to plot the readings like on the SuperMAG website
@@ -132,6 +137,77 @@ def mag_csv_to_Dataset(csv_file, readings=None, MLT=None, MLAT=None):
 #       output: series of plots, one per station, of the readings
 def plot_mag_data(ds):
     ds.measurements.plot.line(x='time', hue='reading', col='station', col_wrap=1)
+################################################################################
+
+
+
+
+
+
+###############################################################################
+####################### Detrending #############################################
+### Function to detrend the data over time
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              type- type of detrending passed to scipy detrend, default linear
+#       output: Dataset with measurements detrended
+#                   data_vars- measurements
+#                   coordinates- time, reading, station
+def mag_detrend(ds, type='linear'):
+    stations = ds.station
+    readings = ds.reading
+
+    # initialize DataArray
+    temp = ds.measurements.loc[dict(station = stations[0])]
+    temp = temp.dropna(dim = 'time', how = 'any')
+    temp_times = temp.time
+    det = scg.detrend(data=temp, axis=0, type=type)
+    da = xr.DataArray(data = det,
+                      coords = [temp_times, readings],
+                      dims = ['time', 'reading'])
+
+    for i in range(1, len(stations)):
+        temp = ds.measurements.loc[dict(station = stations[i])]
+        temp = temp.dropna(dim = 'time', how = 'any')
+        temp_times = temp.time
+        det = scg.detrend(data=temp, axis=0, type=type)
+        temp_da = xr.DataArray(data = det,
+                               coords = [temp_times, readings],
+                               dims = ['time', 'reading'])
+        da = xr.concat([da, temp_da], dim = 'station')
+
+    # fix coordinates
+    da = da.assign_coords(station = stations)
+
+    # convert DataArray into Dataset
+    res = da.to_dataset(name = 'measurements')
+
+    return res
+
+################################################################################
+
+
+
+
+
+
+################################################################################
+####################### Windowing ##############################################
+### Function to window the data at a given window length
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              win_len- length of the window, default is 128
+#       output: Dataset with extra dimension from windowing
+#                   data_vars- measurements, mlts, mlats
+#                   coordinates- time, reading, station, window
+def window(ds, win_len=128):
+    # create a rolling object
+    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna('time')
+    # fix window coordinates
+    ds_roll = ds_roll.assign_coords(win_rel_time = range(win_len))
+    ds_roll = ds_roll.rename(dict(time = 'win_start'))
+    # ensure the coordinates are in the proper order
+    ds_roll = ds_roll.transpose('win_start', 'reading', 'station', 'win_rel_time')
+
+    return ds_roll
 ################################################################################
 
 
@@ -252,4 +328,171 @@ def st_cca(ds, readings=None):
 
     return res
 
+################################################################################
+
+#### Function to remove n/a values in both time slots between two stations
+#    input: ds - dataset output from mag_csv_to_Dataset Function
+#           station 1 - 3 letter code for the station 1 as a string, ex: 'BLC'
+#           station 2 - 3 letter code for the station 2 as a string, ex: 'BLC'
+#           readings - Vector of characters representing measurements, default is ['N', 'E', 'Z']
+#    output: data1 - station 1 data
+#            data2 - station 2 data
+#            coordinates- 'first_read', 'second_read', 'station'
+
+def cleans_na(ds, station1, station2, readings=None):
+    # check if readings are provided
+    if readings is None:
+        readings = ['N', 'E', 'Z']
+
+    #Read data and merge
+    read1 = ds1.measurements.loc[dict(station = station1)]
+    read2 = ds1.measurements.loc[dict(station = station2)]
+    merge = xr.concat([read1, read2], dim = 'station')
+
+    #Drop n/a values
+    mergenew = merge.dropna(dim = 'time', how = 'any')
+
+    #Split apart again
+    data1 = mergenew[0]
+    data2 = mergenew[1]
+
+    return (data1, data2)
+
+
+
+
+#### Function to calculate the first canonical correlation coefficients between the direction
+#    reading for two stations
+#    input: ds - dataset output from mag_csv_to_Dataset Function
+#           station 1 - 3 letter code for the station 1 as a string, ex: 'BLC'
+#           station 2 - 3 letter code for the station 2 as a string, ex: 'BLC'
+#           readings - Vector of characters representing measurements, default is ['N', 'E', 'Z']
+#    output: data- cca_coeffs
+#                   coordinates- 'first_read', 'second_read', 'station'
+
+def inter_direction_cca(ds, station1, station2, readings=None):
+     # check if readings are provided
+      if readings is None:
+          readings = ['N', 'E', 'Z']
+
+      # universally necessary things
+      num_read = len(readings)
+
+      # get readings for the station
+      data1, data2 = cleans_na(ds, station1, station2)
+
+      # setup row array for the correlation coefficients
+      cca_coeffs = np.zeros(shape = (1, num_read), dtype = float)
+
+      #Calculate the cannonical correlation between the directional meaurements on each station
+      for i in range(num_read):
+          first_read = data1[:,i].data
+          first_read = np.reshape(first_read, newshape=[len(first_read),1])
+
+          second_read = data2[:,i].data
+          second_read = np.reshape(second_read, newshape=[len(second_read),1])
+
+          temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
+          cca_coeffs[0,i] = abs(temp_cca.train([first_read, second_read]).cancorrs[0])
+      return cca_coeffs
+
+
+
+
+
+################################################################################
+####################### Thresholding ###########################################
+### Function to calculate the threshold for each station pair
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#       output: Dataset of thresholds
+#                   data- thresholds
+#                   coordinates- 'first_st', 'second_st'
+def mag_thresh_kf(ds, readings=['N', 'E', 'Z']):
+    thr = inter_st_cca(ds=ds, readings=readings)
+    thr = thr.rename(dict(cca_coeffs = 'thresholds'))
+    return thr
+
+
+### Function to calculate the threshold for each station pair
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              n0- the desired expected normalized degree of each node (station)
+#       output: Dataset of thresholds
+#                   data- thresholds
+#                   coordinates- 'first_st', 'second_st'
+def mag_thresh_dods(ds, n0=0.25, readings=['N', 'E', 'Z']):
+    # univeral constants
+    stations = ds.station.values
+    num_st = len(stations)
+    ct_mat = inter_st_cca(ds=ds, readings=readings)
+    ct_vec = np.linspace(start=0, stop=1, num=101)
+
+    # initialize
+    arr = np.zeros(shape = (len(ct_vec), num_st))
+    # iterate through all possible ct values
+    for i in range(len(ct_vec)):
+        temp = ct_mat.where(ct_mat > ct_vec[i], 0) # it looks opposite, but it's right
+        temp = temp.where(temp <= ct_vec[i], 1)
+        for j in range(num_st):
+            arr[i,j] = sum(temp.loc[dict(first_st = stations[j])].cca_coeffs.values) + sum(temp.loc[dict(second_st = stations[j])].cca_coeffs.values)
+    # normalize
+    arr = arr/(num_st-1)
+
+    # find indices roughly equal to n0 and get their values
+    idx = np.zeros(num_st, dtype=int)
+    thr = np.zeros(num_st)
+    for i in range(num_st):
+        idx[i] = int(np.where(arr[:,i] <= n0)[0][0])
+        thr[i] = ct_vec[idx[i]]
+
+    # create threshold matrix using smaller threshold in each pair
+    threshold = np.ones(shape = (num_st, num_st))
+    for i in range(num_st):
+        for j in range(i+1, num_st):
+            if thr[i] < thr[j]:
+                threshold[i,j] = thr[i]
+                threshold[j,i] = thr[i]
+            else:
+                threshold[i,j] = thr[j]
+                threshold[j,i] = thr[j]
+
+    # restructure into Dataset
+    res = xr.Dataset(data_vars = {'thresholds': (['first_st', 'second_st'], threshold)},
+                     coords = {'first_st': stations,
+                               'second_st': stations})
+
+    return res
+################################################################################
+
+
+
+
+################################################################################
+####################### Constructing the Network ###############################
+### Function to ultimately calculate the threshold for each station pair
+#       input: ds- dataset output from mag_csv_to_Dataset function
+#              win_len- length of the window, default is 128
+#              n0- the desired expected normalized degree of each node (station)
+#       output: Dataset of thresholds
+#                   data- thresholds
+#                   coordinates- 'first_st', 'second_st', 'win_start'
+def construct_network(ds, win_len=128, n0=0.25, readings=['N', 'E', 'Z']):
+    # run window over data
+    ds_win = sm.window(ds=ds, win_len=win_len)
+
+    # format Dataset
+    ds_win = ds_win.transpose('win_rel_time', 'reading', 'station', 'win_start')
+    ds_win = ds_win.rename(dict(win_rel_time = 'time'))
+
+    # get threshold values for each window
+    det = sm.mag_detrend(ds = ds_win[dict(win_start = 0)])
+    net = sm.mag_thresh_dods(ds = det, n0=n0, readings=readings)
+    for i in range(1, len(ds_win.win_start)):
+        det = sm.mag_detrend(ds = ds_win[dict(win_start = i)])
+        temp = sm.mag_thresh_dods(ds = det, n0=n0, readings=readings)
+        net = xr.concat([net, temp], dim = 'win_start')
+
+    # fix coordinates
+    net = net.assign_coords(win_start = ds_win.win_start.values)
+
+    return net
 ################################################################################
