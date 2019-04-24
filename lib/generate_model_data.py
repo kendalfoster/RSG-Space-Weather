@@ -110,13 +110,23 @@ def generate_one_day_time_series(pc_wave_start_date, pc_wave_start_time, wavepac
     times = pd.to_datetime(np.linspace(day_start_time.value, day_end_time.value, total_timesteps))
 
     components = ['N', 'E', 'Z']
-    N_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:00:00', 30, 4, phase_shift = phase_shift[0])
-    E_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:00:00', 30, 4, phase_shift = phase_shift[1])
-    Z_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:00:00', 30, 4, phase_shift = phase_shift[2])
-
     measurement_data = np.zeros((len(times),len(components),len(station)))
 
     for station_index in range(len(station)):
+
+
+
+        if station_index == 0:
+            N_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:00:00', 30, 4, phase_shift = phase_shift[0])
+            E_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:00:00', 30, 4, phase_shift = phase_shift[1])
+            Z_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:00:00', 30, 4, phase_shift = phase_shift[2])
+        else:
+            N_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:06:00', 30, 4, phase_shift = phase_shift[0])
+            E_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:06:00', 30, 4, phase_shift = phase_shift[1])
+            Z_component_time_series = generate_one_day_one_component_time_series('2001-04-03', '08:06:00', 30, 4, phase_shift = phase_shift[2])
+
+
+
         measurement_data[:,0,station_index] = N_component_time_series
         measurement_data[:,1,station_index] = E_component_time_series
         measurement_data[:,2,station_index] = Z_component_time_series
