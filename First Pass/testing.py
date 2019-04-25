@@ -52,11 +52,13 @@ sm.plot_mag_data(ds=ds1)
 ## extra code for editing titles of plots
 ds1 = ds1.loc[dict(station = slice('BLC'))]
 stations = ds1.station.loc[dict(station = slice('BLC'))].values
+components = ds1.component.values
 ## all of below code must be run simultaneously
-g = ds1.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1)
+g = ds1.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1, add_legend=False)
 for i, ax in enumerate(g.axes.flat):
    ax.set_title(stations[i], fontsize=30)
 
+plt.legend(labels=components, loc='right', title='Component', title_fontsize='x-large', fontsize=20)
 plt.draw()
 ################################################################################
 
