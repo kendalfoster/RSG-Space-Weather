@@ -26,7 +26,7 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 import lib.supermag as sm
 import numpy as np
 
-station_components = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+station_components = sm.mag_csv_to_Dataset(csv_file = "First Pass/poster_supermag_data.csv",
                             MLT = True, MLAT = True)
 
 t = station_components.time[1]
@@ -57,6 +57,24 @@ b_symm = (b + b.T)/2
 
 fake_data = b_symm < 0
 
+
+
 sm.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
 #plots connections between stations.
 #for now it expects a 2d adjacency matrix as input but i will add code to make it do 3d(time on 3rd axis) as well
+
+
+
+
+
+
+
+
+
+## for the poster
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/poster_supermag_data.csv",
+                            MLT = True, MLAT = True)
+ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
+adj_mat = sm.mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
+sandy = sm.plot_connections_globe(ds2, adj_matrix = adj_mat.cca_coeffs, ortho_trans = (0, 0), t = None, list_of_stations = None)
+sandy.savefig('First Pass/poster_globe.png', transparent=True)

@@ -610,6 +610,6 @@ def plot_connections_globe(station_components, adj_matrix, ortho_trans = (0, 0),
                     lat1 = station_coords.latitude.loc[dict(station = station_i)]
                     lat2 = station_coords.latitude.loc[dict(station = station_j)]
 
-                    ax.plot([long1, long2], [lat1, lat2], color='blue', transform=ccrs.PlateCarree())
+                    ax.plot([long1, long2], [lat1, lat2], color='blue', transform=ccrs.Geodetic())
 
     return fig

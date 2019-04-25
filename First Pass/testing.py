@@ -149,11 +149,11 @@ adj_mat2 = sm.print_mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
 
 ################################################################################
 ########## Poster Thresholding Picture ##########
-ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20010305-16-38-supermag.csv",
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/poster_supermag_data.csv",
                             MLT = True, MLAT = True)
-ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
+ds2w = ds2.loc[dict(time = slice('2001-03-05T15:25', '2001-03-05T17:25'))]
 
-stations = ds2w.station.values
+stations = ds2.station.values
 num_st = len(stations)
 
 cca = sm.inter_st_cca(ds=ds2w)
