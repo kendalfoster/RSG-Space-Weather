@@ -238,7 +238,9 @@ def inter_st_cca(ds, components=['N', 'E', 'Z']):
             # run cca, suppress rcca output
             sys.stdout = open(os.devnull, "w")
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-            cca_coeffs[i,j] = temp_cca.train([first_st, second_st]).cancorrs[0]
+            ccac = temp_cca.train([first_st, second_st]).cancorrs[0]
+            cca_coeffs[i,j] = ccac
+            cca_coeffs[j,i] = ccac
             sys.stdout = sys.__stdout__
 
     # build DataArray from the cca_coeffs array
@@ -368,7 +370,7 @@ def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
         thr[i] = ct_vec[idx[i]]
 
     # create threshold matrix using smaller threshold in each pair
-    threshold = np.ones(shape = (num_st, num_st))
+    threshold = np.zeros(shape = (num_st, num_st))
     for i in range(num_st):
         for j in range(i+1, num_st):
             if thr[i] < thr[j]:
@@ -413,6 +415,58 @@ def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
     net = net.assign_coords(win_start = ds_win.win_start.values)
 
     return net
+
+## Adjacency Matrix
+def mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
+    stations = ds.station.values
+    num_st = len(stations)
+
+    cca = inter_st_cca(ds=ds_win, components= components)
+    cca = cca.assign_coords(first_st = range(num_st))
+    cca = cca.assign_coords(second_st = range(num_st))
+
+    thresh = mag_thresh_dods(ds=ds, n0=n0, components=components)
+    thresh = thresh.assign_coords(first_st = range(num_st))
+    thresh = thresh.assign_coords(second_st = range(num_st))
+
+    adj_mat = cca - thresh.thresholds
+    values = adj_mat.cca_coeffs.values
+    values[values > 0] = 1
+    values[values <= 0] = 0
+    adj_mat.cca_coeffs.values = values
+    adj_mat = adj_mat.assign_coords(first_st = stations)
+    adj_mat = adj_mat.assign_coords(first_st = stations)
+
+    return adj_mat
+
+def print_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
+    stations = ds.station.values
+    num_st = len(stations)
+
+    cca = inter_st_cca(ds=ds_win, components= components)
+    cca = cca.assign_coords(first_st = range(num_st))
+    cca = cca.assign_coords(second_st = range(num_st))
+
+    thresh = mag_thresh_dods(ds=ds, n0=n0, components=components)
+    thresh = thresh.assign_coords(first_st = range(num_st))
+    thresh = thresh.assign_coords(second_st = range(num_st))
+
+    adj_mat = cca - thresh.thresholds
+    values = adj_mat.cca_coeffs.values
+    values[values > 0] = 1
+    values[values <= 0] = 0
+    adj_mat.cca_coeffs.values = values
+
+    fig = plt.figure(figsize=(10,8))
+    adj_mat.cca_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
+    plt.title('Adjacency Matrix', fontsize=30)
+    plt.xlabel('Station 1', fontsize=20)
+    plt.xticks(ticks=range(num_st), labels=stations, rotation=0)
+    plt.ylabel('Station 2', fontsize=20)
+    plt.yticks(ticks=range(num_st), labels=stations, rotation=0)
+    plt.show()
+
+    return adj_mat
 ################################################################################
 
 

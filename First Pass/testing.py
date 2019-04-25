@@ -129,6 +129,14 @@ thresh_kf.thresholds.values
 thresh_dods = sm.mag_thresh_dods(ds = ds1, n0 = 0.25)
 thresh_dods.thresholds.values
 
+## Adjacency Matrix Functions
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20010305-16-38-supermag.csv",
+                            MLT = True, MLAT = True)
+ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
+
+adj_mat = sm.mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
+adj_mat2 = sm.print_mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
+
 #--- Phase Correlation ---
 ## KF Threshold
 
@@ -139,34 +147,38 @@ thresh_dods.thresholds.values
 
 
 
-##### Poster Thresholding Picture #####
+################################################################################
+########## Poster Thresholding Picture ##########
 ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20010305-16-38-supermag.csv",
                             MLT = True, MLAT = True)
+ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
 
-stations = ds2.station.values
-sm.plot_mag_data(ds2)
+stations = ds2w.station.values
+num_st = len(stations)
 
-test_inter = sm.inter_st_cca(ds = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))])
-test_inter = test_inter.assign_coords(first_st = range(9))
-test_inter = test_inter.assign_coords(second_st = range(9))
+cca = sm.inter_st_cca(ds=ds2w)
+cca = cca.assign_coords(first_st = range(num_st))
+cca = cca.assign_coords(second_st = range(num_st))
 
-thresh_dods = sm.mag_thresh_dods(ds = ds2, n0 = 0.25)
-thresh_dods = thresh_dods.assign_coords(first_st = range(9))
-thresh_dods = thresh_dods.assign_coords(second_st = range(9))
+thresh = sm.mag_thresh_dods(ds=ds2)
+thresh = thresh.assign_coords(first_st = range(num_st))
+thresh = thresh.assign_coords(second_st = range(num_st))
 
-testy = test_inter - thresh_dods.thresholds
+adj_mat = cca - thresh.thresholds
+adj_mat = adj_mat.assign_coords(first_st = range(num_st))
+adj_mat = adj_mat.assign_coords(second_st = range(num_st))
 
 # must run all following code simultaneously
 fig = plt.figure(figsize=(10,8))
-testy.cca_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
+adj_mat.cca_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
 plt.title('Adjacency Matrix', fontsize=30)
 plt.xlabel('Station 1', fontsize=20)
 plt.xticks(ticks=range(9), labels=stations, rotation=0)
 plt.ylabel('Station 2', fontsize=20)
 plt.yticks(ticks=range(9), labels=stations, rotation=0)
-plt.savefig('First Pass/testy.png')
+plt.savefig('First Pass/adj_mat.png')
 plt.show()
-#######################################
+################################################################################
 
 
 
