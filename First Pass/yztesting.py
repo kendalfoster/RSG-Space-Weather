@@ -26,12 +26,15 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 import lib.supermagyz as yz
 import lib.supermag as sm
 import numpy as np
+import cartopy.crs as ccrs
 
 station_readings = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
 t = station_readings.time[1]
 list_of_stations = station_readings.station
+
+new_list = yz.csv_to_coords().station
 
 
 yz.plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = (0, 0))
@@ -49,7 +52,7 @@ yz.data_globe_gif(station_readings, time_start = 0, time_end = 10, ortho_trans =
 
 
 #generating fake adjacency matrix
-N = 9
+N = 20
 # length = 50
 b = np.random.randint(-2000,2000,size=(N,N))
 
@@ -58,6 +61,6 @@ b_symm = (b + b.T)/2
 
 fake_data = b_symm < 0
 
-yz.plot_connections_globe(station_readings, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
+yz.plot_connections_globe(station_readings, adj_matrix = fake_data[:10, :10], ortho_trans = (0, 0), t = None, list_of_stations = new_list[:10])
 #plots connections between stations.
 #for now it expects a 2d adjacency matrix as input but i will add code to make it do 3d(time on 3rd axis) as well

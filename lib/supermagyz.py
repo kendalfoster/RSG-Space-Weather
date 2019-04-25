@@ -108,7 +108,7 @@ def plot_connections_globe(station_readings, adj_matrix, ortho_trans = (0, 0), t
        will add more later
        also gives 2 plots for some reason'''
 
-    if list_of_stations == None:
+    if np.all(list_of_stations == None):
         list_of_stations = station_readings.station
 
     if np.all(ortho_trans == (0, 0)):
@@ -116,20 +116,20 @@ def plot_connections_globe(station_readings, adj_matrix, ortho_trans = (0, 0), t
 
     if t == None:
         num_sta = len(adj_matrix)
-        fig = plot_stations(station_readings.station, ortho_trans)
+        fig = plot_stations(list_of_stations, ortho_trans)
         station_coords = csv_to_coords()
         ax = fig.axes[0]
 
         for i in range(num_sta-1):
             for j in range(i+1, num_sta):
                 if adj_matrix[i, j] == 1:
-                    station_i = station_readings.station[i]
-                    station_j = station_readings.station[j]
+                    station_i = list_of_stations[i]
+                    station_j = list_of_stations[j]
                     long1 = station_coords.longitude.loc[dict(station = station_i)]
                     long2 = station_coords.longitude.loc[dict(station = station_j)]
                     lat1 = station_coords.latitude.loc[dict(station = station_i)]
                     lat2 = station_coords.latitude.loc[dict(station = station_j)]
 
-                    ax.plot([long1, long2], [lat1, lat2], color='blue', transform=ccrs.PlateCarree())
+                    ax.plot([long1, long2], [lat1, lat2], color='blue', transform=ccrs.Geodetic())
 
     return fig
