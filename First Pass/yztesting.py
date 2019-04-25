@@ -23,18 +23,17 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 
 
 
-import lib.supermagyz as yz
 import lib.supermag as sm
 import numpy as np
 
-station_readings = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+station_components = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
-t = station_readings.time[1]
-list_of_stations = station_readings.station
+t = station_components.time[1]
+list_of_stations = station_components.station
 
 
-yz.plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = (0, 0))
+sm.plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0))
 # plots N and E components of the vector readings for a single time step t
 # by default it plots data from all stations fed to it in station_readings unless
 # specified otherwise in list_of_stations.
@@ -44,7 +43,7 @@ yz.plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = (
 
 
 
-yz.data_globe_gif(station_readings, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
+sm.data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
 #makes sandra.gif in the /gif folder
 
 
@@ -58,6 +57,6 @@ b_symm = (b + b.T)/2
 
 fake_data = b_symm < 0
 
-yz.plot_connections_globe(station_readings, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
+sm.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
 #plots connections between stations.
 #for now it expects a 2d adjacency matrix as input but i will add code to make it do 3d(time on 3rd axis) as well

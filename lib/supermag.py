@@ -467,9 +467,9 @@ def plot_stations(list_of_stations, ortho_trans):
 
 
 ##
-def plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = (0, 0)):
+def plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0)):
     if np.all(list_of_stations == None):
-        list_of_stations = station_readings.station
+        list_of_stations = station_components.station
     if np.all(ortho_trans == (0, 0)):
         ortho_trans = auto_ortho(list_of_stations)
 
@@ -484,8 +484,8 @@ def plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = 
     for station in list_of_stations:
         x[i] = station_coords.longitude.loc[dict(station = station)]
         y[i] = station_coords.latitude.loc[dict(station = station)]
-        u[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "E")]
-        v[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "N")]
+        u[i] = station_components.measurements.loc[dict(station = station, time = t, component = "E")]
+        v[i] = station_components.measurements.loc[dict(station = station, time = t, component = "N")]
         i += 1
 
     fig = plt.figure(figsize = (20, 20))
@@ -505,17 +505,17 @@ def plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = 
 
 
 ##
-def data_globe_gif(station_readings, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra"):
+def data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra"):
     #times in terms of index in the array, might be helpful to have a fn to look up index from timestamps
     names = []
     images = []
-    list_of_stations = station_readings.station
+    list_of_stations = station_components.station
     if np.all(ortho_trans == (0, 0)):
         ortho_trans = auto_ortho(list_of_stations)
 
     for i in range(time_start, time_end):
-        t = station_readings.time[i]
-        fig = plot_data_globe(station_readings, t, list_of_stations, ortho_trans)
+        t = station_components.time[i]
+        fig = plot_data_globe(station_components, t, list_of_stations, ortho_trans)
         fig.savefig("gif/images_for_giffing/%s.png" %i)
 
     for i in range(time_start, time_end):
@@ -529,28 +529,28 @@ def data_globe_gif(station_readings, time_start = 0, time_end = 10, ortho_trans 
 
 
 ##
-def plot_connections_globe(station_readings, adj_matrix, ortho_trans = (0, 0), t = None, list_of_stations = None):
+def plot_connections_globe(station_components, adj_matrix, ortho_trans = (0, 0), t = None, list_of_stations = None):
     '''right now this assumes i want to plot all stations in the adj_matrix for a single time,
        will add more later
        also gives 2 plots for some reason'''
 
     if list_of_stations == None:
-        list_of_stations = station_readings.station
+        list_of_stations = station_components.station
 
     if np.all(ortho_trans == (0, 0)):
         ortho_trans = auto_ortho(list_of_stations)
 
     if t == None:
         num_sta = len(adj_matrix)
-        fig = plot_stations(station_readings.station, ortho_trans)
+        fig = plot_stations(station_components.station, ortho_trans)
         station_coords = csv_to_coords()
         ax = fig.axes[0]
 
         for i in range(num_sta-1):
             for j in range(i+1, num_sta):
                 if adj_matrix[i, j] == 1:
-                    station_i = station_readings.station[i]
-                    station_j = station_readings.station[j]
+                    station_i = station_components.station[i]
+                    station_j = station_components.station[j]
                     long1 = station_coords.longitude.loc[dict(station = station_i)]
                     long2 = station_coords.longitude.loc[dict(station = station_j)]
                     lat1 = station_coords.latitude.loc[dict(station = station_i)]
