@@ -1,0 +1,6 @@
+desktop.ini
+*.gdoc
+*.gslides
+__pycache__/
+**.gif
+**.png
