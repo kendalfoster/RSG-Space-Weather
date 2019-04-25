@@ -139,6 +139,38 @@ thresh_dods.thresholds.values
 
 
 
+##### Poster Thresholding Picture #####
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20010305-16-38-supermag.csv",
+                            MLT = True, MLAT = True)
+
+stations = ds2.station.values
+sm.plot_mag_data(ds2)
+
+test_inter = sm.inter_st_cca(ds = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))])
+test_inter = test_inter.assign_coords(first_st = range(9))
+test_inter = test_inter.assign_coords(second_st = range(9))
+
+thresh_dods = sm.mag_thresh_dods(ds = ds2, n0 = 0.25)
+thresh_dods = thresh_dods.assign_coords(first_st = range(9))
+thresh_dods = thresh_dods.assign_coords(second_st = range(9))
+
+testy = test_inter - thresh_dods.thresholds
+
+# must run all following code simultaneously
+fig = plt.figure(figsize=(10,8))
+testy.cca_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
+plt.title('Adjacency Matrix', fontsize=30)
+plt.xlabel('Station 1', fontsize=20)
+plt.xticks(ticks=range(9), labels=stations, rotation=0)
+plt.ylabel('Station 2', fontsize=20)
+plt.yticks(ticks=range(9), labels=stations, rotation=0)
+plt.savefig('First Pass/testy.png')
+plt.show()
+#######################################
+
+
+
+
 ################################################################################
 ########## Constructing the Network ##########
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
