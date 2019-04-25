@@ -6,7 +6,10 @@ import xarray as xr # if gives error, just rerun
 import matplotlib.pyplot as plt
 import sys
 import os
-import lib.supermag as sm
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from PIL import Image
+# Our Packages
 import lib.rcca as rcca
 # import xscale.signal.fitting as xsf # useful functions for xarray data structures
     # pip3 install git+https://github.com/serazing/xscale.git
@@ -177,7 +180,6 @@ def mag_detrend(ds, type='linear'):
     res = da.to_dataset(name = 'measurements')
 
     return res
-
 ################################################################################
 
 
@@ -322,172 +324,6 @@ def st_cca(ds, components=['N', 'E', 'Z']):
 
 
 ################################################################################
-####################### Phase Correlation ######################################
-### Function to calculate the maximum phase correlation between two DataArrays
-#       input: first_da- 1-dimensional DataArray with coords 'time' and 'win_start'
-#              second_da- 1-dimensional DataArray with coords 'time' and 'win_start'
-#       output: maximum correlation via windowing (float)
-def max_phase_corr(first_da, second_da):
-    max_corr = 0
-    first_da = first_da.transpose('time', 'win_start')
-    second_da = second_da.transpose('time', 'win_start')
-
-    for i in range(len(first_da.win_start)):
-        first_det = scg.detrend(data=first_da[dict(win_start = i)], axis=0)
-        first_det = np.reshape(first_det, newshape=[len(first_det),1])
-        for j in range(len(second_da.win_start)):
-            second_det = scg.detrend(data=second_da[dict(win_start = j)], axis=0)
-            second_det = np.reshape(second_det, newshape=[len(second_det),1])
-            # run cca, suppress rcca output
-            sys.stdout = open(os.devnull, "w")
-            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-            cur_corr = temp_cca.train([first_det, second_det]).cancorrs[0]
-            sys.stdout = sys.__stdout__
-            # check if this is bigger than max_corr
-            if cur_corr > max_corr:
-                max_corr = cur_corr
-
-    return max_corr
-
-
-### Function to calculate the phase correlation coefficients between components between stations
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              win_len- length of the window, default is 128
-#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#       output: Dataset of cca coefficients
-#                   data- cca_coeffs
-#                   coordinates- 'first_st', 'second_st', 'component'
-def inter_st_phase_cca(ds, win_len=128, components=['N', 'E', 'Z']):
-    # universal constants
-    stations = ds.station.values
-    num_st = len(stations)
-    num_comp = len(components)
-
-    # window the Dataset
-    ds_win = window(ds = ds, win_len = win_len)
-
-    # fix coordinates
-    ds_win = ds_win.rename(dict(win_rel_time = 'time'))
-    ds_win = ds_win.transpose('time', 'component', 'station', 'win_start')
-    # remove Nans from data (will mess up cca)
-    ds_win = ds_win.dropna(dim = 'time', how = 'any')
-
-    # initialize array
-    cca_coeffs = np.zeros(shape = (num_st, num_st, num_comp))
-
-    # shrinking nested for loops to get all the pairs of stations
-    for i in range(0, num_st-1):
-        first_st = ds_win.measurements.loc[dict(station = stations[i])]
-        for j in range(i+1, num_st):
-            second_st = ds_win.measurements.loc[dict(station = stations[j])]
-            # loop through the components
-            for k in range(num_comp):
-                cca_coeffs[i,j,k] = max_phase_corr(first_st.loc[dict(component = components[k])],
-                                                   second_st.loc[dict(component = components[k])])
-
-    # build DataArray from the cca_coeffs array
-    da = xr.DataArray(data = cca_coeffs,
-                      coords = [stations, stations, components],
-                      dims = ['first_st', 'second_st', 'component'])
-
-    # convert the DataArray into a Dataset
-    res = da.to_dataset(name = 'cca_coeffs')
-
-    return res
-
-
-
-### Function to calculate the phase correlation coefficients between components in one station
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              station- 3 letter code for the station as a string, ex: 'BLC'
-#              win_len- length of the window, default is 128
-#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#       output: Dataset of cca coefficients
-#                   data- cca_coeffs
-#                   coordinates- 'first_comp', 'second_comp'
-def intra_st_phase_cca(ds, station, win_len=128, components=['N', 'E', 'Z']):
-    # universal constants
-    num_comp = len(components)
-
-    # window the Dataset
-    ds_win = window(ds = ds, win_len = win_len)
-
-    # get components for the station
-    comp = ds_win.measurements.loc[dict(station = station)]
-    # fix coordinates
-    comp = comp.rename(dict(win_rel_time = 'time'))
-    comp = comp.transpose('time', 'component', 'win_start')
-    # remove Nans from data (will mess up cca)
-    comp = comp.dropna(dim = 'time', how = 'any')
-
-    # setup (triangular) array for the correlation coefficients
-    cca_coeffs = np.zeros(shape = (num_comp, num_comp), dtype = float)
-
-    # shrinking nested for loops to get all the pairs of components
-    for i in range(0, num_comp-1):
-        first_comp = comp.loc[dict(component = components[i])]
-        for j in range(i+1, num_comp):
-            second_comp = comp.loc[dict(component = components[j])]
-            # run phase correlation for this pair of components
-            max_corr = 0
-            for ii in range(len(first_comp.win_start)):
-                first_det = scg.detrend(data=first_comp[dict(win_start = ii)], axis=0)
-                first_det = np.reshape(first_det, newshape=[len(first_det),1])
-                for jj in range(len(second_comp.win_start)):
-                    second_det = scg.detrend(data=second_comp[dict(win_start = jj)], axis=0)
-                    second_det = np.reshape(second_det, newshape=[len(second_det),1])
-                    # run cca, suppress rcca output
-                    sys.stdout = open(os.devnull, "w")
-                    temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-                    cur_corr = temp_cca.train([first_det, second_det]).cancorrs[0]
-                    sys.stdout = sys.__stdout__
-                    # check if this is bigger than max_corr
-                    if cur_corr > max_corr:
-                        max_corr = cur_corr
-            # store the maximum phase correlation in the output array
-            cca_coeffs[i,j] = max_corr
-
-    # build DataArray from the cca_coeffs array
-    da = xr.DataArray(data = cca_coeffs,
-                      coords = [components, components],
-                      dims = ['first_comp', 'second_comp'])
-
-    # convert the DataArray into a Dataset
-    res = da.to_dataset(name = 'cca_coeffs')
-
-    return res
-
-
-### Function to calculate the phase correlation coefficients between components for all stations
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              win_len- length of the window, default is 128
-#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#       output: Dataset of cca coefficients
-#                   data- cca_coeffs
-#                   coordinates- 'first_comp', 'second_comp', 'station'
-def st_phase_cca(ds, win_len=128, components=['N', 'E', 'Z']):
-    # universal constants
-    stations = ds.station.values
-    num_st = len(stations)
-
-    # initialize result Dataset (so we can append things to it later)
-    res = intra_st_phase_cca(ds = ds, station = stations[0], win_len=128, components = components)
-
-    # loop through the stations and append each to master Dataset
-    for i in stations[1:]:
-        temp_ds = intra_st_phase_cca(ds = ds, station = i, components = components)
-        res = xr.concat([res, temp_ds], dim = 'station')
-
-    # fix coordinates for 'station' dimension
-    res = res.assign_coords(station = stations)
-
-    return res
-################################################################################
-
-
-
-
-################################################################################
 ####################### Thresholding ###########################################
 ### Function to calculate the threshold for each station pair
 #       input: ds- dataset output from mag_csv_to_Dataset function
@@ -548,13 +384,8 @@ def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
                                'second_st': stations})
 
     return res
-################################################################################
 
 
-
-
-################################################################################
-####################### Constructing the Network ###############################
 ### Function to ultimately calculate the threshold for each station pair
 #       input: ds- dataset output from mag_csv_to_Dataset function
 #              win_len- length of the window, default is 128
@@ -562,7 +393,7 @@ def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
 #       output: Dataset of thresholds
 #                   data- thresholds
 #                   coordinates- 'first_st', 'second_st', 'win_start'
-def construct_network(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
+def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
     # run window over data
     ds_win = sm.window(ds=ds, win_len=win_len)
 
@@ -583,3 +414,148 @@ def construct_network(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
 
     return net
 ################################################################################
+
+
+
+
+################################################################################
+####################### Figures, and Plots, and GIFS, oh my! ###################
+
+##
+def csv_to_coords():
+    csv_file = "First Pass/20190420-12-15-supermag-stations.csv"
+    stationdata = pd.read_csv(csv_file, usecols = [0, 1, 2])
+
+    IAGAs = stationdata["IAGA"]
+    LATs = stationdata["GEOLAT"]
+    LONGs = stationdata["GEOLON"]
+    data = xr.Dataset(data_vars = {"latitude": (["station"], LATs), "longitude": (["station"], LONGs)}, coords = {"station": list(IAGAs)})
+
+    return data
+
+
+##
+def auto_ortho(list_of_stations):
+    station_coords = csv_to_coords()
+    av_long = sum(station_coords.longitude.loc[dict(station = s)] for s in list_of_stations)/len(list_of_stations)
+    av_lat = sum(station_coords.latitude.loc[dict(station = s)] for s in list_of_stations)/len(list_of_stations)
+
+    return np.array((av_long, av_lat))
+
+
+##
+def plot_stations(list_of_stations, ortho_trans):
+    station_coords = csv_to_coords()
+    fig = plt.figure(figsize = (20, 20))
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Orthographic(ortho_trans[0], ortho_trans[1])) #(long, lat)
+    ax.add_feature(cfeature.OCEAN, zorder=0)
+    ax.add_feature(cfeature.LAND, zorder=0, edgecolor='grey')
+    ax.add_feature(cfeature.BORDERS, zorder=0, edgecolor='grey')
+    ax.add_feature(cfeature.LAKES, zorder=0)
+    ax.set_global()
+    ax.gridlines()
+
+    num_sta = len(list_of_stations)
+    longs = np.zeros(num_sta)
+    lats = np.zeros(num_sta)
+    for i in range(num_sta):
+        longs[i] = station_coords.longitude.loc[dict(station = list_of_stations[i])]
+        lats[i] = station_coords.latitude.loc[dict(station = list_of_stations[i])]
+    ax.scatter(longs, lats, transform = ccrs.Geodetic())
+
+    return fig
+
+
+##
+def plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = (0, 0)):
+    if np.all(list_of_stations == None):
+        list_of_stations = station_readings.station
+    if np.all(ortho_trans == (0, 0)):
+        ortho_trans = auto_ortho(list_of_stations)
+
+    station_coords = csv_to_coords()
+    num_stations = len(list_of_stations)
+    x = np.zeros(num_stations)
+    y = np.zeros(num_stations)
+    u = np.zeros(num_stations)
+    v = np.zeros(num_stations)
+    i = 0
+
+    for station in list_of_stations:
+        x[i] = station_coords.longitude.loc[dict(station = station)]
+        y[i] = station_coords.latitude.loc[dict(station = station)]
+        u[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "E")]
+        v[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "N")]
+        i += 1
+
+    fig = plt.figure(figsize = (20, 20))
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Orthographic(ortho_trans[0], ortho_trans[1])) #(long, lat)
+    ax.add_feature(cfeature.OCEAN, zorder=0)
+    ax.add_feature(cfeature.LAND, zorder=0, edgecolor='grey')
+    ax.add_feature(cfeature.BORDERS, zorder=0, edgecolor='grey')
+    ax.add_feature(cfeature.LAKES, zorder=0)
+    ax.set_global()
+    ax.gridlines()
+
+    ax.scatter(x, y, transform = ccrs.Geodetic()) #plots stations
+    ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
+              width = 0.002, color = "g")
+
+    return fig
+
+
+##
+def data_globe_gif(station_readings, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra"):
+    #times in terms of index in the array, might be helpful to have a fn to look up index from timestamps
+    names = []
+    images = []
+    list_of_stations = station_readings.station
+    if np.all(ortho_trans == (0, 0)):
+        ortho_trans = auto_ortho(list_of_stations)
+
+    for i in range(time_start, time_end):
+        t = station_readings.time[i]
+        fig = plot_data_globe(station_readings, t, list_of_stations, ortho_trans)
+        fig.savefig("gif/images_for_giffing/%s.png" %i)
+
+    for i in range(time_start, time_end):
+        names.append("gif/images_for_giffing/%s.png" %i)
+
+    for n in names:
+        frame = Image.open(n)
+        images.append(frame)
+
+    images[0].save("gif/%s.gif" %file_name, save_all = True, append_images = images[1:], duration = 50, loop = 0)
+
+
+##
+def plot_connections_globe(station_readings, adj_matrix, ortho_trans = (0, 0), t = None, list_of_stations = None):
+    '''right now this assumes i want to plot all stations in the adj_matrix for a single time,
+       will add more later
+       also gives 2 plots for some reason'''
+
+    if list_of_stations == None:
+        list_of_stations = station_readings.station
+
+    if np.all(ortho_trans == (0, 0)):
+        ortho_trans = auto_ortho(list_of_stations)
+
+    if t == None:
+        num_sta = len(adj_matrix)
+        fig = plot_stations(station_readings.station, ortho_trans)
+        station_coords = csv_to_coords()
+        ax = fig.axes[0]
+
+        for i in range(num_sta-1):
+            for j in range(i+1, num_sta):
+                if adj_matrix[i, j] == 1:
+                    station_i = station_readings.station[i]
+                    station_j = station_readings.station[j]
+                    long1 = station_coords.longitude.loc[dict(station = station_i)]
+                    long2 = station_coords.longitude.loc[dict(station = station_j)]
+                    lat1 = station_coords.latitude.loc[dict(station = station_i)]
+                    lat2 = station_coords.latitude.loc[dict(station = station_j)]
+
+                    ax.plot([long1, long2], [lat1, lat2], color='blue', transform=ccrs.PlateCarree())
+
+    return fig
