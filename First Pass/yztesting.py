@@ -17,6 +17,12 @@ remove redundancies in plot_stations and plot_data_globe
 incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and all other data
 '''
 
+
+
+'''before running install cartopy using "conda install -c conda-forge cartopy" '''
+
+
+
 import lib.supermagyz as yz
 import lib.supermag as sm
 import numpy as np
