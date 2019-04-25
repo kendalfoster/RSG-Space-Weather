@@ -435,7 +435,7 @@ def mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     values[values <= 0] = 0
     adj_mat.cca_coeffs.values = values
     adj_mat = adj_mat.assign_coords(first_st = stations)
-    adj_mat = adj_mat.assign_coords(first_st = stations)
+    adj_mat = adj_mat.assign_coords(second_st = stations)
 
     return adj_mat
 
