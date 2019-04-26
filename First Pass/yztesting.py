@@ -72,9 +72,9 @@ sm.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_tran
 
 
 ## for the poster
-ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/poster_supermag_data.csv",
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/poster_supermag_data2.csv",
                             MLT = True, MLAT = True)
 ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
 adj_mat = sm.mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
 sandy = sm.plot_connections_globe(ds2, adj_matrix = adj_mat.cca_coeffs, ortho_trans = (0, 0), t = None, list_of_stations = None)
-sandy.savefig('First Pass/poster_globe.png', transparent=True)
+sandy.savefig('First Pass/poster_globe2.png', transparent=True)
