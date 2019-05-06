@@ -5,6 +5,11 @@ pwd()
 import lib.supermag as sm
 import numpy as np
 
+# may need to install OpenSSL for cartopy to function properly
+# I needed it on Windows, even though OpenSSL was already installed
+# https://slproweb.com/products/Win32OpenSSL.html
+
+
 
 ################################################################################
 ####################### Restructuring the SuperMAG Data ########################
