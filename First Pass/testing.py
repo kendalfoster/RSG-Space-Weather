@@ -2,20 +2,7 @@
 pwd()
 
 ## Packages
-import numpy as np
-import pandas as pd
-import scipy.signal as scg
-import xarray as xr # if gives error, just rerun
-import matplotlib.pyplot as plt
-import sys
-import os
 import lib.supermag as sm
-from matplotlib import cm
-from matplotlib.colors import ListedColormap
-import lib.rcca as rcca
-# import xscale.signal.fitting as xsf # useful functions for xarray data structures
-    # pip3 install git+https://github.com/serazing/xscale.git
-    # pip3 install toolz
 
 ################################################################################
 ########## Restructuring the SuperMAG Data ##########
@@ -144,53 +131,6 @@ adj_mat2 = sm.print_mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
 
 ## Dods-style Threshold
 
-################################################################################
-
-
-
-
-################################################################################
-########## Poster Thresholding Picture ##########
-ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/poster_supermag_data2.csv",
-                            MLT = True, MLAT = True)
-ds2w = ds2.loc[dict(time = slice('2001-03-05T15:25', '2001-03-05T17:25'))]
-
-stations = ds2.station.values
-num_st = len(stations)
-
-cca = sm.inter_st_cca(ds=ds2w)
-cca = cca.assign_coords(first_st = range(num_st))
-cca = cca.assign_coords(second_st = range(num_st))
-
-thresh = sm.mag_thresh_dods(ds=ds2)
-thresh = thresh.assign_coords(first_st = range(num_st))
-thresh = thresh.assign_coords(second_st = range(num_st))
-
-adj_mat = cca - thresh.thresholds
-adj_mat = adj_mat.assign_coords(first_st = range(num_st))
-adj_mat = adj_mat.assign_coords(second_st = range(num_st))
-
-# define new colormap
-top = cm.get_cmap('Oranges_r', 128)
-bottom = cm.get_cmap('Blues', 128)
-
-newcolors = np.vstack((top(np.linspace(0, 1, 128)),
-                       bottom(np.linspace(0, 1, 128))))
-newcmap = ListedColormap(newcolors, name='OrangeBlue')
-
-# must run all following code simultaneously
-fig = plt.figure(figsize=(10,8))
-g = adj_mat.cca_coeffs.plot.pcolormesh(yincrease=False,
-                                       cmap=newcmap,
-                                       cbar_kwargs={'label': 'Correlation Coefficient - Threshold'})
-plt.title('Adjacency Matrix', fontsize=30)
-plt.xlabel('Station 1', fontsize=20)
-plt.xticks(ticks=range(9), labels=stations, rotation=0)
-plt.ylabel('Station 2', fontsize=20)
-plt.yticks(ticks=range(9), labels=stations, rotation=0)
-g.figure.axes[-1].yaxis.label.set_size(20)
-plt.savefig('First Pass/adj_mat2.png')
-plt.show()
 ################################################################################
 
 
