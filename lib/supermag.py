@@ -407,6 +407,7 @@ def inter_direction_cca(ds, station1, station2, readings=None):
 #    output: cca_coeffs - the three directional correlation coefficients
 
 
+
 def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=None):
      #check if readings are provided
      if readings is None:
@@ -419,11 +420,13 @@ def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=N
      cca_coeffs = np.zeros(shape = (1, num_read), dtype = float)
 
      # get readings for the station
-     data = window(ds1,128)
-     data1 = view.measurements.loc[dict(station = station1)].loc[dict(win_start = wind[wind_start1])]
-     data2 = view.measurements.loc[dict(station = station2)].loc[dict(win_start = wind[wind_start2])]
+     data = sm.window(ds,128)
+     data1 = data.measurements.loc[dict(station = station1)][dict(win_start = wind_start1)]
+     data2 = data.measurements.loc[dict(station = station2)][dict(win_start = wind_start2)]
 
 
+#data1 = data.measurements.loc[dict(station = station1)].loc[dict(win_start = wind[wind_start1])]
+#data2 = data.measurements.loc[dict(station = station2)].loc[dict(win_start = wind[wind_start2])]
      #Calculate the cannonical correlation between the directional meaurements on each station
      for i in range(num_read):
          first_read = data1[:,i].data
@@ -449,9 +452,9 @@ def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=N
 def phase_finder(ds, station1, station2, start):
 
     ### Get the data windows
-    data = window(ds1,128)
-    data1 = view.measurements.loc[dict(station = station1)]
-    data2 = view.measurements.loc[dict(station = station2)]
+    data = sm.window(ds,128)
+    data1 = data.measurements.loc[dict(station = station1)]
+    data2 = data.measurements.loc[dict(station = station2)]
 
     ## Set up matrix to put our correlation parameters into
     corr_coeff = np.zeros(shape = (21), dtype = float)
