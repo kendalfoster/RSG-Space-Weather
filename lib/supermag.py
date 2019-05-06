@@ -1,7 +1,6 @@
 ## Packages
 import numpy as np
 import pandas as pd
-import scipy.signal as scg
 import xarray as xr # if gives error, just rerun
 import matplotlib.pyplot as plt
 import sys
@@ -11,6 +10,9 @@ import cartopy.feature as cfeature
 from PIL import Image
 # Our Packages
 import lib.rcca as rcca
+
+## Unused Packages, but potentially useful
+# import scipy.signal as scg
 # import xscale.signal.fitting as xsf # useful functions for xarray data structures
     # pip3 install git+https://github.com/serazing/xscale.git
     # pip3 install toolz
