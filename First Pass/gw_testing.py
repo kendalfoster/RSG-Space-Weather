@@ -26,7 +26,7 @@ scratch_ds.measurements.plot.line(x='time', hue='component', col='station', col_
 scratch_ds.measurements[480:510,:,:].plot.line(x='time', hue='component', col='station', col_wrap=1)
 
 
-
+mag_detrend(ds1, type='linear')
 
 
 

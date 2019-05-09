@@ -5,6 +5,7 @@ pwd()
 ########## Restructuring and Plotting the SuperMAG Data ##########
 import numpy as np
 import pandas as pd
+
 import xarray as xr # if gives warning/error, just rerun
 import matplotlib.pyplot as plt
 import lib.supermag as sm
@@ -13,8 +14,8 @@ from statistics import mean
 
 
 ## Restructure SuperMAG
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
+ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/moredata.csv", MLT = True, MLAT = True)
+
 ds1
 
 ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
@@ -66,3 +67,26 @@ test_intra
 test_all = sm.st_cca(ds = ds1)
 test_all
 ###############################################################################
+ds1 = sm.mag_detrend(ds1, type='linear')
+
+
+
+
+
+from scipy.fftpack import fft, fftfreq, fftshift
+
+
+N = 256
+n = int(N/2 - 1)
+Q = 8
+a = sm.window(ds1,N)
+a
+b = a.measurements.loc[dict(station = "BLC")].loc[dict(reading="N")]
+b
+# sample spacing
+T = 1.0 / 200.0
+x = np.linspace(0.0, N*T, N)
+y = b
+yf = fft(y)[0:n]
+xf = fftfreq(N, T)[0:n]
+plt.plot(xf, 1.0/N * np.abs(yf))
