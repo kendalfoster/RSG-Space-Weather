@@ -8,6 +8,7 @@ import sys
 import os
 import lib.supermag as sm
 import lib.rcca as rcca
+import seaborn as sns
 
 
 
@@ -540,6 +541,26 @@ def mag_thresh_dods(ds, n0=0.25, readings=['N', 'E', 'Z']):
 #### Function to create a "corellogram" betwenn two stations
 
 def corellogram(ds, station1, station2, lag_range=10, win_len=128):
+    #Window the data
+    windowed = window(ds,win_len)
+
+    #Generating appropriate dimensions for our array
+    a = windowed.measurements.loc[dict(station = station1)].loc[dict(reading = "N")][:,0]
+    time_length = len(a)
+    time_range = time_length - 2 * lag_range
+
+    x = np.arange(time_range) + lag_range + 1
+    y = np.arange(2*lag_range+1) - lag_range
+    z = np.zeros([len(y),time_range])
+
+    #Do correlations
+    for i in range(len(y)):
+        for j in range(time_range):
+            corr = inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,readings=None)
+            z[i,j] = np.mean(corr)
+
+    #Produce heatmap
+    plot = sns.heatmap(z,vmin=0,vmax=1,yticklabels=y)
 
     return plot
 
