@@ -51,8 +51,7 @@ import matplotlib.pyplot as plt
 import lib.supermag as sm
 import lib.rcca as rcca
 
-## Import and Restructure SuperMAG Data
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/moredata.csv",MLT = True, MLAT = True)
+
 
 ## CCA between stations
 test_inter = sm.inter_st_cca(ds = ds1);
@@ -66,27 +65,33 @@ test_intra
 test_all = sm.st_cca(ds = ds1)
 test_all
 ###############################################################################
-ds1 = sm.mag_detrend(ds1, type='linear')
+ds1 = sm.mag_detrend(ds2, type='linear')
+
+ds = ds1
+station1 = "BLC"
+station2 = "BSL"
+lag_range=3
+win_len=128
+
+#Window the data
+windowed = sm.window(ds,win_len)
+windowed
+
+a = windowed.measurements.loc[dict(station = station1)].loc[dict(reading = "N")][:,0]
+time_length = len(a)
+time_range = time_length - 2 * lag_range
+a.shape
+
+x = np.arange(time_range) + lag_range + 1
+y = np.arange(2*lag_range+1) - lag_range
+z = np.zeros([len(y),time_range])
 
 
+for i in range(len(y)):
+    for j in range(time_range):
+        corr = sm.inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,readings=None)
+        z[i,j] = np.mean(corr)
 
+import seaborn as sns;
 
-
-from scipy.fftpack import fft, fftfreq, fftshift
-
-
-N = 512
-n = int(N/2 - 1)
-Q = 8
-a = sm.window(ds1,N)
-a
-b = a.measurements.loc[dict(station = "BLC")].loc[dict(reading="N")][10,:]
-
-# sample spacing
-T = 1.0 / 256.0
-x = np.linspace(0.0, N*T, N)
-y = b - mean(b)
-
-yf = fft(y)[0:n]
-xf = fftfreq(N, T)[0:n]
-plt.plot(xf, 1.0/N * np.abs(yf))
+sns.heatmap(z,vmin=0,vmax=1,yticklabels=y )

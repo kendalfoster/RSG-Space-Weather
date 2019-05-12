@@ -26,10 +26,9 @@ scratch_ds.measurements.plot.line(x='time', hue='component', col='station', col_
 scratch_ds.measurements[480:510,:,:].plot.line(x='time', hue='component', col='station', col_wrap=1)
 
 
-mag_detrend(ds1, type='linear')
+sm.mag_detrend(scratch_ds, type='linear')
 
 
 
-phase_finder(scratch_ds, "XXX", "YYY", 480)
 
 sm.window(scratch_ds)

@@ -408,7 +408,7 @@ def inter_direction_cca(ds, station1, station2, readings=None):
 
 
 
-def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=None):
+def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,win_len=128,readings=None):
      #check if readings are provided
      if readings is None:
          readings = ['N', 'E', 'Z']
@@ -420,7 +420,7 @@ def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=N
      cca_coeffs = np.zeros(shape = (1, num_read), dtype = float)
 
      # get readings for the station
-     data = sm.window(ds,128)
+     data = sm.window(ds,win_len)
      data1 = data.measurements.loc[dict(station = station1)][dict(win_start = wind_start1)]
      data2 = data.measurements.loc[dict(station = station2)][dict(win_start = wind_start2)]
 
@@ -537,7 +537,11 @@ def mag_thresh_dods(ds, n0=0.25, readings=['N', 'E', 'Z']):
     return res
 ################################################################################
 
+#### Function to create a "corellogram" betwenn two stations
 
+def corellogram(ds, station1, station2, lag_range=10, win_len=128):
+
+    return plot
 
 
 ################################################################################
