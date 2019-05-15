@@ -10,6 +10,7 @@ auto ortho_trans based on stations plotted
 plot connections - list_of_stations, t
 colour code arrows to improve readability - map long, lat onto 2d grid of colours
 colour code vertex connections similar to Dods
+auto colour range based on max/min lat
 
 improve efficiency of gif fn if possible
 make gifs
@@ -30,119 +31,112 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import matplotlib.colors as plc
 import cartopy.feature as cfeature
+from PIL import Image
+import pandas as pd
 
 station_readings = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
 t = station_readings.time[1]
+t.data
 list_of_stations = station_readings.station
 
-new_list = yz.csv_to_coords().station
-
-
-yz.plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = (0, 0))
-# plots N and E components of the vector readings for a single time step t
-# by default it plots data from all stations fed to it in station_readings unless
-# specified otherwise in list_of_stations.
-# ortho_trans specifies the angle from which we see the plot(earth) at.
-# if left at default, yz.auto_ortho(list_of_stations) centres the view on the centre of all stations in list_of_stations.
 
 
 
 
-yz.data_globe_gif(station_readings, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
-#makes sandra.gif in the /gif folder
 
+def cca(ds, components=['N', 'E', 'Z']):
+    """
+    Run canonical correlation analysis between stations.
 
-#generating fake adjacency matrix
-N = 20
-# length = 50
-b = np.random.randint(-2000,2000,size=(N,N))
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
 
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the canonical correlation analysis attributes.
+            The data_vars are: coeffs, weights, angles, comps.\n
+            The coordinates are: first_st, second_st, component, index, ab, uv.
+    """
 
-b_symm = (b + b.T)/2
+    # detrend input Dataset, remove NAs
+    # ds = mag_csv_to_Dataset(csv_file = "First Pass/dik1996.csv")
+    ds = mag_detrend(ds)
+    ds = ds.dropna(dim = 'time')
 
-fake_data = b_symm < 0
+    # universal constants
+    stations = ds.station.values
+    num_st = len(stations)
+    num_ws = len(components)
+    num_cp = len(ds.time)
 
-yz.plot_connections_globe(station_readings, adj_matrix = fake_data[:10, :10], ortho_trans = (0, 0), t = None, list_of_stations = new_list[:10])
-#plots connections between stations.
-#for now it expects a 2d adjacency matrix as input but i will add code to make it do 3d(time on 3rd axis) as well
+    # setup (symmetric) arrays for each attribute
+    coeffs_arr = np.zeros(shape = (num_st, num_st), dtype = float)
+    weights_arr = np.zeros(shape = (num_st, num_st, 2, num_ws), dtype = float)
+    angles_arr = np.zeros(shape = (num_st, num_st), dtype = float)
+    comps_arr = np.zeros(shape = (num_st, num_st, 2, num_cp), dtype = float)
 
+    # shrinking nested for loops to get all the pairs of stations
+    for i in range(0, num_st-1):
+        st_1 = ds.measurements.loc[dict(station = stations[i])]
+        for j in range(i+1, num_st):
+            st_2 = ds.measurements.loc[dict(station = stations[j])]
+            # remove NaNs from data (will mess up cca)
+            comb_st = xr.concat([st_1, st_2], dim = 'component')
+            comb_st = comb_st.dropna(dim = 'time', how = 'any')
+            st_1 = comb_st[:, 0:num_ws]
+            st_2 = comb_st[:, num_ws:2*num_ws]
+            # run cca, suppress rcca output
+            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+            ccac = temp_cca.train([st_1, st_2])
+            ## store cca attributes ##
+            # coeffs
+            coeffs_arr[i,j] = ccac.cancorrs[0]
+            coeffs_arr[j,i] = coeffs_arr[i,j] # mirror results
+            # weights
+            w0 = ccac.ws[0].flatten()
+            w1 = ccac.ws[1].flatten()
+            weights_arr[i,j,0,:] = w0
+            weights_arr[i,j,1,:] = w1
+            weights_arr[j,i,0,:] = w0 # mirror results
+            weights_arr[j,i,1,:] = w1 # mirror results
+            # angles
+            angles_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1), -1.0, 1.0)))
+            angles_arr[j,i] = angles_arr[i,j] # mirror results
+            # comps
+            comps_arr[i,j,0,:] = ccac.comps[0].flatten()
+            comps_arr[i,j,1,:] = ccac.comps[1].flatten()
+            comps_arr[j,i,0,:] = comps_arr[i,j,0,:]
+            comps_arr[j,i,1,:] = comps_arr[i,j,1,:]
 
+    # build Dataset from coeffs
+    coeffs = xr.Dataset(data_vars = {'coeffs': (['first_st', 'second_st'], coeffs_arr)},
+                        coords = {'first_st': stations,
+                                  'second_st': stations})
+    # build Dataset from weights
+    weights = xr.Dataset(data_vars = {'weights': (['first_st', 'second_st', 'ab', 'component'], weights_arr)},
+                         coords = {'first_st': stations,
+                                   'second_st': stations,
+                                   'ab': ['a', 'b'],
+                                   'component': components})
+    # build Dataset from angles
+    angles = xr.Dataset(data_vars = {'angles': (['first_st', 'second_st'], angles_arr)},
+                        coords = {'first_st': stations,
+                                  'second_st': stations})
+    # build Dataset from comps
+    comps = xr.Dataset(data_vars = {'comps': (['first_st', 'second_st', 'uv', 'index'], comps_arr)},
+                       coords = {'first_st': stations,
+                                 'second_st': stations,
+                                 'uv': ['u', 'v'],
+                                 'index': range(num_cp)})
 
+    # merge Datasets
+    res = xr.merge([coeffs, weights, angles, comps])
 
-def plot_data_globe(station_readings, t, list_of_stations = None, ortho_trans = (0, 0)):
-    if np.all(list_of_stations == None):
-        list_of_stations = station_readings.station
-    if np.all(ortho_trans == (0, 0)):
-        ortho_trans = yz.auto_ortho(list_of_stations)
-
-    station_coords = yz.csv_to_coords()
-    num_stations = len(list_of_stations)
-    x = np.zeros(num_stations)
-    y = np.zeros(num_stations)
-    u = np.zeros(num_stations)
-    v = np.zeros(num_stations)
-    i = 0
-
-    for station in list_of_stations:
-        x[i] = station_coords.longitude.loc[dict(station = station)]
-        y[i] = station_coords.latitude.loc[dict(station = station)]
-        u[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "E")]
-        v[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "N")]
-        i += 1
-
-    fig = plt.figure(figsize = (20, 20))
-    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Orthographic(ortho_trans[0], ortho_trans[1])) #(long, lat)
-    ax.add_feature(cfeature.OCEAN, zorder=0)
-    ax.add_feature(cfeature.LAND, zorder=0, edgecolor='grey')
-    ax.add_feature(cfeature.BORDERS, zorder=0, edgecolor='grey')
-    ax.add_feature(cfeature.LAKES, zorder=0)
-    ax.set_global()
-    ax.gridlines()
-
-    ax.scatter(x, y, color = "k", transform = ccrs.Geodetic()) #plots stations
-
-    colours = np.ones((num_stations, 3))
-
-    for i in range(num_stations):
-        colours[i, 0] = station_coords.longitude.loc[dict(station = list_of_stations[i])]/360
-        colours[i, 2] = (station_coords.latitude.loc[dict(station = list_of_stations[i])]+90)/180
-
-    colours = plc.hsv_to_rgb(colours)
-
-    for i in range(num_stations):
-        ax.quiver(x[i:i+1], y[i:i+1], u[i:i+1], v[i:i+1], transform = ccrs.PlateCarree(), #plots vector data
-              width = 0.002, color = colours[i, :])
-
-    return fig
-
-
-np.array((1, 1)).shape
-
-test = np.zeros((1, 5))
-
-test = (1, 2, 3)
-
-test[2:3]
-
-plot_data_globe(station_readings, t)
-
-
-station_coords = yz.csv_to_coords()
-
-max(station_coords.longitude)
-
-plc.hsv_to_rgb((1, 1, 1))
-test = np.ones((2, 3))
-plc.hsv_to_rgb(test)
-
-
-num_stations = len(list_of_stations)
-colours = np.ones((num_stations, 3))
-colours
-for i in range(num_stations):
-    colours[i, 0] = station_coords.longitude.loc[dict(station = list_of_stations[i])]/360
-    colours[i, 2] = (station_coords.latitude.loc[dict(station = list_of_stations[i])]+90)/180
-
-colours = plc.hsv_to_rgb(colours)
+    return res
