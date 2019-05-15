@@ -263,10 +263,17 @@ def window(ds, win_len=128):
             The coordinates are: time, component, station, window.
     """
 
+    # check for NA values in Dataset
+    if True in np.isnan(ds.measurements):
+        print('WARNING: Dataset contains NA values')
+        ds = ds.dropna(dim = 'time', how = 'any')
+
     # create a rolling object
-    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna('time')
+    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna(dim = 'time')
     # fix window coordinates
     ds_roll = ds_roll.assign_coords(win_rel_time = range(win_len))
+    times = ds_roll.time - np.timedelta64(win_len-1, 'm')
+    ds_roll = ds_roll.assign_coords(time = times)
     ds_roll = ds_roll.rename(dict(time = 'win_start'))
     # ensure the coordinates are in the proper order
     ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_rel_time')
