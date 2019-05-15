@@ -13,6 +13,8 @@ import cartopy.feature as cfeature
 from PIL import Image
 # Local Packages
 import lib.rcca as rcca
+import seaborn as sns
+
 
 ## Dependencies
 # numpy
@@ -1008,10 +1010,34 @@ def corellogram(ds, station1, station2, lag_range=10, win_len=128):
     #Do correlations
     for i in range(len(y)):
         for j in range(time_range):
-            corr = inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,components=None)
-            z[i,j] = np.mean(corr)
+            z[i,j] = inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,components=None)
+
 
     #Produce heatmap
-    plot = sns.heatmap(z,vmin=0,vmax=1,yticklabels=y)
+    plot = plt.pcolormesh(x,y,z)
 
-    return plot
+    return x, y , z
+
+
+
+def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,win_len=128,components=None):
+     #check if readings are provided
+     if components is None:
+         components = ['N', 'E', 'Z']
+
+     num_comp = len(components)
+
+     data = window(ds,win_len)
+
+     data1 = data.measurements.loc[dict(station = station1)][dict(win_start = wind_start1)]
+     data2 = data.measurements.loc[dict(station = station2)][dict(win_start = wind_start2)]
+     comb_st = xr.concat([data1, data2], dim = 'component')
+     comb_st = comb_st.dropna(dim = 'win_rel_time', how = 'any')
+     first_st = comb_st[:, 0:num_comp]
+     second_st = comb_st[:, num_comp:2*num_comp]
+     # run cca, suppress rcca output
+     temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+     ccac = temp_cca.train([first_st, second_st])
+     cca_coeffs = ccac.cancorrs[0]
+
+     return cca_coeffs

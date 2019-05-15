@@ -4,7 +4,7 @@ pwd()
 ## Packages
 import lib.supermag as sm
 import numpy as np
-
+import lib.rcca as rcca
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
 # https://slproweb.com/products/Win32OpenSSL.html
@@ -36,7 +36,9 @@ ds4 # exclude MLT and MLAT data, order of stations should also be different
 ################################################################################
 
 
-sm.corellogram(ds2, "BLC", "TAL", 10, 128)
+sm.corellogram(ds2, "BLC", "TAL", 5, 256)
+
+sm.corellogram_max(d)
 
 ################################################################################
 ####################### Plotting ###############################################
@@ -206,3 +208,19 @@ scratch_ds.measurements.plot.line(x='time', hue='component', col='station', col_
 scratch_ds.measurements[480:510,:,:].plot.line(x='time', hue='component', col='station', col_wrap=1)
 
 ################################################################################
+
+import seaborn as sns
+
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            components = ['N', 'E', 'Z'],
+                            MLT = True, MLAT = True)
+
+det = sm.mag_detrend(ds=ds2)
+x, y, z = sm.corellogram(det, "TAL", "RAN" , lag_range=5, win_len=400)
+
+
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+
+plot = plt.pcolormesh(x,y,z, norm = colors.LogNorm(vmin = 0.999, vmax = 1))
