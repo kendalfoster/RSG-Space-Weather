@@ -169,7 +169,7 @@ def mag_detrend(ds, type='linear'):
     temp = ds.measurements.loc[dict(station = stations[0])]
     temp = temp.dropna(dim = 'time', how = 'any')
     temp_times = temp.time
-    det = scg.detrend(data=temp, axis=0, type=type)
+    det = signal.detrend(data=temp, axis=0, type=type)
     da = xr.DataArray(data = det,
                       coords = [temp_times, components],
                       dims = ['time', 'component'])
@@ -178,7 +178,7 @@ def mag_detrend(ds, type='linear'):
         temp = ds.measurements.loc[dict(station = stations[i])]
         temp = temp.dropna(dim = 'time', how = 'any')
         temp_times = temp.time
-        det = scg.detrend(data=temp, axis=0, type=type)
+        det = signal.detrend(data=temp, axis=0, type=type)
         temp_da = xr.DataArray(data = det,
                                coords = [temp_times, components],
                                dims = ['time', 'component'])
@@ -236,12 +236,11 @@ def cca(ds, components=['N', 'E', 'Z']):
     -------
     xarray.Dataset
         Dataset containing the canonical correlation analysis attributes.
-            The data_vars are: coeffs, weights, angles, comps.\n
+            The data_vars are: coeffs, weights, ang_rel, ang_abs, comps.\n
             The coordinates are: first_st, second_st, component, index, ab, uv.
     """
 
     # detrend input Dataset, remove NAs
-    # ds = mag_csv_to_Dataset(csv_file = "First Pass/dik1996.csv")
     ds = mag_detrend(ds)
     ds = ds.dropna(dim = 'time')
 
@@ -254,7 +253,8 @@ def cca(ds, components=['N', 'E', 'Z']):
     # setup (symmetric) arrays for each attribute
     coeffs_arr = np.zeros(shape = (num_st, num_st), dtype = float)
     weights_arr = np.zeros(shape = (num_st, num_st, 2, num_ws), dtype = float)
-    angles_arr = np.zeros(shape = (num_st, num_st), dtype = float)
+    ang_rel_arr = np.zeros(shape = (num_st, num_st), dtype = float)
+    ang_abs_arr = np.zeros(shape = (num_st, num_st, num_cp, 2), dtype = float)
     comps_arr = np.zeros(shape = (num_st, num_st, 2, num_cp), dtype = float)
 
     # shrinking nested for loops to get all the pairs of stations
@@ -282,13 +282,16 @@ def cca(ds, components=['N', 'E', 'Z']):
             weights_arr[j,i,0,:] = w0 # mirror results
             weights_arr[j,i,1,:] = w1 # mirror results
             # angles
-            angles_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1), -1.0, 1.0)))
-            angles_arr[j,i] = angles_arr[i,j] # mirror results
+            ang_rel_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1), -1.0, 1.0)))
+            ang_rel_arr[j,i] = angles_arr[i,j] # mirror results
+            for k in range(num_cp):
+                ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, st_1[dict(time=k)].values), -1.0, 1.0)))
+                ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, st_1[dict(time=k)].values), -1.0, 1.0)))
             # comps
             comps_arr[i,j,0,:] = ccac.comps[0].flatten()
             comps_arr[i,j,1,:] = ccac.comps[1].flatten()
-            comps_arr[j,i,0,:] = comps_arr[i,j,0,:]
-            comps_arr[j,i,1,:] = comps_arr[i,j,1,:]
+            comps_arr[j,i,0,:] = comps_arr[i,j,0,:] # mirror results
+            comps_arr[j,i,1,:] = comps_arr[i,j,1,:] # mirror results
 
     # build Dataset from coeffs
     coeffs = xr.Dataset(data_vars = {'coeffs': (['first_st', 'second_st'], coeffs_arr)},
@@ -301,9 +304,14 @@ def cca(ds, components=['N', 'E', 'Z']):
                                    'ab': ['a', 'b'],
                                    'component': components})
     # build Dataset from angles
-    angles = xr.Dataset(data_vars = {'angles': (['first_st', 'second_st'], angles_arr)},
-                        coords = {'first_st': stations,
-                                  'second_st': stations})
+    ang_rel = xr.Dataset(data_vars = {'ang_rel': (['first_st', 'second_st'], ang_rel_arr)},
+                         coords = {'first_st': stations,
+                                   'second_st': stations})
+    ang_abs = xr.Dataset(data_vars = {'ang_abs': (['first_st', 'second_st', 'index', 'ab'], ang_abs_arr)},
+                         coords = {'first_st': stations,
+                                   'second_st': stations,
+                                   'index': range(num_cp),
+                                   'ab': ['a', 'b']})
     # build Dataset from comps
     comps = xr.Dataset(data_vars = {'comps': (['first_st', 'second_st', 'uv', 'index'], comps_arr)},
                        coords = {'first_st': stations,
@@ -312,7 +320,7 @@ def cca(ds, components=['N', 'E', 'Z']):
                                  'index': range(num_cp)})
 
     # merge Datasets
-    res = xr.merge([coeffs, weights, angles, comps])
+    res = xr.merge([coeffs, weights, ang_rel, ang_abs, comps])
 
     return res
 
