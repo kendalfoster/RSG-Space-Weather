@@ -219,7 +219,7 @@ def window(ds, win_len=128):
 
 ################################################################################
 ####################### Canonical Correlation Analysis #########################
-def cca_coeffs():
+def cca_coeffs(ds, components=['N', 'E', 'Z']):
     """
     Calculate the first canonical correlation coefficients between stations.
 
