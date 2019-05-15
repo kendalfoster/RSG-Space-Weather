@@ -1,25 +1,34 @@
 ## Packages
+import sys
+import os
 import numpy as np
 from numpy import hstack
 import scipy as sp
 from scipy import signal
+import matplotlib.pyplot as plt
 import pandas as pd
 import xarray as xr # if gives error, just rerun
-import matplotlib.pyplot as plt
-import sys
-import os
-#import cartopy.crs as ccrs
-#import cartopy.feature as cfeature
-#from PIL import Image
-# Our Packages
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from PIL import Image
+# Local Packages
 import lib.rcca as rcca
 
+## Dependencies
+# numpy
+# scipy
+# matplotlib.pyplot
+# pandas
+# xarray
+# cartopy
+# rcca (code downloaded from GitHub)
+
+## Notes
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
 # https://slproweb.com/products/Win32OpenSSL.html
 
 ## Unused Packages, but potentially useful
-# import scipy.signal as scg
 # import xscale.signal.fitting as xsf # useful functions for xarray data structures
     # pip3 install git+https://github.com/serazing/xscale.git
     # pip3 install toolz
@@ -28,19 +37,33 @@ import lib.rcca as rcca
 
 ################################################################################
 ####################### Restructure ############################################
-### Function to restructure the SuperMAG data as an xarray.Dataset
-#       inputs: csv_file- SuperMAG data as csv file, downloaded from SuperMAG website
-#               components- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#               MLT- input False if the magnetic local time column is NOT included, default is True
-#               MLAT- input False if the magnetic latitude column is NOT included, default is True
-#       output: Dataset with the SuperMAG data easily accessible,
-#                   data_vars- measurements, mlts, mlats
-#                   coordinates- time, component, station
-#                 ----time is first dimension (ie, axis=0 for numpy commands)
-#                 ----data in DataArray format via output.measurements
-#                 ----data in array format via output.measurements.values
+# Note: fix if there's only 1 station
 def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
-    # get universally needed things
+    """
+    Restructure the SuperMAG data as an xarray Dataset.
+
+    Returns an xarray Dataset with time as the first dimension.
+
+    Parameters
+    ----------
+    csv_file : csv file
+        CSV file downloaded from the SuperMAG website.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
+    MLT : bool, optional
+        True if MLT data is included in csv_file, False otherwise.
+    MLAT : bool, optional
+        True if MLAT data is included in csv_file, False otherwise.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset with the SuperMAG data easily accessible.
+            The data_vars are: measurements, mlts, mlats.\n
+            The coordinates are: time, component, station.
+
+    """
+    # universal constants
     data = pd.read_csv(csv_file)
     times = pd.to_datetime(data['Date_UTC'].unique())
 
@@ -141,10 +164,21 @@ def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True
 
 ################################################################################
 ####################### Plotting ###############################################
-### Function to plot the components like on the SuperMAG website
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#       output: series of plots, one per station, of the components
 def plot_mag_data(ds):
+    """
+    Plot components of data like on the SuperMAG website.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+
+    Yields
+    -------
+    NoneType
+        One column of plots, where each plot shows the components of one station over time.
+
+    """
     ds.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1)
 ################################################################################
 
@@ -153,13 +187,25 @@ def plot_mag_data(ds):
 
 ################################################################################
 ####################### Detrending #############################################
-### Function to detrend the data over time
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              type- type of detrending passed to scipy detrend, default linear
-#       output: Dataset with measurements detrended
-#                   data_vars- measurements
-#                   coordinates- time, component, station
 def mag_detrend(ds, type='linear'):
+    """
+    Detrend the time series for each component.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+    type : str, optional
+        Type of detrending passed to scipy detrend. Default is 'linear'.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset with the SuperMAG data easily accessible.
+            The data_vars are: measurements.\n
+            The coordinates are: time, component, station.
+    """
+
     stations = ds.station
     components = ds.component
 
@@ -196,13 +242,25 @@ def mag_detrend(ds, type='linear'):
 
 ################################################################################
 ####################### Windowing ##############################################
-### Function to window the data at a given window length
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              win_len- length of the window, default is 128
-#       output: Dataset with extra dimension from windowing
-#                   data_vars- measurements, mlts, mlats
-#                   coordinates- time, component, station, window
 def window(ds, win_len=128):
+    """
+    Window the time series for a given window length.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+    win_len : int, optional
+        Length of window in minutes. Default is 128.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset with the SuperMAG data easily accessible and an extra dimension from windowing.
+            The data_vars are: measurements, mlts, mlats.\n
+            The coordinates are: time, component, station, window.
+    """
+
     # create a rolling object
     ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna('time')
     # fix window coordinates
@@ -318,7 +376,7 @@ def cca(ds, components=['N', 'E', 'Z']):
                                  'index': range(num_cp)})
 
     # merge Datasets
-    res = xr.merge([coeffs, weights, ang_rel, ang_abs, comps])
+    res = xr.merge([coeffs, weights, angles, comps])
 
     return res
 
@@ -341,6 +399,10 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
             The data_vars are: cca_coeffs.\n
             The coordinates are: first_st, second_st.
     """
+
+    # detrend input Dataset, remove NAs
+    ds = mag_detrend(ds)
+    ds = ds.dropna(dim = 'time')
 
     # universal constants
     stations = ds.station
@@ -382,24 +444,56 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
 
 ################################################################################
 ####################### Thresholding ###########################################
-### Function to calculate the threshold for each station pair
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#       output: Dataset of thresholds
-#                   data- thresholds
-#                   coordinates- 'first_st', 'second_st'
 def mag_thresh_kf(ds, components=['N', 'E', 'Z']):
+    """
+    Calculate the threshold for each station pair, my method.
+
+    This function simply uses the first canonical correlation coefficients
+    across the entire time series for each station pair.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the thresholds for each station pair.
+            The data_vars are: thresholds.\n
+            The coordinates are: first_st, second_st.
+    """
+
     thr = inter_st_cca(ds=ds, components=components)
     thr = thr.rename(dict(cca_coeffs = 'thresholds'))
     return thr
 
 
-### Function to calculate the threshold for each station pair
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              n0- the desired expected normalized degree of each node (station)
-#       output: Dataset of thresholds
-#                   data- thresholds
-#                   coordinates- 'first_st', 'second_st'
 def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
+    """
+    Calculate the threshold for each station pair, method used in Dods et al (2015) paper.
+
+    This function follows the outline in the Dods et al (2015) paper.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+    n0 : float, optional
+        The desired expected normalized degree of each station. Default is 0.25.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the thresholds for each station pair.
+            The data_vars are: thresholds.\n
+            The coordinates are: first_st, second_st.
+    """
+
     # univeral constants
     stations = ds.station.values
     num_st = len(stations)
@@ -443,14 +537,32 @@ def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
     return res
 
 
-### Function to ultimately calculate the threshold for each station pair
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              win_len- length of the window, default is 128
-#              n0- the desired expected normalized degree of each node (station)
-#       output: Dataset of thresholds
-#                   data- thresholds
-#                   coordinates- 'first_st', 'second_st', 'win_start'
 def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
+    """
+    Calculate the threshold for each station pair, using a windowed approach.
+
+    This function windows the Dataset and then follows the outline in the
+    Dods et al (2015) paper for calculating the pairwise thresholds in each window.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+    win_len : int, optional
+        Length of window in minutes. Default is 128.
+    n0 : float, optional
+        The desired expected normalized degree of each station. Default is 0.25.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the thresholds for each station pair.
+            The data_vars are: thresholds.\n
+            The coordinates are: first_st, second_st, win_start.
+    """
+
     # run window over data
     ds_win = sm.window(ds=ds, win_len=win_len)
 
@@ -471,8 +583,38 @@ def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
 
     return net
 
-## Adjacency Matrix
+
 def mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
+    """
+    Calculate the adjacency matrix for a set of stations during one time window.
+
+    This function follows the outline in the Dods et al (2015) paper for
+    calculating the pairwise thresholds. It then determines adjacency by
+    comparing the correlations in the specified window of the dataset to the
+    above thresholds.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This is used to calculate the pairwise thresholds.
+    ds_win : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This window of a Dataset is used to calculate the pairwise correlations,
+        for comparison with the above pairwise thresholds.
+    n0 : float, optional
+        The desired expected normalized degree of each station. Default is 0.25.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the adjacency coefficients.
+            The data_vars are: adj_coeffs.\n
+            The coordinates are: first_st, second_st.
+    """
+
     stations = ds.station.values
     num_st = len(stations)
 
@@ -489,12 +631,46 @@ def mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     values[values > 0] = 1
     values[values <= 0] = 0
     adj_mat.cca_coeffs.values = values
+    adj_mat = adj_mat.rename(name_dict=dict(cca_coeffs = 'adj_coeffs'))
     adj_mat = adj_mat.assign_coords(first_st = stations)
     adj_mat = adj_mat.assign_coords(second_st = stations)
 
     return adj_mat
 
-def print_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
+
+def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
+    """
+    Calculate and plot the adjacency matrix for a set of stations during one time window.
+
+    This function does the same as :func:'supermag.mag_adj_mat'. In addition to
+    calculating the adjacency matrix, this also returns the plot of the
+    adjacency matrix.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This is used to calculate the pairwise thresholds.
+    ds_win : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This window of a Dataset is used to calculate the pairwise correlations,
+        for comparison with the above pairwise thresholds.
+    n0 : float, optional
+        The desired expected normalized degree of each station. Default is 0.25.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the adjacency coefficients.
+            The data_vars are: adj_coeffs.\n
+            The coordinates are: first_st, second_st.
+
+    matplotlib.figure.Figure
+        Plot of the adjacency matrix.
+    """
+
     stations = ds.station.values
     num_st = len(stations)
 
@@ -511,9 +687,11 @@ def print_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     values[values > 0] = 1
     values[values <= 0] = 0
     adj_mat.cca_coeffs.values = values
+    adj_mat = adj_mat.rename(name_dict=dict(cca_coeffs = 'adj_coeffs'))
 
     fig = plt.figure(figsize=(10,8))
-    adj_mat.cca_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
+    adj_mat.adj_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
+    fig.axes[-1].yaxis.label.set_size(20)
     plt.title('Adjacency Matrix', fontsize=30)
     plt.xlabel('Station 1', fontsize=20)
     plt.xticks(ticks=range(num_st), labels=stations, rotation=0)
@@ -521,7 +699,7 @@ def print_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     plt.yticks(ticks=range(num_st), labels=stations, rotation=0)
     plt.show()
 
-    return adj_mat
+    return adj_mat, fig
 ################################################################################
 
 
