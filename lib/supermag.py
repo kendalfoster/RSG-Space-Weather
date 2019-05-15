@@ -14,6 +14,10 @@ from PIL import Image
 # Our Packages
 import lib.rcca as rcca
 
+# may need to install OpenSSL for cartopy to function properly
+# I needed it on Windows, even though OpenSSL was already installed
+# https://slproweb.com/products/Win32OpenSSL.html
+
 ## Unused Packages, but potentially useful
 # import scipy.signal as scg
 # import xscale.signal.fitting as xsf # useful functions for xarray data structures
