@@ -79,6 +79,12 @@ det
 ####################### Windowing ##############################################
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
+ds1_slice = ds1[dict(time=slice(0,10))]
+ds1_slice_win = sm.window(ds1_slice, win_len=7)
+
+ds2 = sm.mag_csv_to_Dataset("First Pass/dik1996.csv", MLT = False, MLAT = False)
+True in np.isnan(ds2.measurements)
+ds2_win = sm.window(ds2)
 
 ds1_win = sm.window(ds = ds1)
 ds1_win
