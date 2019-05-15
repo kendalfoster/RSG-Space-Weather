@@ -305,9 +305,8 @@ def cca(ds, components=['N', 'E', 'Z']):
             The coordinates are: first_st, second_st, component, index, ab, uv.
     """
 
-    # detrend input Dataset, remove NAs
+    # detrend input Dataset
     ds = mag_detrend(ds)
-    ds = ds.dropna(dim = 'time')
 
     # universal constants
     stations = ds.station.values
@@ -339,22 +338,30 @@ def cca(ds, components=['N', 'E', 'Z']):
             # coeffs
             coeffs_arr[i,j] = ccac.cancorrs[0]
             coeffs_arr[j,i] = coeffs_arr[i,j] # mirror results
-            # weights
-            w0 = ccac.ws[0].flatten()
-            w1 = ccac.ws[1].flatten()
+            # weights (a and b from Wikipedia)
+            w0 = ccac.ws[0].flatten() # this is a
+            w1 = ccac.ws[1].flatten() # this is b
             weights_arr[i,j,0,:] = w0
             weights_arr[i,j,1,:] = w1
             weights_arr[j,i,0,:] = w0 # mirror results
             weights_arr[j,i,1,:] = w1 # mirror results
-            # angles
-            ang_rel_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1), -1.0, 1.0)))
+            # angles, relative
+            wt_norm = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(w1**2))
+            ang_rel_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1)/wt_norm, -1.0, 1.0)))
             ang_rel_arr[j,i] = ang_rel_arr[i,j] # mirror results
+            # angles, absolute
             for k in range(num_cp):
-                ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, st_1[dict(time=k)].values), -1.0, 1.0)))
-                ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, st_1[dict(time=k)].values), -1.0, 1.0)))
-            # comps
-            comps_arr[i,j,0,:] = ccac.comps[0].flatten()
-            comps_arr[i,j,1,:] = ccac.comps[1].flatten()
+                xdata = st_1[dict(time=k)].values
+                ydata = st_2[dict(time=k)].values
+                wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
+                wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
+                ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
+                ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
+                ang_abs_arr[j,i,k,0] = ang_abs_arr[i,j,k,0]
+                ang_abs_arr[j,i,k,1] = ang_abs_arr[i,j,k,1]
+            # comps (a^T*X and b^T*Y from Wikipedia)
+            comps_arr[i,j,0,:] = ccac.comps[0].flatten() # this is a^T*X
+            comps_arr[i,j,1,:] = ccac.comps[1].flatten() # this is b^T*Y
             comps_arr[j,i,0,:] = comps_arr[i,j,0,:] # mirror results
             comps_arr[j,i,1,:] = comps_arr[i,j,1,:] # mirror results
 
