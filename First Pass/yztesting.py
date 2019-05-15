@@ -140,3 +140,7 @@ def cca(ds, components=['N', 'E', 'Z']):
     res = xr.merge([coeffs, weights, angles, comps])
 
     return res
+
+
+
+sm.cca(station_readings)
