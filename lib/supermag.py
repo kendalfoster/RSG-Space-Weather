@@ -339,7 +339,7 @@ def cca(ds, components=['N', 'E', 'Z']):
             weights_arr[j,i,1,:] = w1 # mirror results
             # angles
             ang_rel_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1), -1.0, 1.0)))
-            ang_rel_arr[j,i] = angles_arr[i,j] # mirror results
+            ang_rel_arr[j,i] = ang_rel_arr[i,j] # mirror results
             for k in range(num_cp):
                 ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, st_1[dict(time=k)].values), -1.0, 1.0)))
                 ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, st_1[dict(time=k)].values), -1.0, 1.0)))
@@ -376,7 +376,7 @@ def cca(ds, components=['N', 'E', 'Z']):
                                  'index': range(num_cp)})
 
     # merge Datasets
-    res = xr.merge([coeffs, weights, angles, comps])
+    res = xr.merge([coeffs, weights, ang_rel, ang_abs, comps])
 
     return res
 
