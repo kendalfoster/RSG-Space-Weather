@@ -8,9 +8,9 @@ import xarray as xr # if gives error, just rerun
 import matplotlib.pyplot as plt
 import sys
 import os
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from PIL import Image
+#import cartopy.crs as ccrs
+#import cartopy.feature as cfeature
+#from PIL import Image
 # Our Packages
 import lib.rcca as rcca
 
@@ -811,3 +811,29 @@ def generate_one_day_time_series(pc_wave_start_date, pc_wave_start_time, wavepac
 
     return dataset
 ################################################################################
+
+
+
+def corellogram(ds, station1, station2, lag_range=10, win_len=128):
+    #Window the data
+    windowed = window(ds,win_len)
+
+    #Generating appropriate dimensions for our array
+    a = windowed.measurements.loc[dict(station = station1)].loc[dict(component = "N")][:,0]
+    time_length = len(a)
+    time_range = time_length - 2 * lag_range
+
+    x = np.arange(time_range) + lag_range + 1
+    y = np.arange(2*lag_range+1) - lag_range
+    z = np.zeros([len(y),time_range])
+
+    #Do correlations
+    for i in range(len(y)):
+        for j in range(time_range):
+            corr = inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,components=None)
+            z[i,j] = np.mean(corr)
+
+    #Produce heatmap
+    plot = sns.heatmap(z,vmin=0,vmax=1,yticklabels=y)
+
+    return plot
