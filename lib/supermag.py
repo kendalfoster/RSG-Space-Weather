@@ -565,6 +565,39 @@ def corellogram(ds, station1, station2, lag_range=10, win_len=128):
     return plot
 
 
+def corellogram_max(ds, station1, station2, lag_range=10, win_len=128):
+    #Window the data
+    windowed = sm.window(ds,win_len)
+
+    #Generating appropriate dimensions for our array
+    a = windowed.measurements.loc[dict(station = station1)].loc[dict(reading = "N")][:,0]
+    time_length = len(a)
+    time_range = time_length - 2 * lag_range
+
+    x = np.arange(time_range) + lag_range + 1
+    y = np.arange(2*lag_range+1) - lag_range
+    z = np.zeros([len(y),time_range])
+
+    #Do correlations
+    for i in range(len(y)):
+        for j in range(time_range):
+            corr = sm.inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,readings=None)
+            z[i,j] = np.mean(corr)
+
+    ## Produce a maximum in each window for the lag_range
+    m = np.argmax(z,axis=0)
+    u = np.zeros([len(y),time_range])
+
+
+    for i in range(time_range):
+        a = m[i]
+        u[a,i] = 1
+
+    #Produce heatmap
+    plot = sns.heatmap(u,vmin=0,vmax=1,yticklabels=y)
+
+    return plot
+
 ################################################################################
 ####################### Constructing the Network ###############################
 ### Function to ultimately calculate the threshold for each station pair

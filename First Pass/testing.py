@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import lib.supermag as sm
 # importing mean()
 from statistics import mean
-
+import seaborn as sns
 
 ## Restructure SuperMAG
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/moredata.csv", MLT = True, MLAT = True)
@@ -70,7 +70,7 @@ ds1 = sm.mag_detrend(ds2, type='linear')
 ds = ds1
 station1 = "BLC"
 station2 = "BSL"
-lag_range=20
+lag_range=7
 win_len=400
 
 #Window the data
@@ -95,28 +95,19 @@ for i in range(len(y)):
 
 plot = sns.heatmap(z,vmin=0,vmax=1,yticklabels=y)
 
-def corellogram(ds, station1, station2, lag_range=10, win_len=128):
-    #Window the data
-    windowed = sm.window(ds,win_len)
 
-    #Generating appropriate dimensions for our array
-    a = windowed.measurements.loc[dict(station = station1)].loc[dict(reading = "N")][:,0]
-    time_length = len(a)
-    time_range = time_length - 2 * lag_range
+m = np.argmax(z,axis=0)
+u = np.zeros([len(y),time_range])
 
-    x = np.arange(time_range) + lag_range + 1
-    y = np.arange(2*lag_range+1) - lag_range
-    z = np.zeros([len(y),time_range])
+for i in range(time_range):
+    a = m[i]
+    u[a,i] = 1
 
-    #Do correlations
-    for i in range(len(y)):
-        for j in range(time_range):
-            corr = sm.inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,readings=None)
-            z[i,j] = np.mean(corr)
+#Produce heatmap
+plot = sns.heatmap(u,vmin=0,vmax=1,yticklabels=y)
 
-    #Produce heatmap
-    plot = sns.heatmap(z,vmin=0,vmax=1,yticklabels=y)
 
-    return plot
 
-corellogram(ds, station1, station2, lag_range, win_len)
+
+a = sm.corellogram(ds, station1, station2, lag_range, win_len)
+b = sm.corellogram_max(ds, station1, station2,lag_range,win_len)
