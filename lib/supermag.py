@@ -167,7 +167,7 @@ def mag_detrend(ds, type='linear'):
     temp = ds.measurements.loc[dict(station = stations[0])]
     temp = temp.dropna(dim = 'time', how = 'any')
     temp_times = temp.time
-    det = scg.detrend(data=temp, axis=0, type=type)
+    det = signal.detrend(data=temp, axis=0, type=type)
     da = xr.DataArray(data = det,
                       coords = [temp_times, components],
                       dims = ['time', 'component'])
