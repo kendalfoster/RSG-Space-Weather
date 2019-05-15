@@ -215,13 +215,25 @@ def window(ds, win_len=128):
 
 ################################################################################
 ####################### Canonical Correlation Analysis #########################
-### Function to calculate the first canonical correlation coefficients between stations
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#       output: Dataset of cca coefficients
-#                   data- cca_coeffs
-#                   coordinates- 'first_st', 'second_st'
-def inter_st_cca(ds, components=['N', 'E', 'Z']):
+def cca_coeffs():
+    """
+    Calculate the first canonical correlation coefficients between stations.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+    components : list, optional
+        List of components in the data. Default is ['N', 'E', 'Z'].
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the first canonical correlation coefficients.
+            The data_vars are: cca_coeffs.\n
+            The coordinates are: first_st, second_st.
+    """
+
     # universal constants
     stations = ds.station
     num_st = len(stations)
@@ -241,12 +253,10 @@ def inter_st_cca(ds, components=['N', 'E', 'Z']):
             first_st = comb_st[:, 0:num_comp]
             second_st = comb_st[:, num_comp:2*num_comp]
             # run cca, suppress rcca output
-            sys.stdout = open(os.devnull, "w")
-            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-            ccac = temp_cca.train([first_st, second_st]).cancorrs[0]
-            cca_coeffs[i,j] = ccac
-            cca_coeffs[j,i] = ccac
-            sys.stdout = sys.__stdout__
+            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+            ccac = temp_cca.train([first_st, second_st])
+            cca_coeffs[i,j] = ccac.cancorrs[0]
+            cca_coeffs[j,i] = ccac.cancorrs[0]
 
     # build DataArray from the cca_coeffs array
     da = xr.DataArray(data = cca_coeffs,
@@ -255,74 +265,6 @@ def inter_st_cca(ds, components=['N', 'E', 'Z']):
 
     # convert the DataArray into a Dataset
     res = da.to_dataset(name = 'cca_coeffs')
-
-    return res
-
-
-### Function to calculate the first canonical correlation coefficients between components in one station
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              station- 3 letter code for the station as a string, ex: 'BLC'
-#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#       output: Dataset of cca coefficients
-#                   data- cca_coeffs
-#                   coordinates- 'first_comp', 'second_comp'
-def intra_st_cca(ds, station, components=['N', 'E', 'Z']):
-    # universal constants
-    num_comp = len(components)
-
-    # get components for the station
-    comp = ds.measurements.loc[dict(station = station)]
-    # remove Nans from data (will mess up cca)
-    comp = comp.dropna(dim = 'time', how = 'any')
-
-    # setup (triangular) array for the correlation coefficients
-    cca_coeffs = np.zeros(shape = (num_comp, num_comp), dtype = float)
-
-    # shrinking nested for loops to get all the pairs of components
-    for i in range(0, num_comp-1):
-        first_comp = comp.loc[dict(component = components[i])].values
-        first_comp = np.reshape(first_comp, newshape=[len(first_comp),1])
-        for j in range(i+1, num_comp):
-            second_comp = comp.loc[dict(component = components[j])].values
-            second_comp = np.reshape(second_comp, newshape=[len(second_comp),1])
-            # run cca, suppress rcca output
-            sys.stdout = open(os.devnull, "w")
-            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1)
-            cca_coeffs[i,j] = abs(temp_cca.train([first_comp, second_comp]).cancorrs[0])
-            sys.stdout = sys.__stdout__
-
-    # build DataArray from the cca_coeffs array
-    da = xr.DataArray(data = cca_coeffs,
-                      coords = [components, components],
-                      dims = ['first_comp', 'second_comp'])
-
-    # convert the DataArray into a Dataset
-    res = da.to_dataset(name = 'cca_coeffs')
-
-    return res
-
-
-### Function to calculate the first canonical correlation coefficients between components for all stations
-#       input: ds- dataset output from mag_csv_to_Dataset function
-#              components- vector of characters representing measurements, default is ['N', 'E', 'Z']
-#       output: Dataset of cca coefficients
-#                   data- cca_coeffs
-#                   coordinates- 'first_comp', 'second_comp', 'station'
-def st_cca(ds, components=['N', 'E', 'Z']):
-    # universal constants
-    stations = ds.station.values
-    num_st = len(stations)
-
-    # initialize result Dataset (so we can append things to it later)
-    res = intra_st_cca(ds = ds, station = stations[0], components = components)
-
-    # loop through the stations and append each to master Dataset
-    for i in stations[1:]:
-        temp_ds = intra_st_cca(ds = ds, station = i, components = components)
-        res = xr.concat([res, temp_ds], dim = 'station')
-
-    # fix coordinates for 'station' dimension
-    res = res.assign_coords(station = stations)
 
     return res
 ################################################################################
