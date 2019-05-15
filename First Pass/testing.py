@@ -209,11 +209,18 @@ scratch_ds.measurements[480:510,:,:].plot.line(x='time', hue='component', col='s
 
 ################################################################################
 
+import seaborn as sns
 
-
-
+ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+                            components = ['N', 'E', 'Z'],
+                            MLT = True, MLAT = True)
 
 det = sm.mag_detrend(ds=ds2)
-a = sm.corellogram(det, "TAL", "BLC" , lag_range=5, win_len=400)
+x, y, z = sm.corellogram(det, "TAL", "RAN" , lag_range=5, win_len=400)
 
-plot = sns.heatmap(a)
+
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+
+plot = plt.pcolormesh(x,y,z, norm = colors.LogNorm(vmin = 0.999, vmax = 1))

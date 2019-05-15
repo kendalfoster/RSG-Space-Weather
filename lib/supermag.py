@@ -836,9 +836,9 @@ def corellogram(ds, station1, station2, lag_range=10, win_len=128):
 
 
     #Produce heatmap
-    plot = sns.heatmap(z,yticklabels=y)
+    plot = plt.pcolormesh(x,y,z)
 
-    return z
+    return x, y , z
 
 
 
