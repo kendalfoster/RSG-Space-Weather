@@ -17,7 +17,6 @@ Basically, inside the function definition you include the documentation sandwich
 
 Here is a template::
   def function(param1, param2=5):
-      """
       A short description of the function.
 
       A longer description of the function, maybe include more details or relation to other functions. You could also explain why the function exists, or you could just write words to fill the space. Please don't do that; not every function requires a longer description.
@@ -35,7 +34,6 @@ Here is a template::
           A short description of the return object.
               A longer description of the return object.\n
               I found it helpful to occasionally have new lines.
-      """
 
       nonsense = param1 + param2
       something = np.cos(nonsense)
