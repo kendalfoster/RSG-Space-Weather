@@ -30,6 +30,4 @@ After a merge or perhaps a significant merge, it is often useful to rebase the i
 - open the command line/terminal and navigate to the git repository folder
 - check which branch you are currently on: :code:`git branch -a`
 - ensure you are on the individual branch: :code:`git checkout <individual_branch_name>`
-- rebase the individual branch from the master on GitHub (instead of the local master; this prevents issues with pulling master locally after a merge):: 
-
-  git rebase <individual_branch_name> remotes/origin/master
+- rebase the individual branch from the master on GitHub (instead of the local master; this prevents issues with pulling master locally after a merge): :code:`git rebase <individual_branch_name> remotes/origin/master`
