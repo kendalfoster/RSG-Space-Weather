@@ -831,7 +831,7 @@ def spectrogram(ts=None, ds=None, station=None, component = None, win_len=128, w
 
 ##
 def csv_to_coords():
-    csv_file = "First Pass/20190420-12-15-supermag-stations.csv"
+    csv_file = "First Pass/station_coords.csv"
     stationdata = pd.read_csv(csv_file, usecols = [0, 1, 2])
 
     IAGAs = stationdata["IAGA"]
