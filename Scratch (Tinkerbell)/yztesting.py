@@ -23,11 +23,11 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 
 
 
-import spaceweather.supermag as sm
-import numpy as np
-import spaceweather.plotting as spp
+import spaceweather.analysis.supermag as sm
 
 from spaceweather.visualisation import globes as svg
+
+import numpy as np
 
 station_components = sm.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
