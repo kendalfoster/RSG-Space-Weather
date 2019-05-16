@@ -1,8 +1,6 @@
 ## Packages
 import numpy as np
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import spaceweather.visualisation.globes as svg
 from PIL import Image
 # Local Packages
