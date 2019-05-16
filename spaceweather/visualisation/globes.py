@@ -82,6 +82,14 @@ def plot_stations(list_of_stations, ortho_trans):
 
 ##
 def plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0)):
+
+    # plots N and E components of the vector readings for a single time step t
+    # by default it plots data from all stations fed to it in station_readings unless
+    # specified otherwise in list_of_stations.
+    # ortho_trans specifies the angle from which we see the plot(earth) at.
+    # if left at default, yz.auto_ortho(list_of_stations) centres the view on the centre of all stations in list_of_stations.
+
+
     if np.all(list_of_stations == None):
         list_of_stations = station_components.station
     if np.all(ortho_trans == (0, 0)):
