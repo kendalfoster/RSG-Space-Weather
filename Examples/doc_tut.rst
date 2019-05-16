@@ -16,4 +16,5 @@ Basically, inside the function definition you include the documentation sandwich
 - To denote a parameter as optional, add ", optional" after its type.
 
 Here is a template::
+
   some code here
