@@ -2,8 +2,11 @@
 Documentation Tutorial
 ======================
 
-We are using the Numpy standard of documentation in our functions. The style guidelines can be found .. _here: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/. Essentially just follow the template, capitalize the beginnings of phrases, and put a period at the end of each statement- even if they're not full sentences.
-We are using Sphinx to build the documentation. You can get Sphinx .. _here: http://www.sphinx-doc.org/en/master/usage/installation.html.
+We are using the Numpy standard of documentation in our functions. The style guidelines can be found at https://sphinxcontrib-napoleon.readthedocs.io/en/latest/. Essentially just follow the template, capitalize the beginnings of phrases, and put a period at the end of each statement- even if they're not full sentences.
+We are using Sphinx to build the documentation. You can get Sphinx at http://www.sphinx-doc.org/en/master/usage/installation.html.
+
+
+
 
 Write the Docs
 --------------
@@ -85,11 +88,11 @@ Build the Docs
 --------------
 This is the part that uses Sphinx, so make sure you have it installed.
 
-- Sphinx is a command line/terminal tool, so open up the terminal and navigate to the `docs` folder in the git repository.
+- Sphinx is a command line/terminal tool, so open up the terminal and navigate to the `docs` folder in the git repository folder.
 - Everything should be set up- all you need to do is run the command `make html`.
 - You need to rerun this command each time you want to update the documentation.
 - There is a way to host the documentation on readthedocs and have it update automatically with GitHub commits, but save that for later.
 
 You can view the documentation by navigating to::
 
-  git repo > docs > build > html > index.html
+  git repo folder > docs > build > html > index.html
