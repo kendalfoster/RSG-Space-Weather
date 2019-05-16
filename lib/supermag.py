@@ -664,7 +664,7 @@ def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     """
     Calculate and plot the adjacency matrix for a set of stations during one time window.
 
-    This function does the same as :func:'supermag.mag_adj_mat'. In addition to
+    This function does the same as :func:`supermag.mag_adj_mat`. In addition to
     calculating the adjacency matrix, this also returns the plot of the
     adjacency matrix.
 
