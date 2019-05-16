@@ -23,17 +23,20 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 
 
 
-import lib.supermag as sm
+import spaceweather.supermag as sm
 import numpy as np
+import spaceweather.plotting as spp
 
-station_components = sm.mag_csv_to_Dataset(csv_file = "First Pass/poster_supermag_data.csv",
+from spaceweather.visualisation import globes as svg
+
+station_components = sm.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
 t = station_components.time[1]
-list_of_stations = station_components.station
+# list_of_stations = station_components.station
 
 
-sm.plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0))
+svg.plot_data_globe_colour(station_components, t, list_of_stations = None, ortho_trans = (0, 0))
 # plots N and E components of the vector readings for a single time step t
 # by default it plots data from all stations fed to it in station_readings unless
 # specified otherwise in list_of_stations.
