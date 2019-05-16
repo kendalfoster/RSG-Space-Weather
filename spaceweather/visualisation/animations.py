@@ -17,7 +17,7 @@ def data_globe_gif(station_readings, time_start = 0, time_end = 10, ortho_trans 
 
     if colour:
         for i in range(time_start, time_end):
-            t = station_readings.time[i]
+            t = station_readings.time[i].data
             fig = svg.plot_data_globe_colour(station_readings, t, list_of_stations, ortho_trans)
             fig.savefig("Scratch (Tinkerbell)/gif/images_for_giffing/%s.png" %i)
     else:

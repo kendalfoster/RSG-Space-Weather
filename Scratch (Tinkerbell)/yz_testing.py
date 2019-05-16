@@ -33,18 +33,27 @@ import matplotlib.colors as plc
 import numpy as np
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+import datetime
+
+import pandas as pd
 
 station_readings = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
 test = sac.cca(station_readings)
 
-t = station_readings.time[1]
+datetime.utcnow()
+t = station_readings.time[1].data
+t.item()
 
-t.data
+test = pd.to_datetime(t)
 
+dt64 = t.data
+type(dt64)
 
-plot_data_globe_colour(station_readings, t.data)
+dt64.item().astype(datetime)
+
+plot_data_globe_colour(station_readings, test)
 
 
 
@@ -92,8 +101,7 @@ def plot_data_globe_colour(station_readings, t, list_of_stations = None, ortho_t
     ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
           width = 0.002, color = colours)
 
-    ts = pd.to_datetime(str(t.data))
-    mytime = ts.strftime('%Y.%m.%d %H:%M')
+    mytime = t.strftime('%Y.%m.%d %H:%M')
 
     plt.title("%s" %mytime, fontsize = 30)
 
