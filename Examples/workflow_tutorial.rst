@@ -28,5 +28,8 @@ Rebase the individual branch from master
 After a merge or perhaps a significant merge, it is often useful to rebase the individual branch to update code to the most recent version. This is done via the command line/terminal.
 
 - open the command line/terminal and navigate to the git repository folder
-- check which branch you are currently on with :code:`a = b + c`
-- then do this
+- check which branch you are currently on: :code:`git branch -a`
+- ensure you are on the individual branch: :code:`git checkout <individual_branch_name>`
+- rebase the individual branch from the master on GitHub (instead of the local master; this prevents issues with pulling master locally after a merge):: 
+
+  git rebase <individual_branch_name> remotes/origin/master
