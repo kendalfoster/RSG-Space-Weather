@@ -2,6 +2,14 @@
 To-Do List
 ==========
 
+.. |ss| raw:: html
+
+   <strike>
+
+.. |se| raw:: html
+
+   </strike>
+
 Do Now
 ------
 
@@ -14,5 +22,5 @@ Do in Near Future
 - animate correlation coeffs in matrix over time
 - normalize/threshold the corr coeffs
 - get network parameters
-- <s>animate network on globe, with day n nite</s>
+- |ss| animate network on globe, with day n nite |se|
 - one chain, fixed longitude
