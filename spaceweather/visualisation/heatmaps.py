@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
+import spaceweather.analysis.cca as sac
+import spaceweather.analysis.data_funcs as sad
+import spaceweather.analysis.threshold as sat
 
 
 def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
@@ -42,11 +45,11 @@ def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     stations = ds.station.values
     num_st = len(stations)
 
-    cca = inter_st_cca(ds=ds_win, components= components)
+    cca = sac.cca_coeffs(ds=ds_win, components= components)
     cca = cca.assign_coords(first_st = range(num_st))
     cca = cca.assign_coords(second_st = range(num_st))
 
-    thresh = mag_thresh_dods(ds=ds, n0=n0, components=components)
+    thresh = sat.mag_thresh_dods(ds=ds, n0=n0, components=components)
     thresh = thresh.assign_coords(first_st = range(num_st))
     thresh = thresh.assign_coords(second_st = range(num_st))
 
@@ -73,7 +76,7 @@ def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
 def corellogram(ds, station1, station2, lag_range=10, win_len=128):
     """
     Calculate and plots a corllogram for two stations
-    
+
     Parameters
     ----------
     ds : xarray.Dataset
@@ -94,7 +97,7 @@ def corellogram(ds, station1, station2, lag_range=10, win_len=128):
     """
 
     #Window the data
-    windowed = window(ds,win_len)
+    windowed = sad.window(ds,win_len)
 
     #Generating appropriate dimensions for our array
     a = windowed.measurements.loc[dict(station = station1)].loc[dict(component = "N")][:,0]
@@ -108,7 +111,7 @@ def corellogram(ds, station1, station2, lag_range=10, win_len=128):
     #Do correlations
     for i in range(len(y)):
         for j in range(time_range):
-            z[i,j] = inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,components=None)
+            z[i,j] = sac.inter_phase_dir_corr(ds,station1,station2,x[j]-1,y[i]+x[j]-1,win_len,components=None)
 
 
     #Produce heatmap
