@@ -16,27 +16,4 @@ Basically, inside the function definition you include the documentation sandwich
 - To denote a parameter as optional, add ", optional" after its type.
 
 Here is a template::
-  def function(param1, param2=5):
-      A short description of the function.
-
-      A longer description of the function, maybe include more details or relation to other functions. You could also explain why the function exists, or you could just write words to fill the space. Please don't do that; not every function requires a longer description.
-
-      Parameters
-      ----------
-      param1 : type_of_param1
-          A short description of param1.
-      param2 : type_of_param2, optional
-          A short description of param2.
-
-      Returns
-      -------
-      type_of_return_object
-          A short description of the return object.
-              A longer description of the return object.\n
-              I found it helpful to occasionally have new lines.
-
-      nonsense = param1 + param2
-      something = np.cos(nonsense)
-      notadataset = something/2
-
-      return notadataset
+  some code here
