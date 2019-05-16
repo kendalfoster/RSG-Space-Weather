@@ -1,0 +1,463 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to SuperMAG Space Weather’s documentation! &#8212; SuperMAG Space Weather 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-supermag-space-weather-s-documentation">
+<h1>Welcome to SuperMAG Space Weather’s documentation!<a class="headerlink" href="#welcome-to-supermag-space-weather-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="module-lib.supermag">
+<span id="supermag-main"></span><h1>Supermag main<a class="headerlink" href="#module-lib.supermag" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="lib.supermag.cca">
+<code class="descclassname">lib.supermag.</code><code class="descname">cca</code><span class="sig-paren">(</span><em>ds, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.cca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run canonical correlation analysis between stations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the canonical correlation analysis attributes.</dt><dd><p>The data_vars are: coeffs, weights, ang_rel, ang_abs, comps.</p>
+<p>The coordinates are: first_st, second_st, component, index, ab, uv.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.cca_coeffs">
+<code class="descclassname">lib.supermag.</code><code class="descname">cca_coeffs</code><span class="sig-paren">(</span><em>ds, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.cca_coeffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the first canonical correlation coefficients between stations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the first canonical correlation coefficients.</dt><dd><p>The data_vars are: cca_coeffs.</p>
+<p>The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.mag_adj_mat">
+<code class="descclassname">lib.supermag.</code><code class="descname">mag_adj_mat</code><span class="sig-paren">(</span><em>ds, ds_win, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.mag_adj_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the adjacency matrix for a set of stations during one time window.</p>
+<p>This function follows the outline in the Dods et al (2015) paper for
+calculating the pairwise thresholds. It then determines adjacency by
+comparing the correlations in the specified window of the dataset to the
+above thresholds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This is used to calculate the pairwise thresholds.</p></li>
+<li><p><strong>ds_win</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This window of a Dataset is used to calculate the pairwise correlations,
+for comparison with the above pairwise thresholds.</p></li>
+<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the adjacency coefficients.</dt><dd><p>The data_vars are: adj_coeffs.</p>
+<p>The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.mag_csv_to_Dataset">
+<code class="descclassname">lib.supermag.</code><code class="descname">mag_csv_to_Dataset</code><span class="sig-paren">(</span><em>csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.mag_csv_to_Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restructure the SuperMAG data as an xarray Dataset.</p>
+<p>Returns an xarray Dataset with time as the first dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csv_file</strong> (<em>csv file</em>) – CSV file downloaded from the SuperMAG website.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+<li><p><strong>MLT</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if MLT data is included in csv_file, False otherwise.</p></li>
+<li><p><strong>MLAT</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if MLAT data is included in csv_file, False otherwise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset with the SuperMAG data easily accessible.</dt><dd><p>The data_vars are: measurements, mlts, mlats.</p>
+<p>The coordinates are: time, component, station.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.mag_detrend">
+<code class="descclassname">lib.supermag.</code><code class="descname">mag_detrend</code><span class="sig-paren">(</span><em>ds</em>, <em>type='linear'</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.mag_detrend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detrend the time series for each component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of detrending passed to scipy detrend. Default is ‘linear’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset with the SuperMAG data easily accessible.</dt><dd><p>The data_vars are: measurements.</p>
+<p>The coordinates are: time, component, station.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.mag_thresh_dods">
+<code class="descclassname">lib.supermag.</code><code class="descname">mag_thresh_dods</code><span class="sig-paren">(</span><em>ds, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.mag_thresh_dods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the threshold for each station pair, method used in Dods et al (2015) paper.</p>
+<p>This function follows the outline in the Dods et al (2015) paper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the thresholds for each station pair.</dt><dd><p>The data_vars are: thresholds.</p>
+<p>The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.mag_thresh_kf">
+<code class="descclassname">lib.supermag.</code><code class="descname">mag_thresh_kf</code><span class="sig-paren">(</span><em>ds, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.mag_thresh_kf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the threshold for each station pair, my method.</p>
+<p>This function simply uses the first canonical correlation coefficients
+across the entire time series for each station pair.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the thresholds for each station pair.</dt><dd><p>The data_vars are: thresholds.</p>
+<p>The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.plot_connections_globe">
+<code class="descclassname">lib.supermag.</code><code class="descname">plot_connections_globe</code><span class="sig-paren">(</span><em>station_components</em>, <em>adj_matrix</em>, <em>ortho_trans=(0</em>, <em>0)</em>, <em>t=None</em>, <em>list_of_stations=None</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.plot_connections_globe" title="Permalink to this definition">¶</a></dt>
+<dd><p>right now this assumes i want to plot all stations in the adj_matrix for a single time,
+will add more later
+also gives 2 plots for some reason</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.plot_mag_adj_mat">
+<code class="descclassname">lib.supermag.</code><code class="descname">plot_mag_adj_mat</code><span class="sig-paren">(</span><em>ds, ds_win, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.plot_mag_adj_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and plot the adjacency matrix for a set of stations during one time window.</p>
+<p>This function does the same as <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_adj_mat()</span></code>. In addition to
+calculating the adjacency matrix, this also returns the plot of the
+adjacency matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This is used to calculate the pairwise thresholds.</p></li>
+<li><p><strong>ds_win</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This window of a Dataset is used to calculate the pairwise correlations,
+for comparison with the above pairwise thresholds.</p></li>
+<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul>
+<li><p><em>xarray.Dataset</em> –</p>
+<dl>
+<dt>Dataset containing the adjacency coefficients.</dt><dd><p>The data_vars are: adj_coeffs.</p>
+<p>The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</li>
+<li><p><em>matplotlib.figure.Figure</em> – Plot of the adjacency matrix.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.plot_mag_data">
+<code class="descclassname">lib.supermag.</code><code class="descname">plot_mag_data</code><span class="sig-paren">(</span><em>ds</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.plot_mag_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot components of data like on the SuperMAG website.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p><em>NoneType</em> – One column of plots, where each plot shows the components of one station over time.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.power_spectrum">
+<code class="descclassname">lib.supermag.</code><code class="descname">power_spectrum</code><span class="sig-paren">(</span><em>ts=None</em>, <em>ds=None</em>, <em>station=None</em>, <em>component=None</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.power_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the power spectrum of the Fourier transform of the time series.
+It is recommended to use a small amount of the time series for best results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+Can be replaced by including ds, station, and component inputs.
+Timeseries of one component in one station.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This will be used to extract a timeseries of the same form as the ts input.</p></li>
+<li><p><strong>station</strong> (<em>string</em><em>, </em><em>optional</em>) – Three letter code for the station to be used in the extraction of timeseries from ds input.</p></li>
+<li><p><strong>component</strong> (<em>string</em><em>, </em><em>optional</em>) – Component to be used in the extraction of timeseries from ds input.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p><em>matplotlib.figure.Figure</em> – Plot of the power spectrum. This may be a list of lines?</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.spectrogram">
+<code class="descclassname">lib.supermag.</code><code class="descname">spectrogram</code><span class="sig-paren">(</span><em>ts=None</em>, <em>ds=None</em>, <em>station=None</em>, <em>component=None</em>, <em>win_len=128</em>, <em>win_olap=None</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.spectrogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a spectrogram for one component of one station.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+Can be replaced by including ds, station, and component inputs.
+Timeseries of one component in one station.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This will be used to extract a timeseries of the same form as the ts input.</p></li>
+<li><p><strong>station</strong> (<em>string</em><em>, </em><em>optional</em>) – Three letter code for the station to be used in the extraction of timeseries from ds input.</p></li>
+<li><p><strong>component</strong> (<em>string</em><em>, </em><em>optional</em>) – Component to be used in the extraction of timeseries from ds input.</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the window. Default is 128 (minutes).</p></li>
+<li><p><strong>win_olap</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the overlap of consecutive windows. Default is win_len - 1 for
+a new window every minute.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p><em>matplotlib.figure.Figure</em> – Plot of the spectrogram. This may be a NoneType?</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.threshold_ds">
+<code class="descclassname">lib.supermag.</code><code class="descname">threshold_ds</code><span class="sig-paren">(</span><em>ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.threshold_ds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the threshold for each station pair, using a windowed approach.</p>
+<p>This function windows the Dataset and then follows the outline in the
+Dods et al (2015) paper for calculating the pairwise thresholds in each window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</p></li>
+<li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the thresholds for each station pair.</dt><dd><p>The data_vars are: thresholds.</p>
+<p>The coordinates are: first_st, second_st, win_start.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.supermag.window">
+<code class="descclassname">lib.supermag.</code><code class="descname">window</code><span class="sig-paren">(</span><em>ds</em>, <em>win_len=128</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.supermag.window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window the time series for a given window length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset with the SuperMAG data easily accessible and an extra dimension from windowing.</dt><dd><p>The data_vars are: measurements, mlts, mlats.</p>
+<p>The coordinates are: time, component, station, window.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">SuperMAG Space Weather</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Group B.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
