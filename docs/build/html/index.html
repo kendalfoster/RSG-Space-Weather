@@ -1,0 +1,614 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to Space Weather’s documentation! &#8212; Space Weather 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-space-weather-s-documentation">
+<h1>Welcome to Space Weather’s documentation!<a class="headerlink" href="#welcome-to-space-weather-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="analysis">
+<h2>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-spaceweather.analysis.cca">
+<span id="canonical-correlation-analysis"></span><h3>Canonical Correlation Analysis<a class="headerlink" href="#module-spaceweather.analysis.cca" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.analysis.cca.cca">
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">cca</code><span class="sig-paren">(</span><em>ds, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.cca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run canonical correlation analysis between stations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset containing the canonical correlation analysis attributes.</dt>
+<dd><p class="first">The data_vars are: coeffs, weights, ang_rel, ang_abs, comps.</p>
+<p class="last">The coordinates are: first_st, second_st, component, index, ab, uv.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.cca.cca_coeffs">
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">cca_coeffs</code><span class="sig-paren">(</span><em>ds, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.cca_coeffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the first canonical correlation coefficients between stations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset containing the first canonical correlation coefficients.</dt>
+<dd><p class="first">The data_vars are: cca_coeffs.</p>
+<p class="last">The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.cca.inter_phase_dir_corr">
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">inter_phase_dir_corr</code><span class="sig-paren">(</span><em>ds</em>, <em>station1</em>, <em>station2</em>, <em>wind_start1</em>, <em>wind_start2</em>, <em>win_len=128</em>, <em>components=None</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.inter_phase_dir_corr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the CCA between two stations for two windows</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This is used to calculate the correlations</li>
+<li><strong>and station2</strong> (<em>station1</em>) – Stations you want to have a corellogram comparing, station1 remains fixed whilst
+the window is shifted for station2</li>
+<li><strong>and wind_start2</strong> (<em>wind_start1</em>) – The indexes of the windows you want to comapre</li>
+<li><strong>win_len</strong> (<em>float</em><em>, </em><em>default 128</em>) – The length of the window applied on the data</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>cca_coeffs</strong> – The first CCA coefficient</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-spaceweather.analysis.data_funcs">
+<span id="data-functions"></span><h3>Data Functions<a class="headerlink" href="#module-spaceweather.analysis.data_funcs" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.analysis.data_funcs.mag_csv_to_Dataset">
+<code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">mag_csv_to_Dataset</code><span class="sig-paren">(</span><em>csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.mag_csv_to_Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restructure the SuperMAG data as an xarray Dataset.</p>
+<p>Returns an xarray Dataset with time as the first dimension.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>csv_file</strong> (<em>csv file</em>) – CSV file downloaded from the SuperMAG website.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+<li><strong>MLT</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if MLT data is included in csv_file, False otherwise.</li>
+<li><strong>MLAT</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if MLAT data is included in csv_file, False otherwise.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset with the SuperMAG data easily accessible.</dt>
+<dd><p class="first">The data_vars are: measurements, mlts, mlats.</p>
+<p class="last">The coordinates are: time, component, station.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.data_funcs.mag_detrend">
+<code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">mag_detrend</code><span class="sig-paren">(</span><em>ds</em>, <em>type='linear'</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.mag_detrend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detrend the time series for each component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</li>
+<li><strong>type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of detrending passed to scipy detrend. Default is ‘linear’.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset with the SuperMAG data easily accessible.</dt>
+<dd><p class="first">The data_vars are: measurements.</p>
+<p class="last">The coordinates are: time, component, station.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.data_funcs.window">
+<code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">window</code><span class="sig-paren">(</span><em>ds</em>, <em>win_len=128</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window the time series for a given window length.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</li>
+<li><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset with the SuperMAG data easily accessible and an extra dimension from windowing.</dt>
+<dd><p class="first">The data_vars are: measurements, mlts, mlats.</p>
+<p class="last">The coordinates are: time, component, station, window.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-spaceweather.analysis.generate_model_data">
+<span id="generating-model-data"></span><h3>Generating Model Data<a class="headerlink" href="#module-spaceweather.analysis.generate_model_data" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-spaceweather.analysis.threshold">
+<span id="thresholding"></span><h3>Thresholding<a class="headerlink" href="#module-spaceweather.analysis.threshold" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.analysis.threshold.mag_adj_mat">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">mag_adj_mat</code><span class="sig-paren">(</span><em>ds, ds_win, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.mag_adj_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the adjacency matrix for a set of stations during one time window.</p>
+<p>This function follows the outline in the Dods et al (2015) paper for
+calculating the pairwise thresholds. It then determines adjacency by
+comparing the correlations in the specified window of the dataset to the
+above thresholds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This is used to calculate the pairwise thresholds.</li>
+<li><strong>ds_win</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This window of a Dataset is used to calculate the pairwise correlations,
+for comparison with the above pairwise thresholds.</li>
+<li><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset containing the adjacency coefficients.</dt>
+<dd><p class="first">The data_vars are: adj_coeffs.</p>
+<p class="last">The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.threshold.mag_thresh_dods">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">mag_thresh_dods</code><span class="sig-paren">(</span><em>ds, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.mag_thresh_dods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the threshold for each station pair, method used in Dods et al (2015) paper.</p>
+<p>This function follows the outline in the Dods et al (2015) paper.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</li>
+<li><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset containing the thresholds for each station pair.</dt>
+<dd><p class="first">The data_vars are: thresholds.</p>
+<p class="last">The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.threshold.mag_thresh_kf">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">mag_thresh_kf</code><span class="sig-paren">(</span><em>ds, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.mag_thresh_kf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the threshold for each station pair, my method.</p>
+<p>This function simply uses the first canonical correlation coefficients
+across the entire time series for each station pair.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset containing the thresholds for each station pair.</dt>
+<dd><p class="first">The data_vars are: thresholds.</p>
+<p class="last">The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.threshold.threshold_ds">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">threshold_ds</code><span class="sig-paren">(</span><em>ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.threshold_ds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the threshold for each station pair, using a windowed approach.</p>
+<p>This function windows the Dataset and then follows the outline in the
+Dods et al (2015) paper for calculating the pairwise thresholds in each window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</li>
+<li><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</li>
+<li><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Dataset containing the thresholds for each station pair.</dt>
+<dd><p class="first">The data_vars are: thresholds.</p>
+<p class="last">The coordinates are: first_st, second_st, win_start.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">xarray.Dataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="visualisation">
+<h2>Visualisation<a class="headerlink" href="#visualisation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-spaceweather.visualisation.animations">
+<span id="animations"></span><h3>Animations<a class="headerlink" href="#module-spaceweather.visualisation.animations" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-spaceweather.visualisation.globes">
+<span id="globes"></span><h3>Globes<a class="headerlink" href="#module-spaceweather.visualisation.globes" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.visualisation.globes.plot_connections_globe">
+<code class="descclassname">spaceweather.visualisation.globes.</code><code class="descname">plot_connections_globe</code><span class="sig-paren">(</span><em>station_components</em>, <em>adj_matrix</em>, <em>ortho_trans=(0</em>, <em>0)</em>, <em>t=None</em>, <em>list_of_stations=None</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.globes.plot_connections_globe" title="Permalink to this definition">¶</a></dt>
+<dd><p>right now this assumes i want to plot all stations in the adj_matrix for a single time,
+will add more later
+also gives 2 plots for some reason</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-spaceweather.visualisation.heatmaps">
+<span id="heatmaps"></span><h3>Heatmaps<a class="headerlink" href="#module-spaceweather.visualisation.heatmaps" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.visualisation.heatmaps.corellogram">
+<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">corellogram</code><span class="sig-paren">(</span><em>ds</em>, <em>station1</em>, <em>station2</em>, <em>lag_range=10</em>, <em>win_len=128</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.corellogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and plots a corllogram for two stations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This is used to calculate the correlations</li>
+<li><strong>and station2</strong> (<em>station1</em>) – Stations you want to have a corellogram comparing, station1 remains fixed whilst
+the window is shifted for station2</li>
+<li><strong>lag_range</strong> (<em>float</em><em>, </em><em>default 10</em>) – The range of lags you want to examine</li>
+<li><strong>win_len</strong> (<em>float</em><em>, </em><em>default 128</em>) – The length you want your window to be</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Plot of the corellogram</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotlib.figure.Figure</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.heatmaps.plot_mag_adj_mat">
+<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_mag_adj_mat</code><span class="sig-paren">(</span><em>ds, ds_win, n0=0.25, components=['N', 'E', 'Z']</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_mag_adj_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and plot the adjacency matrix for a set of stations during one time window.</p>
+<p>This function does the same as <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_adj_mat()</span></code>. In addition to
+calculating the adjacency matrix, this also returns the plot of the
+adjacency matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This is used to calculate the pairwise thresholds.</li>
+<li><strong>ds_win</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This window of a Dataset is used to calculate the pairwise correlations,
+for comparison with the above pairwise thresholds.</li>
+<li><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><p class="first"><em>xarray.Dataset</em> –</p>
+<dl class="docutils">
+<dt>Dataset containing the adjacency coefficients.</dt>
+<dd><p class="first">The data_vars are: adj_coeffs.</p>
+<p class="last">The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><em>matplotlib.figure.Figure</em> – Plot of the adjacency matrix.</p>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-spaceweather.visualisation.lines">
+<span id="line-plots-of-data"></span><h3>Line Plots of Data<a class="headerlink" href="#module-spaceweather.visualisation.lines" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.visualisation.lines.plot_mag_data">
+<code class="descclassname">spaceweather.visualisation.lines.</code><code class="descname">plot_mag_data</code><span class="sig-paren">(</span><em>ds</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.lines.plot_mag_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot components of data like on the SuperMAG website.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><em>NoneType</em> – One column of plots, where each plot shows the components of one station over time.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-spaceweather.visualisation.spectral_analysis">
+<span id="spectral-analysis"></span><h3>Spectral Analysis<a class="headerlink" href="#module-spaceweather.visualisation.spectral_analysis" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.visualisation.spectral_analysis.power_spectrum">
+<code class="descclassname">spaceweather.visualisation.spectral_analysis.</code><code class="descname">power_spectrum</code><span class="sig-paren">(</span><em>ts=None</em>, <em>ds=None</em>, <em>station=None</em>, <em>component=None</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.spectral_analysis.power_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the power spectrum of the Fourier transform of the time series.
+It is recommended to use a small amount of the time series for best results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+Can be replaced by including ds, station, and component inputs.
+Timeseries of one component in one station.</li>
+<li><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This will be used to extract a timeseries of the same form as the ts input.</li>
+<li><strong>station</strong> (<em>string</em><em>, </em><em>optional</em>) – Three letter code for the station to be used in the extraction of timeseries from ds input.</li>
+<li><strong>component</strong> (<em>string</em><em>, </em><em>optional</em>) – Component to be used in the extraction of timeseries from ds input.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last"><em>matplotlib.figure.Figure</em> – Plot of the power spectrum. This may be a list of lines?</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.spectral_analysis.spectrogram">
+<code class="descclassname">spaceweather.visualisation.spectral_analysis.</code><code class="descname">spectrogram</code><span class="sig-paren">(</span><em>ts=None</em>, <em>ds=None</em>, <em>station=None</em>, <em>component=None</em>, <em>win_len=128</em>, <em>win_olap=None</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.spectral_analysis.spectrogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a spectrogram for one component of one station.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+Can be replaced by including ds, station, and component inputs.
+Timeseries of one component in one station.</li>
+<li><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This will be used to extract a timeseries of the same form as the ts input.</li>
+<li><strong>station</strong> (<em>string</em><em>, </em><em>optional</em>) – Three letter code for the station to be used in the extraction of timeseries from ds input.</li>
+<li><strong>component</strong> (<em>string</em><em>, </em><em>optional</em>) – Component to be used in the extraction of timeseries from ds input.</li>
+<li><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the window. Default is 128 (minutes).</li>
+<li><strong>win_olap</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the overlap of consecutive windows. Default is win_len - 1 for
+a new window every minute.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last"><em>matplotlib.figure.Figure</em> – Plot of the spectrogram. This may be a NoneType?</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="section" id="indices-and-tables">
+<h4>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Space Weather</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Group B.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
