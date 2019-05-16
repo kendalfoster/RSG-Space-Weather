@@ -8,9 +8,9 @@ from scipy import signal
 import matplotlib.pyplot as plt
 import pandas as pd
 import xarray as xr # if gives error, just rerun
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from PIL import Image
+#import cartopy.crs as ccrs
+#import cartopy.feature as cfeature
+#from PIL import Image
 # Local Packages
 import lib.rcca as rcca
 import seaborn as sns
