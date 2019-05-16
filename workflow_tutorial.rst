@@ -34,3 +34,6 @@ After a merge or perhaps a significant merge, it is often useful to rebase the i
 - ensure you are on the individual branch: :code:`git checkout <individual_branch_name>`
 - rebase the individual branch from the master on GitHub (instead of the local master; this prevents issues with pulling master locally after a merge): :code:`git rebase <individual_branch_name> remotes/origin/master`
 - if conflicts arise, try (adding and ) committing all changes to the individual branch before reattempting the rebase
+- it may be necessary to force these changes onto the individual branch: :code:`git push origin HEAD:<individual_branch_name>`
+- then switch to the individual branch: :code:`git checkout <individual_branch_name>`
+- lastly, pull the changes from the rebase: :code:`git pull`
