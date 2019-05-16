@@ -11,8 +11,8 @@ Basically, inside the function definition you include the documentation sandwich
 
 - Note the triple quotes each go on their own lines, without a blank line in between the actual documentation.
 - Also note that there is a blank line between the sections of the documentation; without this, the documentation descends into chaos and gets mucky.
-- If you want something a description of something to have a line break, include "\n".
-- To reference another function in the documentation, use ":func:`path_to_and_name_of_other_function`". Note the `, not a '.
+- If you want something a description of something to have a line break, include "\n". Simply going to the next line just continues the section.
+- To reference another function in the documentation, use ":func:`path_to_and_name_of_function`". Note the `, not a '.
 - To denote a parameter as optional, add ", optional" after its type.
 
 Here is a template::
@@ -21,7 +21,9 @@ Here is a template::
       """
       A short description of the function.
 
-      A longer description of the function, maybe include more details or relation to other functions. You could also explain why the function exists, or you could just write words to fill the space. Please don't do that; not every function requires a longer description.
+      A longer description of the function, maybe include more details or relation to other functions.
+      You could also explain why the function exists, or you could just write words to fill the space.
+      Please don't do that; not every function requires a longer description.
 
       Parameters
       ----------
