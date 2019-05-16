@@ -12,7 +12,7 @@ Do Now
 Do in Near Future
 -----------------
 - animate correlation coeffs in matrix over time
-  - normalize/threshold the corr coeffs
-  - get network parameters
+- normalize/threshold the corr coeffs
+- get network parameters
 - animate network on globe, with day n nite
 - one chain, fixed longitude
