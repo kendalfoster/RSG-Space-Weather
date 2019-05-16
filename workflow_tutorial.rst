@@ -18,7 +18,9 @@ Once the code on the individual branch is confirmed to work properly and is read
 - assuming the merge is able to happen, write a descriptive title for the merge and possibly a longer comment if necessary
 - scroll down and click the big green button labeled "Create pull request"
 - deal with any conflicts that may arise (this can be painful, very painful)
-- finally, scroll down and click the big green button labeled "Merge pull request"
+- finally, scroll down and click the dropdown on the big green button labeled "Merge pull request"
+- click "Squash and merge", then click the big green button
+- click the big green button labeled "Confirm merge"
 
 
 
