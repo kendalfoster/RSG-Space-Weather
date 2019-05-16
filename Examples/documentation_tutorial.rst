@@ -91,4 +91,5 @@ This is the part that uses Sphinx, so make sure you have it installed.
 - There is a way to host the documentation on readthedocs and have it update automatically with GitHub commits, but save that for later.
 
 You can view the documentation by navigating to::
+
   git repo > docs > build > html > index.html
