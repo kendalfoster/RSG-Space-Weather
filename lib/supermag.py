@@ -746,7 +746,7 @@ def power_spectrum(ts=None, ds=None, station=None, component=None):
         Three letter code for the station to be used in the extraction of timeseries from ds input.
     component : string, optional
         Component to be used in the extraction of timeseries from ds input.
-        
+
     Yields
     -------
     matplotlib.figure.Figure
@@ -1163,3 +1163,97 @@ def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,win_len=12
      cca_coeffs = ccac.cancorrs[0]
 
      return cca_coeffs
+
+
+
+
+
+
+
+
+
+'''--------------------------------------yz coloured plots'''
+
+
+
+def plot_data_globe_colour(station_readings, t, list_of_stations = None, ortho_trans = (0, 0)):
+    if np.all(list_of_stations == None):
+        list_of_stations = station_readings.station
+    if np.all(ortho_trans == (0, 0)):
+        ortho_trans = yz.auto_ortho(list_of_stations)
+
+    station_coords = yz.csv_to_coords()
+    num_stations = len(list_of_stations)
+    x = np.zeros(num_stations)
+    y = np.zeros(num_stations)
+    u = np.zeros(num_stations)
+    v = np.zeros(num_stations)
+    i = 0
+
+    for station in list_of_stations:
+        x[i] = station_coords.longitude.loc[dict(station = station)]
+        y[i] = station_coords.latitude.loc[dict(station = station)]
+        u[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "E")]
+        v[i] = station_readings.measurements.loc[dict(station = station, time = t, reading = "N")]
+        i += 1
+
+    fig = plt.figure(figsize = (20, 20))
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Orthographic(ortho_trans[0], ortho_trans[1])) #(long, lat)
+    ax.add_feature(cfeature.OCEAN, zorder=0)
+    ax.add_feature(cfeature.LAND, zorder=0, edgecolor='grey')
+    ax.add_feature(cfeature.BORDERS, zorder=0, edgecolor='grey')
+    ax.add_feature(cfeature.LAKES, zorder=0)
+    ax.set_global()
+    ax.gridlines()
+
+    ax.scatter(x, y, color = "k", transform = ccrs.Geodetic()) #plots stations
+
+    colours = np.ones((num_stations, 3))
+
+    for i in range(num_stations):
+        colours[i, 0] = station_coords.longitude.loc[dict(station = list_of_stations[i])]/360
+        colours[i, 2] = (station_coords.latitude.loc[dict(station = list_of_stations[i])]-10)/80
+
+    colours = plc.hsv_to_rgb(colours)
+
+    # for i in range(num_stations):
+    #     ax.quiver(x[i:i+1], y[i:i+1], u[i:i+1], v[i:i+1], transform = ccrs.PlateCarree(), #plots vector data
+    #           width = 0.002, color = colours[i, :])
+
+    ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
+          width = 0.002, color = colours)
+
+    # plt.text(0, 0, "test", transform = ccrs.PlateCarree())
+    # time = pd.to_datetime(str(t)).strftime('%Y.%m.%d %H:%M')
+
+    ts = pd.to_datetime(str(t.data))
+    mytime = ts.strftime('%Y.%m.%d %H:%M')
+
+    plt.title("%s" %mytime, fontsize = 30)
+
+    return fig
+
+
+
+
+def data_globe_gif_colour(station_readings, list_of_stations, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra"):
+    #times in terms of index in the array, might be helpful to have a fn to look up index from timestamps
+    names = []
+    images = []
+    # list_of_stations = station_readings.station
+    if np.all(ortho_trans == (0, 0)):
+        ortho_trans = auto_ortho(list_of_stations)
+
+    for i in range(time_start, time_end):
+        t = station_readings.time[i]
+        fig = plot_data_globe(station_readings, t, list_of_stations, ortho_trans)
+        fig.savefig("gif/images_for_giffing/%s.png" %i)
+
+    for i in range(time_start, time_end):
+        names.append("gif/images_for_giffing/%s.png" %i)
+
+    for n in names:
+        frame = Image.open(n)
+        images.append(frame)
+
+    images[0].save("gif/%s.gif" %file_name, save_all = True, append_images = images[1:], duration = 50, loop = 0)
