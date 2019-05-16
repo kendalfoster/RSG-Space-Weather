@@ -23,9 +23,10 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 
 
 
-import spaceweather.analysis.supermag as sm
+import spaceweather.supermag as sm
 
 from spaceweather.visualisation import globes as svg
+from spaceweather.visualisation import animations as sva
 
 import numpy as np
 
@@ -46,20 +47,8 @@ svg.plot_data_globe_colour(station_components, t, list_of_stations = None, ortho
 
 
 
-sm.data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
+sva.data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), colour = False, file_name = "sandra")
 #makes sandra.gif in the /gif folder
-
-
-#generating fake adjacency matrix
-N = 9
-# length = 50
-b = np.random.randint(-2000,2000,size=(N,N))
-
-
-b_symm = (b + b.T)/2
-
-fake_data = b_symm < 0
-
 
 
 sm.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
