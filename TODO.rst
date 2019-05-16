@@ -2,9 +2,6 @@
 To-Do List
 ==========
 
-.. role:: strike
-    :class: strike
-
 Do Now
 ------
 
@@ -17,5 +14,5 @@ Do in Near Future
 - animate correlation coeffs in matrix over time
 - normalize/threshold the corr coeffs
 - get network parameters
-- :strike:`animate network on globe, with day n nite`
+- <s>animate network on globe, with day n nite</s>
 - one chain, fixed longitude
