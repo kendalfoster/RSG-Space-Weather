@@ -16,6 +16,7 @@ Basically, inside the function definition you include the documentation sandwich
 - To denote a parameter as optional, add ", optional" after its type.
 
 Here is a template::
+
   def function(param1, param2=5):
       """
       A short description of the function.
@@ -44,34 +45,35 @@ Here is a template::
       return notadataset
 
 Here is an example from our code (with the function shortened)::
-def mag_detrend(ds, type='linear'):
-    """
-    Detrend the time series for each component.
 
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-    type : str, optional
-        Type of detrending passed to scipy detrend. Default is 'linear'.
+  def mag_detrend(ds, type='linear'):
+      """
+      Detrend the time series for each component.
 
-    Returns
-    -------
-    xarray.Dataset
-        Dataset with the SuperMAG data easily accessible.
-            The data_vars are: measurements.\n
-            The coordinates are: time, component, station.
-    """
+      Parameters
+      ----------
+      ds : xarray.Dataset
+          Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+      type : str, optional
+          Type of detrending passed to scipy detrend. Default is 'linear'.
 
-    stations = ds.station
-    components = ds.component
+      Returns
+      -------
+      xarray.Dataset
+          Dataset with the SuperMAG data easily accessible.
+              The data_vars are: measurements.\n
+              The coordinates are: time, component, station.
+      """
 
-    for i in range(1, len(stations)):
-        da = xr.concat([da, temp_da], dim = 'station')
+      stations = ds.station
+      components = ds.component
 
-    res = da.to_dataset(name = 'measurements')
+      for i in range(1, len(stations)):
+          da = xr.concat([da, temp_da], dim = 'station')
 
-    return res
+      res = da.to_dataset(name = 'measurements')
+
+      return res
 
 
 
