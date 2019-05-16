@@ -13,7 +13,6 @@ import cartopy.feature as cfeature
 from PIL import Image
 # Local Packages
 import lib.rcca as rcca
-import seaborn as sns
 
 
 ## Dependencies
@@ -733,6 +732,7 @@ def power_spectrum(ts=None, ds=None, station=None, component=None):
     """
     Plot the power spectrum of the Fourier transform of the time series.
     It is recommended to use a small amount of the time series for best results.
+
     Parameters
     ----------
     ts : xarray.Dataset, optional
@@ -746,6 +746,7 @@ def power_spectrum(ts=None, ds=None, station=None, component=None):
         Three letter code for the station to be used in the extraction of timeseries from ds input.
     component : string, optional
         Component to be used in the extraction of timeseries from ds input.
+        
     Yields
     -------
     matplotlib.figure.Figure
@@ -776,6 +777,7 @@ def power_spectrum(ts=None, ds=None, station=None, component=None):
 def spectrogram(ts=None, ds=None, station=None, component = None, win_len=128, win_olap=None):
     """
     Plot a spectrogram for one component of one station.
+
     Parameters
     ----------
     ts : xarray.Dataset, optional
@@ -794,6 +796,7 @@ def spectrogram(ts=None, ds=None, station=None, component = None, win_len=128, w
     win_olap : int, optional
         Length of the overlap of consecutive windows. Default is win_len - 1 for
         a new window every minute.
+
     Yields
     -------
     matplotlib.figure.Figure
