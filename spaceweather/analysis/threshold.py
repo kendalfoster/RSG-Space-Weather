@@ -3,6 +3,8 @@ import numpy as np
 import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
+import spaceweather.analysis.cca as sac
+import spaceweather.analysis.data_funcs as sad
 
 
 def mag_thresh_kf(ds, components=['N', 'E', 'Z']):
@@ -27,7 +29,7 @@ def mag_thresh_kf(ds, components=['N', 'E', 'Z']):
             The coordinates are: first_st, second_st.
     """
 
-    thr = inter_st_cca(ds=ds, components=components)
+    thr = sac.cca_coeffs(ds=ds, components=components)
     thr = thr.rename(dict(cca_coeffs = 'thresholds'))
     return thr
 
@@ -58,7 +60,7 @@ def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
     # univeral constants
     stations = ds.station.values
     num_st = len(stations)
-    ct_mat = inter_st_cca(ds=ds, components=components)
+    ct_mat = sac.cca_coeffs(ds=ds, components=components)
     ct_vec = np.linspace(start=0, stop=1, num=101)
 
     # initialize
@@ -125,18 +127,18 @@ def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
     """
 
     # run window over data
-    ds_win = sm.window(ds=ds, win_len=win_len)
+    ds_win = sad.window(ds=ds, win_len=win_len)
 
     # format Dataset
     ds_win = ds_win.transpose('win_rel_time', 'component', 'station', 'win_start')
     ds_win = ds_win.rename(dict(win_rel_time = 'time'))
 
     # get threshold values for each window
-    det = sm.mag_detrend(ds = ds_win[dict(win_start = 0)])
-    net = sm.mag_thresh_dods(ds = det, n0=n0, components=components)
+    det = sad.mag_detrend(ds = ds_win[dict(win_start = 0)])
+    net = mag_thresh_dods(ds = det, n0=n0, components=components)
     for i in range(1, len(ds_win.win_start)):
-        det = sm.mag_detrend(ds = ds_win[dict(win_start = i)])
-        temp = sm.mag_thresh_dods(ds = det, n0=n0, components=components)
+        det = sad.mag_detrend(ds = ds_win[dict(win_start = i)])
+        temp = sad.mag_thresh_dods(ds = det, n0=n0, components=components)
         net = xr.concat([net, temp], dim = 'win_start')
 
     # fix coordinates
@@ -179,7 +181,7 @@ def mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     stations = ds.station.values
     num_st = len(stations)
 
-    cca = inter_st_cca(ds=ds_win, components= components)
+    cca = sac.cca_coeffs(ds=ds_win, components= components)
     cca = cca.assign_coords(first_st = range(num_st))
     cca = cca.assign_coords(second_st = range(num_st))
 

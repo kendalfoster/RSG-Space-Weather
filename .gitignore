@@ -3,3 +3,5 @@ desktop.ini
 *.gslides
 __pycache__/
 lib\__pycache__
+**/*.gif
+**/*.png

@@ -6,6 +6,7 @@ import pandas as pd
 import xarray as xr # if gives error, just rerun
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from cartopy.feature.nightshade import Nightshade
 # Local Packages
 # import spaceweather.rcca as rcca
 
@@ -82,6 +83,14 @@ def plot_stations(list_of_stations, ortho_trans):
 
 ##
 def plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0)):
+
+    # plots N and E components of the vector readings for a single time step t
+    # by default it plots data from all stations fed to it in station_readings unless
+    # specified otherwise in list_of_stations.
+    # ortho_trans specifies the angle from which we see the plot(earth) at.
+    # if left at default, yz.auto_ortho(list_of_stations) centres the view on the centre of all stations in list_of_stations.
+
+
     if np.all(list_of_stations == None):
         list_of_stations = station_components.station
     if np.all(ortho_trans == (0, 0)):
@@ -118,12 +127,14 @@ def plot_data_globe(station_components, t, list_of_stations = None, ortho_trans 
     return fig
 
 
-def plot_data_globe_colour(station_readings, t, list_of_stations = None, ortho_trans = (0, 0)):
+##
+def plot_data_globe_colour(station_readings, t, list_of_stations = None, ortho_trans = (0, 0), daynight = True):
     if np.all(list_of_stations == None):
         list_of_stations = station_readings.station
     if np.all(ortho_trans == (0, 0)):
         ortho_trans = auto_ortho(list_of_stations)
 
+    dt = pd.to_datetime(t)
     station_coords = csv_to_coords()
     num_stations = len(list_of_stations)
     x = np.zeros(num_stations)
@@ -145,6 +156,8 @@ def plot_data_globe_colour(station_readings, t, list_of_stations = None, ortho_t
     ax.add_feature(cfeature.LAND, zorder=0, edgecolor='grey')
     ax.add_feature(cfeature.BORDERS, zorder=0, edgecolor='grey')
     ax.add_feature(cfeature.LAKES, zorder=0)
+    if daynight:
+        ax.add_feature(Nightshade(dt), alpha = 0.2)
     ax.set_global()
     ax.gridlines()
 
@@ -161,13 +174,11 @@ def plot_data_globe_colour(station_readings, t, list_of_stations = None, ortho_t
     ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
           width = 0.002, color = colours)
 
-    ts = pd.to_datetime(str(t.data))
-    mytime = ts.strftime('%Y.%m.%d %H:%M')
+    mytime = dt.strftime('%Y.%m.%d %H:%M')
 
     plt.title("%s" %mytime, fontsize = 30)
 
     return fig
-
 
 
 ##
