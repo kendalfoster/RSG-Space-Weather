@@ -175,7 +175,28 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
 
 
 def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,win_len=128,components=None):
-     #check if readings are provided
+    """
+    Calculates the CCA between two stations for two windows
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This is used to calculate the correlations
+    station1 and station2: float
+        Stations you want to have a corellogram comparing, station1 remains fixed whilst
+        the window is shifted for station2
+    wind_start1 and wind_start2: int
+        The indexes of the windows you want to comapre
+    win_len: float, default 128
+        The length of the window applied on the data
+        
+    Returns
+    -------
+    cca_coeffs: float
+        The first CCA coefficient
+    """
+     # check if readings are provided
      if components is None:
          components = ['N', 'E', 'Z']
 

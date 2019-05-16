@@ -71,6 +71,28 @@ def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
 
 
 def corellogram(ds, station1, station2, lag_range=10, win_len=128):
+    """
+    Calculate and plots a corllogram for two stations
+    
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This is used to calculate the correlations
+    station1 and station2:
+        Stations you want to have a corellogram comparing, station1 remains fixed whilst
+        the window is shifted for station2
+    lag_range: float, default 10
+        The range of lags you want to examine
+    win_len: float, default 128
+        The length you want your window to be
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Plot of the corellogram
+    """
+
     #Window the data
     windowed = window(ds,win_len)
 
