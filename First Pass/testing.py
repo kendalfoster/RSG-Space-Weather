@@ -4,7 +4,6 @@ pwd()
 ## Packages
 import lib.supermag as sm
 import numpy as np
-import lib.rcca as rcca
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
 # https://slproweb.com/products/Win32OpenSSL.html
@@ -15,30 +14,29 @@ import lib.rcca as rcca
 ####################### Restructuring the SuperMAG Data ########################
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
-ds1
 
 ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             components = ['N', 'E', 'Z'],
                             MLT = True, MLAT = True)
-ds2
 
+# exclude MLT data
 ds3 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = False, MLAT = True)
-ds3 # exclude MLT data
 
+# exclude MLAT data, order of stations should be different compared to above
 ds4 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = False)
-ds4 # exclude MLAT data, order of stations should be different compared to above
 
-ds4 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
+# exclude MLT and MLAT data, order of stations should also be different
+ds5 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = False, MLAT = False)
-ds4 # exclude MLT and MLAT data, order of stations should also be different
+
+# CSV file only contains data for one station
+ds_one = sm.mag_csv_to_Dataset("First Pass/one-dik.csv", MLT=True, MLAT=True)
 ################################################################################
 
 
-sm.corellogram(ds2, "BLC", "TAL", 5, 256)
 
-sm.corellogram_max(d)
 
 ################################################################################
 ####################### Plotting ###############################################
@@ -79,6 +77,12 @@ det
 ####################### Windowing ##############################################
 ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
+ds1_slice = ds1[dict(time=slice(0,10))]
+ds1_slice_win = sm.window(ds1_slice, win_len=7)
+
+ds2 = sm.mag_csv_to_Dataset("First Pass/dik1996.csv", MLT = False, MLAT = False)
+True in np.isnan(ds2.measurements)
+ds2_win = sm.window(ds2)
 
 ds1_win = sm.window(ds = ds1)
 ds1_win
@@ -132,6 +136,22 @@ adj_mat2 = sm.print_mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
 
 ## Dods-style Threshold
 
+################################################################################
+
+
+
+
+################################################################################
+####################### Spectral Analysis ######################################
+gw_ds = sm.generate_one_day_time_series('2001-04-03', '08:00:00', 30, 4, [0, 0.25, 0.5],['XXX','YYY'])
+gw_ps = gw_ds[dict(time=slice(480,510))].loc[dict(station='XXX', component='N')]
+gw_ts = gw_ds.loc[dict(station = 'XXX', component = 'N')]
+
+sm.power_spectrum(ts=gw_ps)
+sm.power_spectrum(ds=gw_ds[dict(time=slice(480,510))], station='XXX', component='N')
+
+sm.spectrogram(ts=gw_ts)
+sm.spectrogram(ds=gw_ds, station='XXX', component='N')
 ################################################################################
 
 

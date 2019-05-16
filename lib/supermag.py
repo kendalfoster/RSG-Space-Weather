@@ -39,7 +39,6 @@ import seaborn as sns
 
 ################################################################################
 ####################### Restructure ############################################
-# Note: fix if there's only 1 station
 def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
     """
     Restructure the SuperMAG data as an xarray Dataset.
@@ -78,17 +77,25 @@ def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True
         # sort stations by magnetic latitude (from north to south)
         stations = data['IAGA'].unique()
         num_st = len(stations)
-        mlat_arr = np.vstack((stations,np.zeros(num_st))).transpose()
-        for i in range(0,num_st):
-            mlat_arr[i,1] = data['MLAT'].loc[data['IAGA'] == stations[i]].mean()
-        mlat_arr = sorted(mlat_arr, key=lambda x: x[1], reverse=True)
-        stations = [i[0] for i in mlat_arr]
-        mlats = [round(i[1],4) for i in mlat_arr]
-        # build MLAT Dataset, for merging later
-        ds_mlat = xr.Dataset(data_vars = {'mlats': (['station'], mlats)},
-                             coords = {'station': stations})
+        if num_st > 1:
+            mlat_arr = np.vstack((stations,np.zeros(num_st))).transpose()
+            for i in range(0,num_st):
+                mlat_arr[i,1] = data['MLAT'].loc[data['IAGA'] == stations[i]].mean()
+            mlat_arr = sorted(mlat_arr, key=lambda x: x[1], reverse=True)
+            stations = [i[0] for i in mlat_arr]
+            mlats = [round(i[1],4) for i in mlat_arr]
+            # build MLAT Dataset, for merging later
+            ds_mlat = xr.Dataset(data_vars = {'mlats': (['station'], mlats)},
+                                 coords = {'station': stations})
+        else: # if only one station
+            mlats = data['MLAT'].loc[data['IAGA'] == stations[0]].mean()
+            da_mlat = xr.DataArray(data = mlats)
+            da_mlat = da_mlat.expand_dims(station = stations)
+            # convert DataArray into Dataset, for merging later
+            ds_mlat = da_mlat.to_dataset(name = 'mlats')
     elif MLAT is not True:
         stations = data['IAGA'].unique()
+        num_st = len(stations)
 
     # if MLT (Magnetic Local Time) is included, make a Dataset
     if MLT is True:
@@ -100,19 +107,19 @@ def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True
                            coords = [temp_times_mlt],
                            dims = ['time'])
         # loop through the stations and append each to master DataArray
-        for i in stations[1:]:
-            temp_data_mlt = data[cols_mlt].loc[data['IAGA'] == i]
-            temp_times_mlt = pd.to_datetime(temp_data_mlt['Date_UTC'].unique())
-            temp_mlt = xr.DataArray(data = temp_data_mlt['MLT'],
-                                    coords = [temp_times_mlt],
-                                    dims = ['time'])
-            mlt = xr.concat([mlt, temp_mlt], dim = 'station')
-            mlt = mlt.transpose('time', 'station')
-        # build MLT Dataset, for merging later
-        ds_mlt = xr.Dataset(data_vars = {'mlts': (['time', 'station'], mlt)},
-                            coords = {'time': times,
-                                      'station': stations})
-
+        if num_st > 1:
+            for i in stations[1:]:
+                temp_data_mlt = data[cols_mlt].loc[data['IAGA'] == i]
+                temp_times_mlt = pd.to_datetime(temp_data_mlt['Date_UTC'].unique())
+                temp_mlt = xr.DataArray(data = temp_data_mlt['MLT'],
+                                        coords = [temp_times_mlt],
+                                        dims = ['time'])
+                mlt = xr.concat([mlt, temp_mlt], dim = 'station')
+                mlt = mlt.transpose('time', 'station')
+        else: # if only one station
+            mlt = mlt.expand_dims(station = stations)
+        # convert DataArray into Dataset, for merging later
+        ds_mlt = mlt.to_dataset(name = 'mlts')
 
 
     #-----------------------------------------------------------------------
@@ -127,22 +134,21 @@ def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True
                       coords = [temp_times, components],
                       dims = ['time', 'component'])
 
-    # loop through the stations and append each to master DataArray
-    for i in stations[1:]:
-        temp_data = data[cols].loc[data['IAGA'] == i]
-        temp_times = pd.to_datetime(temp_data['Date_UTC'].unique())
-        temp_da = xr.DataArray(data = temp_data[components],
-                               coords = [temp_times, components],
-                               dims = ['time', 'component'])
-        da = xr.concat([da, temp_da], dim = 'station')
-        da = da.transpose('time', 'component', 'station')
+    # loop through rest of the stations and append each to master DataArray
+    if num_st > 1:
+        for i in stations[1:]:
+            temp_data = data[cols].loc[data['IAGA'] == i]
+            temp_times = pd.to_datetime(temp_data['Date_UTC'].unique())
+            temp_da = xr.DataArray(data = temp_data[components],
+                                   coords = [temp_times, components],
+                                   dims = ['time', 'component'])
+            da = xr.concat([da, temp_da], dim = 'station')
+            da = da.transpose('time', 'component', 'station')
+    else: # if only one station
+        da = da.expand_dims(station = stations)
 
-    # build Dataset from components
-    ds = xr.Dataset(data_vars = {'measurements': (['time', 'component', 'station'], da)},
-                    coords = {'time': times,
-                              'component': components,
-                              'station': stations})
-
+    # convert DataArray into Dataset
+    ds = da.to_dataset(name = 'measurements')
 
 
     #-----------------------------------------------------------------------
@@ -263,10 +269,17 @@ def window(ds, win_len=128):
             The coordinates are: time, component, station, window.
     """
 
+    # check for NA values in Dataset
+    if True in np.isnan(ds.measurements):
+        print('WARNING: Dataset contains NA values')
+        ds = ds.dropna(dim = 'time', how = 'any')
+
     # create a rolling object
-    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna('time')
+    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna(dim = 'time')
     # fix window coordinates
     ds_roll = ds_roll.assign_coords(win_rel_time = range(win_len))
+    times = ds_roll.time - np.timedelta64(win_len-1, 'm')
+    ds_roll = ds_roll.assign_coords(time = times)
     ds_roll = ds_roll.rename(dict(time = 'win_start'))
     # ensure the coordinates are in the proper order
     ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_rel_time')
@@ -298,9 +311,8 @@ def cca(ds, components=['N', 'E', 'Z']):
             The coordinates are: first_st, second_st, component, index, ab, uv.
     """
 
-    # detrend input Dataset, remove NAs
+    # detrend input Dataset
     ds = mag_detrend(ds)
-    ds = ds.dropna(dim = 'time')
 
     # universal constants
     stations = ds.station.values
@@ -332,22 +344,30 @@ def cca(ds, components=['N', 'E', 'Z']):
             # coeffs
             coeffs_arr[i,j] = ccac.cancorrs[0]
             coeffs_arr[j,i] = coeffs_arr[i,j] # mirror results
-            # weights
-            w0 = ccac.ws[0].flatten()
-            w1 = ccac.ws[1].flatten()
+            # weights (a and b from Wikipedia)
+            w0 = ccac.ws[0].flatten() # this is a
+            w1 = ccac.ws[1].flatten() # this is b
             weights_arr[i,j,0,:] = w0
             weights_arr[i,j,1,:] = w1
             weights_arr[j,i,0,:] = w0 # mirror results
             weights_arr[j,i,1,:] = w1 # mirror results
-            # angles
-            ang_rel_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1), -1.0, 1.0)))
+            # angles, relative
+            wt_norm = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(w1**2))
+            ang_rel_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1)/wt_norm, -1.0, 1.0)))
             ang_rel_arr[j,i] = ang_rel_arr[i,j] # mirror results
+            # angles, absolute
             for k in range(num_cp):
-                ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, st_1[dict(time=k)].values), -1.0, 1.0)))
-                ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, st_1[dict(time=k)].values), -1.0, 1.0)))
-            # comps
-            comps_arr[i,j,0,:] = ccac.comps[0].flatten()
-            comps_arr[i,j,1,:] = ccac.comps[1].flatten()
+                xdata = st_1[dict(time=k)].values
+                ydata = st_2[dict(time=k)].values
+                wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
+                wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
+                ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
+                ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
+                ang_abs_arr[j,i,k,0] = ang_abs_arr[i,j,k,0]
+                ang_abs_arr[j,i,k,1] = ang_abs_arr[i,j,k,1]
+            # comps (a^T*X and b^T*Y from Wikipedia)
+            comps_arr[i,j,0,:] = ccac.comps[0].flatten() # this is a^T*X
+            comps_arr[i,j,1,:] = ccac.comps[1].flatten() # this is b^T*Y
             comps_arr[j,i,0,:] = comps_arr[i,j,0,:] # mirror results
             comps_arr[j,i,1,:] = comps_arr[i,j,1,:] # mirror results
 
@@ -702,6 +722,105 @@ def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     plt.show()
 
     return adj_mat, fig
+################################################################################
+
+
+
+
+################################################################################
+####################### Spectral Analysis ######################################
+def power_spectrum(ts=None, ds=None, station=None, component=None):
+    """
+    Plot the power spectrum of the Fourier transform of the time series.
+    It is recommended to use a small amount of the time series for best results.
+    Parameters
+    ----------
+    ts : xarray.Dataset, optional
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Can be replaced by including ds, station, and component inputs.
+        Timeseries of one component in one station.
+    ds : xarray.Dataset, optional
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This will be used to extract a timeseries of the same form as the ts input.
+    station : string, optional
+        Three letter code for the station to be used in the extraction of timeseries from ds input.
+    component : string, optional
+        Component to be used in the extraction of timeseries from ds input.
+    Yields
+    -------
+    matplotlib.figure.Figure
+        Plot of the power spectrum. This may be a list of lines?
+    """
+
+    # prepare the time series
+    if ts is None:
+        ts = ds.loc[dict(station = station, component = component)]
+    ts = ts.dropna(dim = 'time', how = 'any').measurements
+
+    # fast Fourier transform the time series
+    ft_ts = sp.fftpack.fft(ts)
+
+    # get the frequencies corresponding to the FFT
+    n = len(ts)
+    freqs = sp.fftpack.fftfreq(n = n, d = 1)
+
+    # plot power spectrum
+    fig = plt.figure(figsize=(10,8))
+    plt.plot(freqs[0:n//2], np.abs(ft_ts[0:n//2]))
+    plt.title('Power Spectrum', fontsize=30)
+    plt.xlabel('Frequency, cycles/min', fontsize=20)
+    plt.ylabel('Intensity, counts', fontsize=20)
+    # explicitly returning the figure results in two figures being shown
+
+
+def spectrogram(ts=None, ds=None, station=None, component = None, win_len=128, win_olap=None):
+    """
+    Plot a spectrogram for one component of one station.
+    Parameters
+    ----------
+    ts : xarray.Dataset, optional
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Can be replaced by including ds, station, and component inputs.
+        Timeseries of one component in one station.
+    ds : xarray.Dataset, optional
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This will be used to extract a timeseries of the same form as the ts input.
+    station : string, optional
+        Three letter code for the station to be used in the extraction of timeseries from ds input.
+    component : string, optional
+        Component to be used in the extraction of timeseries from ds input.
+    win_len : int, optional
+        Length of the window. Default is 128 (minutes).
+    win_olap : int, optional
+        Length of the overlap of consecutive windows. Default is win_len - 1 for
+        a new window every minute.
+    Yields
+    -------
+    matplotlib.figure.Figure
+        Plot of the spectrogram. This may be a NoneType?
+    """
+
+    # prepare the time series
+    if ts is None:
+        ts = ds.loc[dict(station = station, component = component)]
+    ts = ts.dropna(dim = 'time', how = 'any').measurements
+
+    # check the window overlap
+    if win_olap is None:
+        win_olap = win_len - 1
+
+    # setup spectrogram
+    f, t, Sxx = sp.signal.spectrogram(ts, nperseg = win_len, noverlap = win_olap)
+
+    # plot spectrogram
+    fig = plt.figure(figsize=(10,8))
+    plt.pcolormesh(t, f, Sxx, norm = colors.LogNorm(vmin = 1, vmax = 20000))
+    plt.title('Spectrogram', fontsize=30)
+    plt.xlabel('Time Window', fontsize=20)
+    plt.ylabel('Frequency, cycles/min', fontsize=20)
+    plt.colorbar(label='Intensity')
+    fig.axes[-1].yaxis.label.set_size(20)
+    # explicitly returning the figure results in two figures being shown
 ################################################################################
 
 
