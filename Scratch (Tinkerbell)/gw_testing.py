@@ -6,9 +6,10 @@ import xarray as xr # if gives warning/error, just rerun
 import matplotlib.pyplot as plt
 from scipy import signal
 from numpy import hstack
-import lib.generate_model_data as gen_data
-import lib.supermag as sm
-import lib.rcca as rcca
+import spaceweather.analysis.generate_model_data as gen_data
+import spaceweather.analysis.cca as cca
+import spaceweather.analysis.data_funcs as data_funcs
+import spaceweather.analysis.threshold as threshold
 
 scratch_ds = gen_data.generate_one_day_time_series('2001-04-03', '08:00:00', 30, 4, [0, 0.25, 0.5],['XXX','YYY'])
 
@@ -90,13 +91,10 @@ def phase_finder(ds, station1, station2, start):
 
 
 
-phase_finder(scratch_ds, "XXX", "YYY", 480)
-
-sm.window(scratch_ds)
 
 
-def angle(ts1,ts2):
-    # input 2 time series, of the same length
-    # each data point in the time series should be a 3-dimensional vector with N, E and Z components
-    # return np.rad2deg(subspace_angles(bbb_a, bbb_b))
-     return np.rad2deg(subspace_angles(ts1, ts2))
+# def angle(ts1,ts2):
+#     # input 2 time series, of the same length
+#     # each data point in the time series should be a 3-dimensional vector with N, E and Z components
+#     # return np.rad2deg(subspace_angles(bbb_a, bbb_b))
+#      return np.rad2deg(subspace_angles(ts1, ts2))
