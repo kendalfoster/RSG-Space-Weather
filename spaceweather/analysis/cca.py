@@ -220,7 +220,7 @@ def inter_phase_dir_corr(ds, station1, station2, wind_start1, wind_start2, win_l
     cca_coeffs: float
         The first CCA coefficient.
     """
-     # check if readings are provided
+    # check if readings are provided
     if components is None:
         components = ['N', 'E', 'Z']
 
