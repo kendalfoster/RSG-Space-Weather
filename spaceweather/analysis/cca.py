@@ -41,19 +41,25 @@ def cca(ds, components=['N', 'E', 'Z']):
     ang_abs_arr = np.zeros(shape = (num_st, num_st, num_cp, 2), dtype = float)
     comps_arr = np.zeros(shape = (num_st, num_st, 2, num_cp), dtype = float)
 
-    # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):
         st_1 = ds.measurements.loc[dict(station = stations[i])]
         for j in range(i+1, num_st):
             st_2 = ds.measurements.loc[dict(station = stations[j])]
-            # remove NaNs from data (will mess up cca)
+            # remove NaNs from data (no_nans = 0will mess up cca)
             comb_st = xr.concat([st_1, st_2], dim = 'component')
-            comb_st = comb_st.dropna(dim = 'time', how = 'any')
+            comb_st_no_na = comb_st.dropna(dim = 'time', how = 'any')
             st_1 = comb_st[:, 0:num_ws]
             st_2 = comb_st[:, num_ws:2*num_ws]
+            st_1_no_na = comb_st_no_na[:, 0:num_ws]
+            st_2_no_na = comb_st_no_na[:, num_ws:2*num_ws]
+            nan_times = []
+            for scratch_time in comb_st.time.values:
+                if np.isnan(sum(comb_st.loc[dict(time = scratch_time)].values)):
+                    nan_times.append(scratch_time)
+
             # run cca, suppress rcca output
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-            ccac = temp_cca.train([st_1, st_2])
+            ccac = temp_cca.train([st_1_no_na, st_2_no_na])
             ## store cca attributes ##
             # coeffs
             coeffs_arr[i,j] = ccac.cancorrs[0]
@@ -70,20 +76,38 @@ def cca(ds, components=['N', 'E', 'Z']):
             ang_rel_arr[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(w0, w1)/wt_norm, -1.0, 1.0)))
             ang_rel_arr[j,i] = ang_rel_arr[i,j] # mirror results
             # angles, absolute
-            for k in range(num_cp):
-                xdata = st_1[dict(time=k)].values
-                ydata = st_2[dict(time=k)].values
-                wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
-                wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
-                ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
-                ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
-                ang_abs_arr[j,i,k,0] = ang_abs_arr[i,j,k,0]
-                ang_abs_arr[j,i,k,1] = ang_abs_arr[i,j,k,1]
-            # comps (a^T*X and b^T*Y from Wikipedia)
-            comps_arr[i,j,0,:] = ccac.comps[0].flatten() # this is a^T*X
-            comps_arr[i,j,1,:] = ccac.comps[1].flatten() # this is b^T*Y
-            comps_arr[j,i,0,:] = comps_arr[i,j,0,:] # mirror results
-            comps_arr[j,i,1,:] = comps_arr[i,j,1,:] # mirror results
+
+            no_nans = 0
+            for k,timestamp in enumerate(ds.time):
+                if timestamp in nan_times:
+                    ang_abs_arr[i,j,k,0] = np.nan
+                    ang_abs_arr[i,j,k,1] = np.nan
+                    ang_abs_arr[j,i,k,0] = np.nan
+                    ang_abs_arr[j,i,k,1] = np.nan
+
+                    comps_arr[i,j,0,k] = np.nan
+                    comps_arr[i,j,1,k] = np.nan
+                    comps_arr[j,i,0,k] = np.nan
+                    comps_arr[j,i,1,k] = np.nan
+
+                    no_nans += 1
+                else:
+                    xdata = st_1[dict(time=k)].values
+                    ydata = st_2[dict(time=k)].values
+                    wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
+                    wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
+                    ang_abs_arr[i,j,k,0] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
+                    ang_abs_arr[i,j,k,1] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
+                    ang_abs_arr[j,i,k,0] = ang_abs_arr[i,j,k,0]
+                    ang_abs_arr[j,i,k,1] = ang_abs_arr[i,j,k,1]
+
+                    # comps (a^T*X and b^T*Y from Wikipedia)
+
+                    comps_arr[i,j,0,k] = ccac.comps[0].flatten()[k - no_nans] # this is a^T*X
+                    comps_arr[i,j,1,k] = ccac.comps[1].flatten()[k - no_nans] # this is b^T*Y
+                    comps_arr[j,i,0,k] = comps_arr[i,j,0,k] # mirror results
+                    comps_arr[j,i,1,k] = comps_arr[i,j,1,k] # mirror results
+
 
     # build Dataset from coeffs
     coeffs = xr.Dataset(data_vars = {'coeffs': (['first_st', 'second_st'], coeffs_arr)},
