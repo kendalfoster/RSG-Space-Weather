@@ -123,17 +123,17 @@ def cca(ds, components=['N', 'E', 'Z']):
     ang_rel = xr.Dataset(data_vars = {'ang_rel': (['first_st', 'second_st'], ang_rel_arr)},
                          coords = {'first_st': stations,
                                    'second_st': stations})
-    ang_abs = xr.Dataset(data_vars = {'ang_abs': (['first_st', 'second_st', 'index', 'ab'], ang_abs_arr)},
+    ang_abs = xr.Dataset(data_vars = {'ang_abs': (['first_st', 'second_st', 'time', 'ab'], ang_abs_arr)},
                          coords = {'first_st': stations,
                                    'second_st': stations,
-                                   'index': range(num_cp),
+                                   'time': ds.time,
                                    'ab': ['a', 'b']})
     # build Dataset from comps
-    comps = xr.Dataset(data_vars = {'comps': (['first_st', 'second_st', 'uv', 'index'], comps_arr)},
+    comps = xr.Dataset(data_vars = {'comps': (['first_st', 'second_st', 'uv', 'time'], comps_arr)},
                        coords = {'first_st': stations,
                                  'second_st': stations,
                                  'uv': ['u', 'v'],
-                                 'index': range(num_cp)})
+                                 'time': ds.time})
 
     # merge Datasets
     res = xr.merge([coeffs, weights, ang_rel, ang_abs, comps])
