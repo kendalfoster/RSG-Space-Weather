@@ -26,7 +26,7 @@ import spaceweather.rcca as rcca
 
 ################################################################################
 ####################### Restructure ############################################
-def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
+def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
     """
     Restructure the SuperMAG data as an xarray Dataset.
 
@@ -159,7 +159,7 @@ def mag_csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True
 
 ################################################################################
 ####################### Detrending #############################################
-def mag_detrend(ds, type='linear'):
+def detrend(ds, type='linear'):
     """
     Detrend the time series for each component.
 

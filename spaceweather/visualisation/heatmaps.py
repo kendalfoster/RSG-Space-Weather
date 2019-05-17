@@ -9,7 +9,7 @@ import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.threshold as sat
 
 
-def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
+def plot_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     """
     Calculate and plot the adjacency matrix for a set of stations during one time window.
 
@@ -49,7 +49,7 @@ def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     cca = cca.assign_coords(first_st = range(num_st))
     cca = cca.assign_coords(second_st = range(num_st))
 
-    thresh = sat.mag_thresh_dods(ds=ds, n0=n0, components=components)
+    thresh = sat.thresh_dods(ds=ds, n0=n0, components=components)
     thresh = thresh.assign_coords(first_st = range(num_st))
     thresh = thresh.assign_coords(second_st = range(num_st))
 
@@ -73,7 +73,7 @@ def plot_mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     return adj_mat, fig
 
 
-def corellogram(ds, station1, station2, lag_range=10, win_len=128):
+def correlogram(ds, station1, station2, lag_range=10, win_len=128):
     """
     Calculate and plots a corllogram for two stations
 
@@ -93,7 +93,7 @@ def corellogram(ds, station1, station2, lag_range=10, win_len=128):
     Returns
     -------
     matplotlib.figure.Figure
-        Plot of the corellogram
+        Plot of the correlogram
     """
 
     #Window the data

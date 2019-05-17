@@ -3,8 +3,9 @@ import numpy as np
 import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
+import spaceweather.analysis.data_funcs as sad
 
-
+## Need to fix length error that George spotted
 def cca(ds, components=['N', 'E', 'Z']):
     """
     Run canonical correlation analysis between stations.
@@ -25,7 +26,7 @@ def cca(ds, components=['N', 'E', 'Z']):
     """
 
     # detrend input Dataset
-    ds = mag_detrend(ds)
+    ds = sad.detrend(ds)
 
     # universal constants
     stations = ds.station.values
@@ -136,7 +137,7 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
     """
 
     # detrend input Dataset, remove NAs
-    ds = mag_detrend(ds)
+    ds = sad.detrend(ds)
     ds = ds.dropna(dim = 'time')
 
     # universal constants
@@ -174,27 +175,26 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
     return res
 
 
-def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,win_len=128,components=None):
+def inter_phase_dir_corr(ds, station1, station2, wind_start1, wind_start2, win_len=128, components=None):
     """
-    Calculates the CCA between two stations for two windows
+    Calculates the CCA between two stations for two windows.
 
     Parameters
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-        This is used to calculate the correlations
+        This is used to calculate the correlations.
     station1 and station2: float
-        Stations you want to have a corellogram comparing, station1 remains fixed whilst
-        the window is shifted for station2
+        Stations you want to have a corellogram comparing, station1 remains fixed whilst the window is shifted for station2.
     wind_start1 and wind_start2: int
-        The indexes of the windows you want to comapre
+        The indexes of the windows you want to comapre.
     win_len: float, default 128
-        The length of the window applied on the data
+        The length of the window applied on the data.
 
     Returns
     -------
     cca_coeffs: float
-        The first CCA coefficient
+        The first CCA coefficient.
     """
      # check if readings are provided
     if components is None:
@@ -202,7 +202,7 @@ def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,win_len=12
 
     num_comp = len(components)
 
-    data = window(ds,win_len)
+    data = sad.window(ds,win_len)
 
     data1 = data.measurements.loc[dict(station = station1)][dict(win_start = wind_start1)]
     data2 = data.measurements.loc[dict(station = station2)][dict(win_start = wind_start2)]
