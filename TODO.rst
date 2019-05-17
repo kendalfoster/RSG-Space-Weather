@@ -10,9 +10,12 @@ To-Do List
 
    </strike>
 
+
+
 Do Now
 ------
 
+- |ss| fix all function calls and names |se|
 - fix cca function in cca.py
 - fix window/correlation coeffs for correlogram
 - add documentation to functions

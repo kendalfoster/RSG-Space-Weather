@@ -3,14 +3,7 @@ pwd()
 
 ## Packages
 import numpy as np
-import pandas as pd
-import scipy.signal as scg
 import xarray as xr # if gives error, just rerun
-import matplotlib.pyplot as plt
-import sys
-import os
-import lib.supermag as sm
-import lib.rcca as rcca
 
 
 ################################################################################

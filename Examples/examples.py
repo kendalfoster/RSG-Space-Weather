@@ -2,7 +2,15 @@
 pwd()
 
 ## Packages
-import lib.supermag as sm
+import spaceweather.analysis.cca as sac
+import spaceweather.analysis.data_funcs as sad
+import spaceweather.analysis.gen_data as sag
+import spaceweather.analysis.threshold as sat
+import spaceweather.visualisation.animations as sva
+import spaceweather.visualisation.globes as svg
+import spaceweather.visualisation.heatmaps as svh
+import spaceweather.visualisation.lines as svl
+import spaceweather.visualisation.spectral_analysis as svs
 import numpy as np
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
@@ -11,28 +19,28 @@ import numpy as np
 
 
 ################################################################################
-####################### Restructuring the SuperMAG Data ########################
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
+####################### Importing the SuperMAG Data ############################
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                         MLT = True, MLAT = True)
 
-ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            components = ['N', 'E', 'Z'],
-                            MLT = True, MLAT = True)
+ds2 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                         components = ['N', 'E', 'Z'],
+                         MLT = True, MLAT = True)
 
 # exclude MLT data
-ds3 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = False, MLAT = True)
+ds3 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                         MLT = False, MLAT = True)
 
 # exclude MLAT data, order of stations should be different compared to above
-ds4 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = False)
+ds4 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                         MLT = True, MLAT = False)
 
 # exclude MLT and MLAT data, order of stations should also be different
-ds5 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = False, MLAT = False)
+ds5 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                         MLT = False, MLAT = False)
 
 # CSV file only contains data for one station
-ds_one = sm.mag_csv_to_Dataset("First Pass/one-dik.csv", MLT=True, MLAT=True)
+ds_one = sad.csv_to_Dataset("Data/one-dik.csv", MLT=True, MLAT=True)
 ################################################################################
 
 
@@ -40,12 +48,12 @@ ds_one = sm.mag_csv_to_Dataset("First Pass/one-dik.csv", MLT=True, MLAT=True)
 
 ################################################################################
 ####################### Plotting ###############################################
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
-sm.plot_mag_data(ds=ds1)
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+svl.plot_mag_data(ds=ds1)
 
 
 ## extra code for editing titles of plots
+import matplotlib.pyplot as plt
 ds1 = ds1.loc[dict(station = slice('BLC'))]
 stations = ds1.station.loc[dict(station = slice('BLC'))].values
 components = ds1.component.values
@@ -63,11 +71,9 @@ plt.draw()
 
 ################################################################################
 ####################### Detrending #############################################
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
 
-det = sm.mag_detrend(ds=ds1)
-det
+det = sad.detrend(ds=ds1)
 ################################################################################
 
 
@@ -75,22 +81,15 @@ det
 
 ################################################################################
 ####################### Windowing ##############################################
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
-ds1_slice = ds1[dict(time=slice(0,10))]
-ds1_slice_win = sm.window(ds1_slice, win_len=7)
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
 
-ds2 = sm.mag_csv_to_Dataset("First Pass/dik1996.csv", MLT = False, MLAT = False)
+ds1_win = sad.window(ds = ds1)
+ds1_win_60 = sad.window(ds = ds1, win_len = 60)
+ds1_slice_win = sad.window(ds1[dict(time=slice(0,10))], win_len=7)
+
+ds2 = sad.csv_to_Dataset("Data/dik1996.csv", MLT = False, MLAT = False)
 True in np.isnan(ds2.measurements)
-ds2_win = sm.window(ds2)
-
-ds1_win = sm.window(ds = ds1)
-ds1_win
-ds1_win_60 = sm.window(ds = ds1, win_len = 60)
-ds1_win_60
-ds1_win_slice = sm.window(ds = ds1[dict(time=slice(0,10))], win_len = 3)
-ds1_win_slice.measurements.loc[dict(station = 'TAL')]
-ds1_win_slice[dict(window = 0)]
+ds2_win = sad.window(ds2)
 ################################################################################
 
 
@@ -98,12 +97,13 @@ ds1_win_slice[dict(window = 0)]
 
 ################################################################################
 ####################### Canonical Correlation Analysis #########################
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
 
 ## CCA between stations
-test_inter = sm.cca_coeffs(ds = ds1)
-test_inter
+cca_ex = sac.cca(ds = ds1) # currently broken
+
+## Canonical correlation coefficients between stations
+coeffs_ex = sac.cca_coeffs(ds = ds1)
 ################################################################################
 
 
@@ -111,25 +111,21 @@ test_inter
 
 ################################################################################
 ####################### Thresholding ###########################################
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
 
 #--- Canonical Correlation ---
 ## KF Threshold
-thresh_kf = sm.mag_thresh_kf(ds = ds1)
-thresh_kf.thresholds.values
+thresh_kf = sat.thresh_kf(ds = ds1)
 
 ## Dods-style Threshold
-thresh_dods = sm.mag_thresh_dods(ds = ds1, n0 = 0.25)
-thresh_dods.thresholds.values
+thresh_dods = sat.thresh_dods(ds = ds1, n0 = 0.25)
 
 ## Adjacency Matrix Functions
-ds2 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20010305-16-38-supermag.csv",
-                            MLT = True, MLAT = True)
+ds2 = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv")
 ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
 
-adj_mat = sm.mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
-adj_mat2 = sm.print_mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
+adj_mat = sat.adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
+adj_mat2 = svh.plot_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
 
 #--- Phase Correlation ---
 ## KF Threshold
@@ -143,28 +139,15 @@ adj_mat2 = sm.print_mag_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
 
 ################################################################################
 ####################### Spectral Analysis ######################################
-gw_ds = sm.generate_one_day_time_series('2001-04-03', '08:00:00', 30, 4, [0, 0.25, 0.5],['XXX','YYY'])
+gw_ds = sag.generate_one_day_time_series('2001-04-03', '08:00:00', 30, 4, [0, 0.25, 0.5],['XXX','YYY'])
 gw_ps = gw_ds[dict(time=slice(480,510))].loc[dict(station='XXX', component='N')]
 gw_ts = gw_ds.loc[dict(station = 'XXX', component = 'N')]
 
-sm.power_spectrum(ts=gw_ps)
-sm.power_spectrum(ds=gw_ds[dict(time=slice(480,510))], station='XXX', component='N')
+svs.power_spectrum(ts=gw_ps)
+svs.power_spectrum(ds=gw_ds[dict(time=slice(480,510))], station='XXX', component='N')
 
-sm.spectrogram(ts=gw_ts)
-sm.spectrogram(ds=gw_ds, station='XXX', component='N')
-################################################################################
-
-
-
-
-################################################################################
-####################### Constructing the Network ###############################
-ds1 = sm.mag_csv_to_Dataset(csv_file = "First Pass/20190403-00-22-supermag.csv",
-                            MLT = True, MLAT = True)
-ds1 = ds1[dict(time=slice(0,148))]
-
-con_ds1 = sm.construct_network(ds = ds1, win_len = 128, n0 = 0.25)
-con_ds2 = sm.construct_network(ds = ds1)
+svs.spectrogram(ts=gw_ts)
+svs.spectrogram(ds=gw_ds, station='XXX', component='N')
 ################################################################################
 
 
@@ -172,14 +155,13 @@ con_ds2 = sm.construct_network(ds = ds1)
 
 ################################################################################
 ####################### Visualizing the Network ################################
-station_components = sm.mag_csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv",
-                            MLT = True, MLAT = True)
+station_components = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv")
 
 t = station_components.time[1]
 list_of_stations = station_components.station
 
 
-sm.plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0))
+svg.plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0))
 # plots N and E components of the vector readings for a single time step t
 # by default it plots data from all stations fed to it in station_readings unless
 # specified otherwise in list_of_stations.
@@ -189,7 +171,7 @@ sm.plot_data_globe(station_components, t, list_of_stations = None, ortho_trans =
 
 
 
-sm.data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
+sag.data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
 #makes sandra.gif in the /gif folder
 
 
@@ -205,7 +187,7 @@ fake_data = b_symm < 0
 
 
 
-sm.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
+svg.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
 #plots connections between stations.
 #for now it expects a 2d adjacency matrix as input but i will add code to make it do 3d(time on 3rd axis) as well
 
@@ -216,7 +198,7 @@ sm.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_tran
 
 ################################################################################
 ####################### Generating Model Data ##################################
-scratch_ds = sm.generate_one_day_time_series('2001-04-03', '08:00:00', 30, 4, [0, 0.25, 0.5],['XXX','YYY'])
+scratch_ds = sag.generate_one_day_time_series('2001-04-03', '08:00:00', 30, 4, [0, 0.25, 0.5],['XXX','YYY'])
 
 scratch_N = scratch_ds.measurements.loc[:,'N','YYY']
 scratch_E = scratch_ds.measurements.loc[:,'E','YYY']

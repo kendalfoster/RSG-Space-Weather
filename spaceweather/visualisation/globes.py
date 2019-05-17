@@ -7,36 +7,15 @@ import xarray as xr # if gives error, just rerun
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.feature.nightshade import Nightshade
-# Local Packages
-# import spaceweather.rcca as rcca
 
-
-## Dependencies
-# numpy
-# scipy
-# matplotlib.pyplot
-# pandas
-# xarray
-# cartopy
-# rcca (code downloaded from GitHub)
 
 ## Notes
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
 # https://slproweb.com/products/Win32OpenSSL.html
 
-## Unused Packages, but potentially useful
-# import xscale.signal.fitting as xsf # useful functions for xarray data structures
-    # pip3 install git+https://github.com/serazing/xscale.git
-    # pip3 install toolz
 
 
-
-
-################################################################################
-####################### Visualizing The Network ################################
-
-##
 def csv_to_coords():
     csv_file = "Data/station_coords.csv"
     stationdata = pd.read_csv(csv_file, usecols = [0, 1, 2])
@@ -212,7 +191,3 @@ def plot_connections_globe(station_components, adj_matrix, ortho_trans = (0, 0),
                     ax.plot([long1, long2], [lat1, lat2], color='blue', transform=ccrs.Geodetic())
 
     return fig
-
-
-
-################################################################################

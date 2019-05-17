@@ -7,7 +7,7 @@ import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 
 
-def mag_thresh_kf(ds, components=['N', 'E', 'Z']):
+def thresh_kf(ds, components=['N', 'E', 'Z']):
     """
     Calculate the threshold for each station pair, my method.
 
@@ -34,7 +34,7 @@ def mag_thresh_kf(ds, components=['N', 'E', 'Z']):
     return thr
 
 
-def mag_thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
+def thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
     """
     Calculate the threshold for each station pair, method used in Dods et al (2015) paper.
 
@@ -134,11 +134,11 @@ def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
     ds_win = ds_win.rename(dict(win_rel_time = 'time'))
 
     # get threshold values for each window
-    det = sad.mag_detrend(ds = ds_win[dict(win_start = 0)])
-    net = mag_thresh_dods(ds = det, n0=n0, components=components)
+    det = sad.detrend(ds = ds_win[dict(win_start = 0)])
+    net = thresh_dods(ds = det, n0=n0, components=components)
     for i in range(1, len(ds_win.win_start)):
-        det = sad.mag_detrend(ds = ds_win[dict(win_start = i)])
-        temp = sad.mag_thresh_dods(ds = det, n0=n0, components=components)
+        det = sad.detrend(ds = ds_win[dict(win_start = i)])
+        temp = thresh_dods(ds = det, n0=n0, components=components)
         net = xr.concat([net, temp], dim = 'win_start')
 
     # fix coordinates
@@ -147,7 +147,7 @@ def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
     return net
 
 
-def mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
+def adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     """
     Calculate the adjacency matrix for a set of stations during one time window.
 
@@ -185,7 +185,7 @@ def mag_adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
     cca = cca.assign_coords(first_st = range(num_st))
     cca = cca.assign_coords(second_st = range(num_st))
 
-    thresh = mag_thresh_dods(ds=ds, n0=n0, components=components)
+    thresh = thresh_dods(ds=ds, n0=n0, components=components)
     thresh = thresh.assign_coords(first_st = range(num_st))
     thresh = thresh.assign_coords(second_st = range(num_st))
 

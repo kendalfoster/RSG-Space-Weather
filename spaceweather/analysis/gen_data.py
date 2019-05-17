@@ -1,10 +1,10 @@
 import numpy as np
+from numpy import hstack
 import scipy as sp
+from scipy import signal
 import pandas as pd
 import xarray as xr # if gives warning/error, just rerun
 import matplotlib.pyplot as plt
-from scipy import signal
-from numpy import hstack
 
 # This function generates a time series (with no_of_components components) for a full day
 # At some point during the day there will be Pc waves

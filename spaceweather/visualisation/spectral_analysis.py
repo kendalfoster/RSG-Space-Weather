@@ -2,6 +2,7 @@
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
