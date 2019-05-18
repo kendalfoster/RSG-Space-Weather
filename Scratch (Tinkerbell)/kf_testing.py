@@ -24,6 +24,7 @@ ccac_test = sac.cca_coeffs(ds)
                                   # components
                                   # weights
                                   # angles, weights relative to each other
+                                  # angles, weights relative to measurements at each time
 
 ds = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
 components=['N', 'E', 'Z']
@@ -63,6 +64,7 @@ for i in range(num_st-1): # first station
 
     # get constants
     temp_times = both_st.time.values
+    ltt = len(temp_times)
     st_1 = both_st[:, 0:num_ws]
     st_2 = both_st[:, num_ws:2*num_ws]
 
@@ -100,6 +102,20 @@ for i in range(num_st-1): # first station
     ang_wts_fs = ang_wts_fs.assign_coords(first_st = i, second_st = i+1)
     ang_wts_fs = ang_wts_fs.squeeze(dim = ['dim_0'], drop = True)
 
+    # angles, weights relative to measurements at each time
+    ang_mes_arr = np.zeros(shape = (2,ltt))
+    for k in range(ltt):
+        xdata = st_1[dict(time=k)].values
+        ydata = st_2[dict(time=k)].values
+        wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
+        wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
+        ang_mes_arr[0,k] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
+        ang_mes_arr[1,k] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
+    ang_mes_fs = xr.DataArray(data = ang_mes_arr,
+                              coords = [ab, temp_times],
+                              dims = ['ab', 'time'])
+    ang_mes_fs = ang_mes_fs.assign_coords(first_st = i, second_st = i+1)
+
     if num_st >= 3: # check if there are at least three stations
         ###----- loop through the other stations -----###
         for j in range(i+2, num_st): # second station in the pair
@@ -111,6 +127,7 @@ for i in range(num_st-1): # first station
 
             # get constants
             temp_times = both_st.time.values
+            ltt = len(temp_times)
             st_1 = both_st[:, 0:num_ws]
             st_2 = both_st[:, num_ws:2*num_ws]
 
@@ -152,6 +169,21 @@ for i in range(num_st-1): # first station
             an_w = an_w.squeeze(dim = ['dim_0'], drop = True)
             ang_wts_fs = xr.concat([ang_wts_fs, an_w], dim = 'second_st')
 
+            # angles, weights relative to measurements at each time
+            an_m_arr = np.zeros(shape = (2,ltt))
+            for k in range(ltt):
+                xdata = st_1[dict(time=k)].values
+                ydata = st_2[dict(time=k)].values
+                wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
+                wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
+                an_m_arr[0,k] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
+                an_m_arr[1,k] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
+            an_m = xr.DataArray(data = an_m_arr,
+                                coords = [ab, temp_times],
+                                dims = ['ab', 'time'])
+            an_m = an_m.assign_coords(first_st = i, second_st = j)
+            ang_mes_fs = xr.concat([ang_mes_fs, an_m], dim = 'second_st')
+
 
     ###----- merge above DataArrays into master DataAray -----###
     if i==0:
@@ -159,11 +191,13 @@ for i in range(num_st-1): # first station
         comps = comps_fs
         weights = weights_fs
         ang_wts = ang_wts_fs
+        ang_mes = ang_mes_fs
     elif i < num_st-2:
         coeffs = xr.concat([coeffs, coeffs_fs], dim = 'first_st')
         comps = xr.concat([comps, comps_fs], dim = 'first_st')
         weights = xr.concat([weights, weights_fs], dim = 'first_st')
         ang_wts = xr.concat([ang_wts, ang_wts_fs], dim = 'first_st')
+        ang_mes = xr.concat([ang_mes, ang_mes_fs], dim = 'first_st')
     else: # i = num_st-2; ie the last loop
         # coefficients
         dummy = xr.DataArray(data = 0)
@@ -173,7 +207,7 @@ for i in range(num_st-1): # first station
         coeffs = coeffs.transpose('first_st', 'second_st')
 
         # (cca) components
-        dum = np.zeros(shape = (2, len(temp_times)))
+        dum = np.zeros(shape = (2, ltt))
         dummy = xr.DataArray(data = dum,
                              coords = [uv, temp_times],
                              dims = ['uv','time'])
@@ -198,6 +232,16 @@ for i in range(num_st-1): # first station
         ang_wts_dum = xr.concat([ang_wts_fs, dummy], dim = 'second_st')
         ang_wts = xr.concat([ang_wts, ang_wts_dum], dim = 'first_st')
         ang_wts = ang_wts.transpose('first_st', 'second_st')
+
+        # angles, weights relative to measurements at each time
+        dum = np.zeros(shape = (2, ltt))
+        dummy = xr.DataArray(data = dum,
+                             coords = [ab, temp_times],
+                             dims = ['ab','time'])
+        dummy = dummy.assign_coords(first_st = num_st-2, second_st = num_st-2)
+        ang_mes_dum = xr.concat([ang_mes_fs, dummy], dim = 'second_st')
+        ang_mes = xr.concat([ang_mes, ang_mes_dum], dim = 'first_st')
+        ang_mes = ang_mes.transpose('first_st', 'second_st', 'ab', 'time')
 
 
 #-------------------------------------------------------------------------------
@@ -234,6 +278,13 @@ ang_wts_bda = xr.DataArray(data = ang_wts_blank,
                           dims = ['first_st', 'second_st'])
 ang_wts = ang_wts.combine_first(ang_wts_bda)
 
+# angles, weights relative to measurements at each time
+ang_mes_blank = np.zeros(shape=(num_st, num_st, 2, num_cp))
+ang_mes_bda = xr.DataArray(data = ang_mes_blank,
+                           coords = [ns, ns, ab, times],
+                           dims = ['first_st', 'second_st', 'ab', 'time'])
+ang_mes = ang_mes.combine_first(ang_mes_bda)
+
 ###----- mirror results across the main diagonal -----###
 for i in range(num_st):
     for j in range(i+1, num_st):
@@ -241,9 +292,11 @@ for i in range(num_st):
         comps.values[j,i,:,:] = comps.values[j,i,:,:]
         weights.values[j,i,:,:] = weights.values[j,i,:,:]
         ang_wts.values[j,i] = ang_wts.values[i,j]
+        ang_mes.values[j,i,:,:] = ang_mes.values[i,j,:,:]
 
 ####----- label the station coordinates correctly -----###
 coeffs = coeffs.assign_coords(first_st = stations, second_st = stations)
 comps = comps.assign_coords(first_st = stations, second_st = stations)
 weights = weights.assign_coords(first_st = stations, second_st = stations)
 ang_wts = ang_wts.assign_coords(first_st = stations, second_st = stations)
+ang_mes = ang_mes.assign_coords(first_st = stations, second_st = stations)
