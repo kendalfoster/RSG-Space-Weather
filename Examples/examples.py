@@ -100,7 +100,7 @@ ds2_win = sad.window(ds2)
 ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
 
 ## CCA between stations
-cca_ex = sac.cca(ds = ds1) # currently broken
+cca_ex = sac.cca(ds = ds1)
 
 ## Canonical correlation coefficients between stations
 coeffs_ex = sac.cca_coeffs(ds = ds1)
