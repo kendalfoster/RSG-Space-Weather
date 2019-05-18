@@ -1,5 +1,6 @@
-# need to be in RSG-Space-Weather folder
-pwd()
-
 ## Packages
-import spaceweather.supermag as sm
+import xarray as xr
+import numpy as np
+import spaceweather.analysis.data_funcs as sad
+import spaceweather.analysis.cca as sac
+import spaceweather.rcca as rcca
