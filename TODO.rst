@@ -17,7 +17,7 @@ Do Now
 ------
 
 - |ss| fix all function calls and names |se|
-- fix cca function in cca.py
+- |ss| fix cca function in cca.py |se|
 - fix window/correlation coeffs for correlogram
 - add documentation to functions
 
