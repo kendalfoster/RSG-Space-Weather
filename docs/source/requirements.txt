@@ -1,0 +1,6 @@
+numpy
+scipy
+matplotlib.pyplot
+pandas
+xarray
+cartopy
