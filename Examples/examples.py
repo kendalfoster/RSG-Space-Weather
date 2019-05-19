@@ -104,6 +104,11 @@ cca_ex = sac.cca(ds = ds1)
 
 ## Canonical correlation coefficients between stations
 coeffs_ex = sac.cca_coeffs(ds = ds1)
+
+## Correlogram
+time, lag, corr, fig = svh.correlogram(ds1)
+time, lag, corr, fig = svh.correlogram(ds1, station1 = 'EKP', station2 = 'DLR')
+time, lag, corr, fig = svh.correlogram(ds1, lag_range = 3, win_len = 64)
 ################################################################################
 
 
@@ -124,8 +129,7 @@ thresh_dods = sat.thresh_dods(ds = ds1, n0 = 0.25)
 ds2 = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv")
 ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
 
-adj_mat = sat.adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
-adj_mat2 = svh.plot_adj_mat(ds=ds2, ds_win=ds2w, n0=0.25)
+adj_mat = svh.adj_mat(ds=ds2, ds_win=ds2w, n0=0.25, ret=True)
 
 #--- Phase Correlation ---
 ## KF Threshold

@@ -1,6 +1,12 @@
 ## Packages
-import xarray as xr
+
 import numpy as np
-import spaceweather.analysis.data_funcs as sad
-import spaceweather.analysis.cca as sac
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import xarray as xr # if gives error, just rerun
+# Local Packages
 import spaceweather.rcca as rcca
+import spaceweather.analysis.cca as sac
+import spaceweather.analysis.data_funcs as sad
+import spaceweather.analysis.threshold as sat
+import spaceweather.visualisation.heatmaps as svh

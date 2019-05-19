@@ -7,7 +7,7 @@ import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 
 
-def thresh_kf(ds, components=['N', 'E', 'Z']):
+def thresh_kf(ds):
     """
     Calculate the threshold for each station pair, my method.
 
@@ -18,8 +18,6 @@ def thresh_kf(ds, components=['N', 'E', 'Z']):
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-    components : list, optional
-        List of components in the data. Default is ['N', 'E', 'Z'].
 
     Returns
     -------
@@ -29,12 +27,12 @@ def thresh_kf(ds, components=['N', 'E', 'Z']):
             The coordinates are: first_st, second_st.
     """
 
-    thr = sac.cca_coeffs(ds=ds, components=components)
+    thr = sac.cca_coeffs(ds=ds)
     thr = thr.rename(dict(cca_coeffs = 'thresholds'))
     return thr
 
 
-def thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
+def thresh_dods(ds, n0=0.25):
     """
     Calculate the threshold for each station pair, method used in Dods et al (2015) paper.
 
@@ -46,8 +44,6 @@ def thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
     n0 : float, optional
         The desired expected normalized degree of each station. Default is 0.25.
-    components : list, optional
-        List of components in the data. Default is ['N', 'E', 'Z'].
 
     Returns
     -------
@@ -58,9 +54,10 @@ def thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
     """
 
     # univeral constants
+    components = ds.component.values
     stations = ds.station.values
     num_st = len(stations)
-    ct_mat = sac.cca_coeffs(ds=ds, components=components)
+    ct_mat = sac.cca_coeffs(ds=ds)
     ct_vec = np.linspace(start=0, stop=1, num=101)
 
     # initialize
@@ -100,7 +97,7 @@ def thresh_dods(ds, n0=0.25, components=['N', 'E', 'Z']):
     return res
 
 
-def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
+def threshold_ds(ds, win_len=128, n0=0.25):
     """
     Calculate the threshold for each station pair, using a windowed approach.
 
@@ -115,8 +112,6 @@ def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
         Length of window in minutes. Default is 128.
     n0 : float, optional
         The desired expected normalized degree of each station. Default is 0.25.
-    components : list, optional
-        List of components in the data. Default is ['N', 'E', 'Z'].
 
     Returns
     -------
@@ -135,67 +130,13 @@ def threshold_ds(ds, win_len=128, n0=0.25, components=['N', 'E', 'Z']):
 
     # get threshold values for each window
     det = sad.detrend(ds = ds_win[dict(win_start = 0)])
-    net = thresh_dods(ds = det, n0=n0, components=components)
+    net = thresh_dods(ds = det, n0=n0)
     for i in range(1, len(ds_win.win_start)):
         det = sad.detrend(ds = ds_win[dict(win_start = i)])
-        temp = thresh_dods(ds = det, n0=n0, components=components)
+        temp = thresh_dods(ds = det, n0=n0)
         net = xr.concat([net, temp], dim = 'win_start')
 
     # fix coordinates
     net = net.assign_coords(win_start = ds_win.win_start.values)
 
     return net
-
-
-def adj_mat(ds, ds_win, n0=0.25, components=['N', 'E', 'Z']):
-    """
-    Calculate the adjacency matrix for a set of stations during one time window.
-
-    This function follows the outline in the Dods et al (2015) paper for
-    calculating the pairwise thresholds. It then determines adjacency by
-    comparing the correlations in the specified window of the dataset to the
-    above thresholds.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-        This is used to calculate the pairwise thresholds.
-    ds_win : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-        This window of a Dataset is used to calculate the pairwise correlations,
-        for comparison with the above pairwise thresholds.
-    n0 : float, optional
-        The desired expected normalized degree of each station. Default is 0.25.
-    components : list, optional
-        List of components in the data. Default is ['N', 'E', 'Z'].
-
-    Returns
-    -------
-    xarray.Dataset
-        Dataset containing the adjacency coefficients.
-            The data_vars are: adj_coeffs.\n
-            The coordinates are: first_st, second_st.
-    """
-
-    stations = ds.station.values
-    num_st = len(stations)
-
-    cca = sac.cca_coeffs(ds=ds_win, components= components)
-    cca = cca.assign_coords(first_st = range(num_st))
-    cca = cca.assign_coords(second_st = range(num_st))
-
-    thresh = thresh_dods(ds=ds, n0=n0, components=components)
-    thresh = thresh.assign_coords(first_st = range(num_st))
-    thresh = thresh.assign_coords(second_st = range(num_st))
-
-    adj_mat = cca - thresh.thresholds
-    values = adj_mat.cca_coeffs.values
-    values[values > 0] = 1
-    values[values <= 0] = 0
-    adj_mat.cca_coeffs.values = values
-    adj_mat = adj_mat.rename(name_dict=dict(cca_coeffs = 'adj_coeffs'))
-    adj_mat = adj_mat.assign_coords(first_st = stations)
-    adj_mat = adj_mat.assign_coords(second_st = stations)
-
-    return adj_mat

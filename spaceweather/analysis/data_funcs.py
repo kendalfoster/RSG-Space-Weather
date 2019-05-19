@@ -235,7 +235,7 @@ def window(ds, win_len=128):
 
     # check for NA values in Dataset
     if True in np.isnan(ds.measurements):
-        print('WARNING: Dataset contains NA values')
+        print('WARNING in spaceweather.analysis.data_funcs.window():\n Dataset contains NA values; all times with at least one NA value have been dropped.')
         ds = ds.dropna(dim = 'time', how = 'any')
 
     # create a rolling object
