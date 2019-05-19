@@ -17,7 +17,7 @@ def thresh_kf(ds, **kwargs):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
 
     Returns
     -------
@@ -40,7 +40,7 @@ def thresh_dods(ds, n0=None, **kwargs):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
     n0 : float, optional
         The desired expected normalized degree of each station.
         Default is 1/[number of stations - 1].
@@ -108,7 +108,7 @@ def threshold(ds, thr_meth='Dods', **kwargs):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
     thr_meth : str, optional
         The method used to calculate the threshold. Options are 'Dods' and 'kf'.
         Default is 'Dods'. Note you may have to add kwargs for the method.
@@ -145,7 +145,7 @@ def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
         This window of a Dataset is used to calculate the pairwise correlations,
         for comparison with the pairwise thresholds.
     thr_xrds : xarray.Dataset, optional

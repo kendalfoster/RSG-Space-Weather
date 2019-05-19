@@ -15,11 +15,11 @@ def power_spectrum(ts=None, ds=None, station=None, component=None):
     Parameters
     ----------
     ts : xarray.Dataset, optional
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
         Can be replaced by including ds, station, and component inputs.
         Timeseries of one component in one station.
     ds : xarray.Dataset, optional
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
         This will be used to extract a timeseries of the same form as the ts input.
     station : string, optional
         Three letter code for the station to be used in the extraction of timeseries from ds input.
@@ -60,11 +60,11 @@ def spectrogram(ts=None, ds=None, station=None, component = None, win_len=128, w
     Parameters
     ----------
     ts : xarray.Dataset, optional
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
         Can be replaced by including ds, station, and component inputs.
         Timeseries of one component in one station.
     ds : xarray.Dataset, optional
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
         This will be used to extract a timeseries of the same form as the ts input.
     station : string, optional
         Three letter code for the station to be used in the extraction of timeseries from ds input.

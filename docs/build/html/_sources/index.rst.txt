@@ -12,6 +12,16 @@ Welcome to Space Weather's documentation!
    :caption: Contents:
 
 
+
+Supermag
+========
+Network Creation
+----------------
+.. automodule:: spaceweather.supermag
+ :members:
+
+
+
 Analysis
 ========
 Canonical Correlation Analysis

@@ -53,7 +53,7 @@ def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.\n
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
         Note the time dimension must be at least win_len + 2*lag_range.
     station1 : str, optional
         Station for which the time window is fixed.

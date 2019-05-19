@@ -34,6 +34,51 @@
 <h1>Welcome to Space Weather’s documentation!<a class="headerlink" href="#welcome-to-space-weather-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
+<div class="section" id="supermag">
+<h2>Supermag<a class="headerlink" href="#supermag" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-spaceweather.supermag">
+<span id="network-creation"></span><h3>Network Creation<a class="headerlink" href="#module-spaceweather.supermag" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="spaceweather.supermag.supermag">
+<code class="descclassname">spaceweather.supermag.</code><code class="descname">supermag</code><span class="sig-paren">(</span><em>csv_file=None</em>, <em>ds=None</em>, <em>thr_meth='Dods'</em>, <em>win_len=128</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.supermag.supermag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes data from the SuperMAG website, windows it, and creates a network of
+stations that are connected based on canonical correlation coefficients.</p>
+<p>Various kwargs may pertain to the following functions:</p>
+<p><a class="reference internal" href="#spaceweather.analysis.threshold.threshold" title="spaceweather.analysis.threshold.threshold"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.threshold()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.threshold.thresh_kf" title="spaceweather.analysis.threshold.thresh_kf"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.thresh_kf()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.threshold.thresh_dods" title="spaceweather.analysis.threshold.thresh_dods"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.thresh_dods()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.threshold.adj_mat" title="spaceweather.analysis.threshold.adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.adj_mat()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.visualisation.heatmaps.plot_adj_mat" title="spaceweather.visualisation.heatmaps.plot_adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.visualisation.heatmaps.plot_adj_mat()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.cca.cca_coeffs" title="spaceweather.analysis.cca.cca_coeffs"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.cca.cca_coeffs()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.data_funcs.detrend" title="spaceweather.analysis.data_funcs.detrend"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.detrend()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.data_funcs.window" title="spaceweather.analysis.data_funcs.window"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.window()</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csv_file</strong> (<em>csv file</em>) – CSV file downloaded from the SuperMAG website.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
+<li><p><strong>thr_meth</strong> (<em>str</em><em>, </em><em>optional</em>) – The method used to calculate the threshold. Options are ‘Dods’ and ‘kf’.
+Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the adjacency coefficients.</dt><dd><p>The data_vars are: adj_coeffs.</p>
+<p>The coordinates are: first_st, second_st, win_start.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
 <div class="section" id="analysis">
 <h2>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-spaceweather.analysis.cca">
@@ -45,7 +90,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
 <li><p><strong>detrend</strong> (<em>str</em><em> or </em><em>bool</em><em>, </em><em>optional</em>) – Type of detrending to perform on ds prior to running canonical correlation
 analysis. If False is input, detrending will not occur. Default is linear.</p></li>
 </ul>
@@ -66,11 +111,11 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 
 <dl class="function">
 <dt id="spaceweather.analysis.cca.cca_coeffs">
-<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">cca_coeffs</code><span class="sig-paren">(</span><em>ds</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.cca_coeffs" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">cca_coeffs</code><span class="sig-paren">(</span><em>ds</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.cca_coeffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the first canonical correlation coefficients between stations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p>
+<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl>
@@ -91,16 +136,15 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 <span id="data-functions"></span><h3>Data Functions<a class="headerlink" href="#module-spaceweather.analysis.data_funcs" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="spaceweather.analysis.data_funcs.csv_to_Dataset">
-<code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">csv_to_Dataset</code><span class="sig-paren">(</span><em>csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restructure the SuperMAG data as an xarray Dataset.</p>
-<p>Returns an xarray Dataset with time as the first dimension.</p>
+<code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">csv_to_Dataset</code><span class="sig-paren">(</span><em>csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the SuperMAG data as an xarray Dataset, with time as the first dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>csv_file</strong> (<em>csv file</em>) – CSV file downloaded from the SuperMAG website.</p></li>
 <li><p><strong>components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in the data. Default is [‘N’, ‘E’, ‘Z’].</p></li>
-<li><p><strong>MLT</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if MLT data is included in csv_file, False otherwise.</p></li>
-<li><p><strong>MLAT</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if MLAT data is included in csv_file, False otherwise.</p></li>
+<li><p><strong>MLT</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not MLT data is included in csv_file. Default is False.</p></li>
+<li><p><strong>MLAT</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not MLAT data is included in csv_file. Default is False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -119,13 +163,13 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 
 <dl class="function">
 <dt id="spaceweather.analysis.data_funcs.detrend">
-<code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">detrend</code><span class="sig-paren">(</span><em>ds</em>, <em>type='linear'</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.detrend" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">detrend</code><span class="sig-paren">(</span><em>ds</em>, <em>detr_type='linear'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.detrend" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detrend the time series for each component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
-<li><p><strong>type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of detrending passed to scipy detrend. Default is ‘linear’.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
+<li><p><strong>detr_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of detrending passed to scipy detrend. Default is ‘linear’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -149,14 +193,14 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
 <li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl>
 <dt>Dataset with the SuperMAG data easily accessible and an extra dimension from windowing.</dt><dd><p>The data_vars are: measurements, mlts, mlats.</p>
-<p>The coordinates are: time, component, station, window.</p>
+<p>The coordinates are: win_start, component, station, win_len.</p>
 </dd>
 </dl>
 </p>
@@ -174,15 +218,62 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 <div class="section" id="module-spaceweather.analysis.threshold">
 <span id="thresholding"></span><h3>Thresholding<a class="headerlink" href="#module-spaceweather.analysis.threshold" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="spaceweather.analysis.threshold.thresh_dods">
-<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">thresh_dods</code><span class="sig-paren">(</span><em>ds</em>, <em>n0=0.25</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.thresh_dods" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the threshold for each station pair, method used in Dods et al (2015) paper.</p>
-<p>This function follows the outline in the Dods et al (2015) paper.</p>
+<dt id="spaceweather.analysis.threshold.adj_mat">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">adj_mat</code><span class="sig-paren">(</span><em>ds</em>, <em>thr_xrds=None</em>, <em>thr_array=None</em>, <em>thr_ds=None</em>, <em>thr_meth='Dods'</em>, <em>plot=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.adj_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the adjacency matrix for a set of stations.</p>
+<p>This function calculates the pairwise correlations between the stations in ds.
+Then it determines adjacency by comparing those correlations with either</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>the thresholds provided in thr_xrds,</p></li>
+<li><p>the thresholds provided in thr_array, or</p></li>
+<li><p>the thresholds calculated from thr_ds.</p></li>
+</ol>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
-<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
+This window of a Dataset is used to calculate the pairwise correlations,
+for comparison with the pairwise thresholds.</p></li>
+<li><p><strong>thr_xrds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – xarray.Dataset containing the threshold values for ds.
+If not included, either thr_array or thr_ds must be included.</p></li>
+<li><p><strong>thr_array</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Numpy array containing the threshold values for ds.
+If not included, either thr_xrds or thr_ds must be included.</p></li>
+<li><p><strong>thr_ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+This is used to calculate the pairwise thresholds and must contain the
+same stations as ds. Often this is a longer time series, of which ds is
+a window. If not included, either thr_xrds or thr_array must be included.</p></li>
+<li><p><strong>thr_meth</strong> (<em>str</em><em>, </em><em>optional</em>) – The method used to calculate the threshold. Options are ‘Dods’ and ‘kf’.
+Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
+<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to plot the adjacency matrix as a heatmap. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the adjacency coefficients.</dt><dd><p>The data_vars are: adj_coeffs.</p>
+<p>The coordinates are: first_st, second_st.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.threshold.thresh_dods">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">thresh_dods</code><span class="sig-paren">(</span><em>ds</em>, <em>n0=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.thresh_dods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the threshold for each station pair using the method in the
+Dods et al (2015) paper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
+<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station.
+Default is 1/[number of stations - 1].</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -201,13 +292,13 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 
 <dl class="function">
 <dt id="spaceweather.analysis.threshold.thresh_kf">
-<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">thresh_kf</code><span class="sig-paren">(</span><em>ds</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.thresh_kf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">thresh_kf</code><span class="sig-paren">(</span><em>ds</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.thresh_kf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the threshold for each station pair, my method.</p>
 <p>This function simply uses the first canonical correlation coefficients
 across the entire time series for each station pair.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p>
+<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl>
@@ -224,23 +315,21 @@ across the entire time series for each station pair.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="spaceweather.analysis.threshold.threshold_ds">
-<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">threshold_ds</code><span class="sig-paren">(</span><em>ds</em>, <em>win_len=128</em>, <em>n0=0.25</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.threshold_ds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the threshold for each station pair, using a windowed approach.</p>
-<p>This function windows the Dataset and then follows the outline in the
-Dods et al (2015) paper for calculating the pairwise thresholds in each window.</p>
+<dt id="spaceweather.analysis.threshold.threshold">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">threshold</code><span class="sig-paren">(</span><em>ds</em>, <em>thr_meth='Dods'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the pairwise thresholds for each station pair, using the provided method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
-<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
-<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
+<li><p><strong>thr_meth</strong> (<em>str</em><em>, </em><em>optional</em>) – The method used to calculate the threshold. Options are ‘Dods’ and ‘kf’.
+Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl>
 <dt>Dataset containing the thresholds for each station pair.</dt><dd><p>The data_vars are: thresholds.</p>
-<p>The coordinates are: first_st, second_st, win_start.</p>
+<p>The coordinates are: first_st, second_st.</p>
 </dd>
 </dl>
 </p>
@@ -272,50 +361,15 @@ also gives 2 plots for some reason</p>
 <div class="section" id="module-spaceweather.visualisation.heatmaps">
 <span id="heatmaps"></span><h3>Heatmaps<a class="headerlink" href="#module-spaceweather.visualisation.heatmaps" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="spaceweather.visualisation.heatmaps.adj_mat">
-<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">adj_mat</code><span class="sig-paren">(</span><em>ds</em>, <em>ds_win</em>, <em>n0=0.25</em>, <em>ret=True</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.adj_mat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate and plot the adjacency matrix for a set of stations during one time window.</p>
-<p>This function follows the outline in the Dods et al (2015) paper for
-calculating the pairwise thresholds. It then determines adjacency by
-comparing the correlations in the specified window of the dataset to the
-above thresholds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
-This is used to calculate the pairwise thresholds.</p></li>
-<li><p><strong>ds_win</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
-This window of a Dataset is used to calculate the pairwise correlations,
-for comparison with the above pairwise thresholds.</p></li>
-<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station. Default is 0.25.</p></li>
-<li><p><strong>ret</strong> (<em>bool</em><em>, </em><em>optional</em>) – Boolean value of whether or not to return related objects.
-The objects are the adjacency matrix and heatmap. Default is True.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul>
-<li><p><em>xarray.Dataset</em> –</p>
-<dl>
-<dt>Dataset containing the adjacency coefficients.</dt><dd><p>The data_vars are: adj_coeffs.</p>
-<p>The coordinates are: first_st, second_st.</p>
-</dd>
-</dl>
-</li>
-<li><p><em>matplotlib.figure.Figure</em> – Plot of the adjacency matrix.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
 <dt id="spaceweather.visualisation.heatmaps.correlogram">
 <code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">correlogram</code><span class="sig-paren">(</span><em>ds</em>, <em>station1=None</em>, <em>station2=None</em>, <em>lag_range=10</em>, <em>win_len=128</em>, <em>ret=True</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.correlogram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and plot a heatmap of correlations between two stations over time windows and lag.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – <p>Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
+<p>Note the time dimension must be at least win_len + 2*lag_range.</p>
+</p></li>
 <li><p><strong>station1</strong> (<em>str</em><em>, </em><em>optional</em>) – Station for which the time window is fixed.
 If no station is provided, this will default to the first station in ds.</p></li>
 <li><p><strong>station2</strong> (<em>str</em><em>, </em><em>optional</em>) – Station for which the time window will be shifted according to lag_range.
@@ -339,6 +393,29 @@ The objects are time, lag, correlations, and figure. Default is True.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="function">
+<dt id="spaceweather.visualisation.heatmaps.plot_adj_mat">
+<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_adj_mat</code><span class="sig-paren">(</span><em>adj_mat</em>, <em>stations</em>, <em>rns</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_adj_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the adjacency matrix as a heatmap for a set of stations.</p>
+<p>This function is called from <a class="reference internal" href="#spaceweather.analysis.threshold.adj_mat" title="spaceweather.analysis.threshold.adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.adj_mat()</span></code></a>,
+and is not intended for external use.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adj_mat</strong> (<em>xarray.Dataset</em>) – The adjacency matrix to be plotted.</p></li>
+<li><p><strong>stations</strong> (<em>numpy.ndarray</em>) – Numpy array of three-letter station codes.</p></li>
+<li><p><strong>rns</strong> (<em>range</em>) – A range of the length of stations, explicitly rns = range(len(stations)).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the adjacency matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 <div class="section" id="module-spaceweather.visualisation.lines">
 <span id="line-plots-of-data"></span><h3>Line Plots of Data<a class="headerlink" href="#module-spaceweather.visualisation.lines" title="Permalink to this headline">¶</a></h3>
@@ -348,7 +425,7 @@ The objects are time, lag, correlations, and figure. Default is True.</p></li>
 <dd><p>Plot components of data like on the SuperMAG website.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.</p>
+<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
 </dd>
 <dt class="field-even">Yields</dt>
 <dd class="field-even"><p><em>NoneType</em> – One column of plots, where each plot shows the components of one station over time.</p>
@@ -367,10 +444,10 @@ It is recommended to use a small amount of the time series for best results.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+<li><p><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
 Can be replaced by including ds, station, and component inputs.
 Timeseries of one component in one station.</p></li>
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
 This will be used to extract a timeseries of the same form as the ts input.</p></li>
 <li><p><strong>station</strong> (<em>string</em><em>, </em><em>optional</em>) – Three letter code for the station to be used in the extraction of timeseries from ds input.</p></li>
 <li><p><strong>component</strong> (<em>string</em><em>, </em><em>optional</em>) – Component to be used in the extraction of timeseries from ds input.</p></li>
@@ -389,10 +466,10 @@ This will be used to extract a timeseries of the same form as the ts input.</p><
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+<li><p><strong>ts</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
 Can be replaced by including ds, station, and component inputs.
 Timeseries of one component in one station.</p></li>
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
 This will be used to extract a timeseries of the same form as the ts input.</p></li>
 <li><p><strong>station</strong> (<em>string</em><em>, </em><em>optional</em>) – Three letter code for the station to be used in the extraction of timeseries from ds input.</p></li>
 <li><p><strong>component</strong> (<em>string</em><em>, </em><em>optional</em>) – Component to be used in the extraction of timeseries from ds input.</p></li>

@@ -28,7 +28,7 @@ def supermag(csv_file=None, ds=None, thr_meth='Dods', win_len=128, **kwargs):
     csv_file : csv file
         CSV file downloaded from the SuperMAG website.
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
     thr_meth : str, optional
         The method used to calculate the threshold. Options are 'Dods' and 'kf'.
         Default is 'Dods'. Note you may have to add kwargs for the method.

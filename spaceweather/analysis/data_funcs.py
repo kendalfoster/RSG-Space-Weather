@@ -158,7 +158,7 @@ def detrend(ds, detr_type='linear', **kwargs):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
     detr_type : str, optional
         Type of detrending passed to scipy detrend. Default is 'linear'.
 
@@ -213,7 +213,7 @@ def window(ds, win_len=128):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
     win_len : int, optional
         Length of window in minutes. Default is 128.
 
