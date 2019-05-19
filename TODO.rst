@@ -24,7 +24,7 @@ Do Now
 Do in Near Future
 -----------------
 - animate correlation coeffs in matrix over time
-- normalize/threshold the corr coeffs
+- |ss| normalize/threshold the corr coeffs |se|
 - get network parameters
 - |ss| animate network on globe, with day n nite |se|
 - one chain, fixed longitude

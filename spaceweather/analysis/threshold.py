@@ -32,18 +32,18 @@ def thresh_kf(ds):
     return thr
 
 
-def thresh_dods(ds, n0=0.25):
+def thresh_dods(ds, n0=None):
     """
-    Calculate the threshold for each station pair, method used in Dods et al (2015) paper.
-
-    This function follows the outline in the Dods et al (2015) paper.
+    Calculate the threshold for each station pair using the method in the
+    Dods et al (2015) paper.
 
     Parameters
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
     n0 : float, optional
-        The desired expected normalized degree of each station. Default is 0.25.
+        The desired expected normalized degree of each station.
+        Default is 1/[number of stations - 1].
 
     Returns
     -------
@@ -57,26 +57,26 @@ def thresh_dods(ds, n0=0.25):
     components = ds.component.values
     stations = ds.station.values
     num_st = len(stations)
-    ct_mat = sac.cca_coeffs(ds=ds)
+    if n0 is None:
+        n0 = 1/(num_st-1)
+    cca_coeffs = sac.cca_coeffs(ds=ds)
     ct_vec = np.linspace(start=0, stop=1, num=101)
 
     # initialize
-    arr = np.zeros(shape = (len(ct_vec), num_st))
+    ct_arr = np.zeros(shape = (len(ct_vec), num_st))
     # iterate through all possible ct values
     for i in range(len(ct_vec)):
-        temp = ct_mat.where(ct_mat > ct_vec[i], 0) # it looks opposite, but it's right
+        temp = cca_coeffs.where(cca_coeffs > ct_vec[i], 0) # it looks opposite, but it's right
         temp = temp.where(temp <= ct_vec[i], 1)
         for j in range(num_st):
-            arr[i,j] = sum(temp.loc[dict(first_st = stations[j])].cca_coeffs.values) + sum(temp.loc[dict(second_st = stations[j])].cca_coeffs.values)
+            ct_arr[i,j] = sum(temp.loc[dict(first_st = stations[j])].cca_coeffs.values)
     # normalize
-    arr = arr/(num_st-1)
+    ct_arr = ct_arr/(num_st-1)
 
     # find indices roughly equal to n0 and get their values
-    idx = np.zeros(num_st, dtype=int)
     thr = np.zeros(num_st)
     for i in range(num_st):
-        idx[i] = int(np.where(arr[:,i] <= n0)[0][0])
-        thr[i] = ct_vec[idx[i]]
+        thr[i] = ct_vec[int(np.where(ct_arr[:,i] <= n0)[0][0])]
 
     # create threshold matrix using smaller threshold in each pair
     threshold = np.zeros(shape = (num_st, num_st))
@@ -97,12 +97,12 @@ def thresh_dods(ds, n0=0.25):
     return res
 
 
-def threshold_ds(ds, win_len=128, n0=0.25):
+def threshold(ds, win_len=128, method='Dods', **kwargs):
     """
     Calculate the threshold for each station pair, using a windowed approach.
 
-    This function windows the Dataset and then follows the outline in the
-    Dods et al (2015) paper for calculating the pairwise thresholds in each window.
+    This function windows the Dataset and then calculates the pairwise thresholds
+    in each window by the provided method.
 
     Parameters
     ----------
@@ -110,8 +110,9 @@ def threshold_ds(ds, win_len=128, n0=0.25):
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
     win_len : int, optional
         Length of window in minutes. Default is 128.
-    n0 : float, optional
-        The desired expected normalized degree of each station. Default is 0.25.
+    method : str, optional
+        The method used to calculate the threshold. Options are 'Dods' and 'kf'.
+        Default is 'Dods'. Note you may have to add kwargs for the method.
 
     Returns
     -------
@@ -120,6 +121,18 @@ def threshold_ds(ds, win_len=128, n0=0.25):
             The data_vars are: thresholds.\n
             The coordinates are: first_st, second_st, win_start.
     """
+
+    # determine method of thresholding
+    if method is 'Dods':
+        n0 = kwargs.get('n0', None)
+        def thresh(ds, **kwargs):
+            return thresh_dods(ds=ds, n0=n0)
+    elif method is 'kf':
+        def thresh(ds, **kwargs):
+            return thresh_kf(ds=ds)
+    else:
+        print('Error: not a valid thresholding method')
+        return 'Error: not a valid thresholding method'
 
     # run window over data
     ds_win = sad.window(ds=ds, win_len=win_len)
@@ -130,10 +143,10 @@ def threshold_ds(ds, win_len=128, n0=0.25):
 
     # get threshold values for each window
     det = sad.detrend(ds = ds_win[dict(win_start = 0)])
-    net = thresh_dods(ds = det, n0=n0)
+    net = thresh(ds = det, **kwargs)
     for i in range(1, len(ds_win.win_start)):
         det = sad.detrend(ds = ds_win[dict(win_start = i)])
-        temp = thresh_dods(ds = det, n0=n0)
+        temp = thresh(ds = det, **kwargs)
         net = xr.concat([net, temp], dim = 'win_start')
 
     # fix coordinates
