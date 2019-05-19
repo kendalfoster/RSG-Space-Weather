@@ -2,12 +2,12 @@
 import numpy as np
 import xarray as xr # if gives error, just rerun
 # Local Packages
-import spaceweather.rcca as rcca
 import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
+import spaceweather.visualisation.heatmaps as svh
 
 
-def thresh_kf(ds):
+def thresh_kf(ds, **kwargs):
     """
     Calculate the threshold for each station pair, my method.
 
@@ -27,12 +27,12 @@ def thresh_kf(ds):
             The coordinates are: first_st, second_st.
     """
 
-    thr = sac.cca_coeffs(ds=ds)
+    thr = sac.cca_coeffs(ds=ds, **kwargs)
     thr = thr.rename(dict(cca_coeffs = 'thresholds'))
     return thr
 
 
-def thresh_dods(ds, n0=None):
+def thresh_dods(ds, n0=None, **kwargs):
     """
     Calculate the threshold for each station pair using the method in the
     Dods et al (2015) paper.
@@ -59,7 +59,7 @@ def thresh_dods(ds, n0=None):
     num_st = len(stations)
     if n0 is None:
         n0 = 1/(num_st-1)
-    cca_coeffs = sac.cca_coeffs(ds=ds)
+    cca_coeffs = sac.cca_coeffs(ds=ds, **kwargs)
     ct_vec = np.linspace(start=0, stop=1, num=101)
 
     # initialize
@@ -97,20 +97,15 @@ def thresh_dods(ds, n0=None):
     return res
 
 
-def threshold(ds, win_len=128, method='Dods', **kwargs):
+def threshold(ds, thr_meth='Dods', **kwargs):
     """
-    Calculate the threshold for each station pair, using a windowed approach.
-
-    This function windows the Dataset and then calculates the pairwise thresholds
-    in each window by the provided method.
+    Calculate the pairwise thresholds for each station pair, using the provided method.
 
     Parameters
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-    win_len : int, optional
-        Length of window in minutes. Default is 128.
-    method : str, optional
+    thr_meth : str, optional
         The method used to calculate the threshold. Options are 'Dods' and 'kf'.
         Default is 'Dods'. Note you may have to add kwargs for the method.
 
@@ -119,37 +114,94 @@ def threshold(ds, win_len=128, method='Dods', **kwargs):
     xarray.Dataset
         Dataset containing the thresholds for each station pair.
             The data_vars are: thresholds.\n
-            The coordinates are: first_st, second_st, win_start.
+            The coordinates are: first_st, second_st.
     """
 
     # determine method of thresholding
-    if method is 'Dods':
+    if thr_meth is 'Dods':
         n0 = kwargs.get('n0', None)
-        def thresh(ds, **kwargs):
-            return thresh_dods(ds=ds, n0=n0)
-    elif method is 'kf':
-        def thresh(ds, **kwargs):
-            return thresh_kf(ds=ds)
+        return thresh_dods(ds=ds, n0=n0, **kwargs)
+    elif thr_meth is 'kf':
+        return thresh_kf(ds=ds, **kwargs)
     else:
         print('Error: not a valid thresholding method')
         return 'Error: not a valid thresholding method'
 
-    # run window over data
-    ds_win = sad.window(ds=ds, win_len=win_len)
 
-    # format Dataset
-    ds_win = ds_win.transpose('win_rel_time', 'component', 'station', 'win_start')
-    ds_win = ds_win.rename(dict(win_rel_time = 'time'))
+def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
+            plot=False, **kwargs):
+    """
+    Calculate the adjacency matrix for a set of stations.
 
-    # get threshold values for each window
-    det = sad.detrend(ds = ds_win[dict(win_start = 0)])
-    net = thresh(ds = det, **kwargs)
-    for i in range(1, len(ds_win.win_start)):
-        det = sad.detrend(ds = ds_win[dict(win_start = i)])
-        temp = thresh(ds = det, **kwargs)
-        net = xr.concat([net, temp], dim = 'win_start')
+    This function calculates the pairwise correlations between the stations in ds.
+    Then it determines adjacency by comparing those correlations with either\n
+        1) the thresholds provided in thr_array, or
+        2) the thresholds calculated from thr_ds.
 
-    # fix coordinates
-    net = net.assign_coords(win_start = ds_win.win_start.values)
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This window of a Dataset is used to calculate the pairwise correlations,
+        for comparison with the pairwise thresholds.
+    thr_xrds : xarray.Dataset, optional
+        like thr_array, but in xarray Dataset format
+    thr_array : np.ndarray, optional
+        Numpy array containing the threshold values for ds.
+        If not included, thr_ds must be included.
+    thr_ds : xarray.Dataset, optional
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        This is used to calculate the pairwise thresholds and must contain the
+        same stations as ds. Often this is a longer time series, of which ds is
+        a window. If not included, thr_array must be included.
+    thr_meth : str, optional
+        The method used to calculate the threshold. Options are 'Dods' and 'kf'.
+        Default is 'Dods'. Note you may have to add kwargs for the method.
+    plot : bool, optional
+        Whether or not to plot the adjacency matrix as a heatmap. Default is False.
 
-    return net
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the adjacency coefficients.
+            The data_vars are: adj_coeffs.\n
+            The coordinates are: first_st, second_st.
+    """
+
+    # get constants
+    stations = ds.station.values
+    num_st = len(stations)
+    rns = range(num_st)
+
+    if thr_xrds is None:
+        if thr_array is None:
+            if thr_ds is None:
+                print('Error: you must include one of:\n 1) thr_xrds\n 2) thr_array\n 3) thr_ds')
+                # return 'Error: you must include one of:\n 1) thr_xrds\n 2) thr_array\n 3) thr_ds'
+            else:
+                thresh = threshold(ds=thr_ds, thr_meth=thr_meth, **kwargs)
+                thresh = thresh.assign_coords(first_st = rns, second_st = rns)
+        else:
+            thresh = xr.Dataset(data_vars = {'thresholds': (['first_st', 'second_station'], thr_array)},
+                                coords = {'first_st': rns,
+                                          'second_st': rns})
+    else:
+        thresh = thr_xrds.assign_coords(first_st = rns, second_st = rns)
+
+    # calculate pairwise CCA coefficients
+    cca = sac.cca_coeffs(ds=ds, **kwargs)
+    cca = cca.assign_coords(first_st = rns, second_st = rns)
+
+    adj_mat = cca - thresh.thresholds
+    values = adj_mat.cca_coeffs.values
+    values[values > 0] = 1
+    values[values <= 0] = 0
+    adj_mat.cca_coeffs.values = values
+    adj_mat = adj_mat.assign_coords(first_st = stations, second_st = stations)
+    adj_mat = adj_mat.rename(name_dict=dict(cca_coeffs = 'adj_coeffs'))
+
+    # plot adjacency matrix
+    if plot:
+        fig = svh.plot_adj_mat(adj_mat = adj_mat, stations = stations, rns = rns)
+
+    return adj_mat

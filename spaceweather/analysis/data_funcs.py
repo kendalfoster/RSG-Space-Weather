@@ -159,7 +159,7 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
 
 ################################################################################
 ####################### Detrending #############################################
-def detrend(ds, type='linear'):
+def detrend(ds, detr_type='linear', **kwargs):
     """
     Detrend the time series for each component.
 
@@ -167,7 +167,7 @@ def detrend(ds, type='linear'):
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-    type : str, optional
+    detr_type : str, optional
         Type of detrending passed to scipy detrend. Default is 'linear'.
 
     Returns
@@ -178,6 +178,11 @@ def detrend(ds, type='linear'):
             The coordinates are: time, component, station.
     """
 
+    # check if kwargs contains detr_type
+    d_t = kwargs.get('detr_type', None)
+    if d_t is not None:
+        detr_type = d_t
+
     stations = ds.station
     components = ds.component
 
@@ -185,7 +190,7 @@ def detrend(ds, type='linear'):
     temp = ds.measurements.loc[dict(station = stations[0])]
     temp = temp.dropna(dim = 'time', how = 'any')
     temp_times = temp.time
-    det = signal.detrend(data=temp, axis=0, type=type)
+    det = signal.detrend(data=temp, axis=0, type=detr_type)
     da = xr.DataArray(data = det,
                       coords = [temp_times, components],
                       dims = ['time', 'component'])
@@ -194,7 +199,7 @@ def detrend(ds, type='linear'):
         temp = ds.measurements.loc[dict(station = stations[i])]
         temp = temp.dropna(dim = 'time', how = 'any')
         temp_times = temp.time
-        det = signal.detrend(data=temp, axis=0, type=type)
+        det = signal.detrend(data=temp, axis=0, type=detr_type)
         temp_da = xr.DataArray(data = det,
                                coords = [temp_times, components],
                                dims = ['time', 'component'])

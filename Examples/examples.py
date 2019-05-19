@@ -120,16 +120,16 @@ ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
 
 #--- Canonical Correlation ---
 ## KF Threshold
-thresh_kf = sat.threshold(ds = ds1, method = 'kf')
+thresh_kf = sat.threshold(ds = ds1, thr_meth = 'kf')
 
 ## Dods-style Threshold
-thresh_dods = sat.threshold(ds = ds1, method = 'Dods')
-thresh_dods_25 = sat.threshold(ds = ds1, method = 'Dods', n0 = 0.25)
+thresh_dods = sat.threshold(ds = ds1, thr_meth = 'Dods')
+thresh_dods_25 = sat.threshold(ds = ds1, thr_meth = 'Dods', n0 = 0.25)
 
 ## Adjacency Matrix
-ds2 = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv")
-ds2w = ds2.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
-adj_mat = svh.adj_mat(ds=ds2, ds_win=ds2w, n0=0.25, ret=True)
+thr_ds = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv")
+ds2 = thr_ds.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
+adj_mat = sat.adj_mat(ds=ds2, thr_ds=thr_ds, thr_meth='Dods', plot=True)
 
 #--- Phase Correlation ---
 ## KF Threshold

@@ -316,7 +316,7 @@ def cca(ds, detrend='linear'):
     return res
 
 
-def cca_coeffs(ds):
+def cca_coeffs(ds, **kwargs):
     """
     Calculate the first canonical correlation coefficients between stations.
 
@@ -332,9 +332,9 @@ def cca_coeffs(ds):
             The data_vars are: cca_coeffs.\n
             The coordinates are: first_st, second_st.
     """
-
+    
     # detrend input Dataset, remove NAs
-    ds = sad.detrend(ds)
+    ds = sad.detrend(ds, **kwargs)
     ds = ds.dropna(dim = 'time')
 
     # universal constants

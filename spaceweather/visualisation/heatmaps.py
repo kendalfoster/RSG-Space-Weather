@@ -9,72 +9,40 @@ import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.threshold as sat
 
 
-def adj_mat(ds, ds_win, n0=0.25, ret=True):
+def plot_adj_mat(adj_mat, stations, rns):
     """
-    Calculate and plot the adjacency matrix for a set of stations during one time window.
+    Plot the adjacency matrix as a heatmap for a set of stations.
 
-    This function follows the outline in the Dods et al (2015) paper for
-    calculating the pairwise thresholds. It then determines adjacency by
-    comparing the correlations in the specified window of the dataset to the
-    above thresholds.
+    This function is called from :func:`spaceweather.analysis.threshold.adj_mat`,
+    and is not intended for external use.
 
     Parameters
     ----------
-    ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-        This is used to calculate the pairwise thresholds.
-    ds_win : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-        This window of a Dataset is used to calculate the pairwise correlations,
-        for comparison with the above pairwise thresholds.
-    n0 : float, optional
-        The desired expected normalized degree of each station. Default is 0.25.
-    ret : bool, optional
-        Boolean value of whether or not to return related objects.
-        The objects are the adjacency matrix and heatmap. Default is True.
+    adj_mat : xarray.Dataset
+        The adjacency matrix to be plotted.
+    stations : numpy.ndarray
+        Numpy array of three-letter station codes.
+    rns : range
+        A range of the length of stations, explicitly rns = range(len(stations)).
 
     Returns
     -------
-    xarray.Dataset
-        Dataset containing the adjacency coefficients.
-            The data_vars are: adj_coeffs.\n
-            The coordinates are: first_st, second_st.
-
     matplotlib.figure.Figure
         Plot of the adjacency matrix.
     """
 
-    stations = ds.station.values
-    num_st = len(stations)
-    components = ds.component.values
-
-    cca = sac.cca_coeffs(ds=ds_win)
-    cca = cca.assign_coords(first_st = range(num_st))
-    cca = cca.assign_coords(second_st = range(num_st))
-
-    thresh = sat.thresh_dods(ds=ds, n0=n0)
-    thresh = thresh.assign_coords(first_st = range(num_st))
-    thresh = thresh.assign_coords(second_st = range(num_st))
-
-    adj_mat = cca - thresh.thresholds
-    values = adj_mat.cca_coeffs.values
-    values[values > 0] = 1
-    values[values <= 0] = 0
-    adj_mat.cca_coeffs.values = values
-    adj_mat = adj_mat.rename(name_dict=dict(cca_coeffs = 'adj_coeffs'))
+    # relabel the coordinates so it will plot properly
+    adj_mat = adj_mat.assign_coords(first_st = rns, second_st = rns)
 
     fig = plt.figure(figsize=(10,8))
     adj_mat.adj_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
     fig.axes[-1].yaxis.label.set_size(20)
     plt.title('Adjacency Matrix', fontsize=30)
     plt.xlabel('Station 1', fontsize=20)
-    plt.xticks(ticks=range(num_st), labels=stations, rotation=0)
+    plt.xticks(ticks=rns, labels=stations, rotation=0)
     plt.ylabel('Station 2', fontsize=20)
-    plt.yticks(ticks=range(num_st), labels=stations, rotation=0)
+    plt.yticks(ticks=rns, labels=stations, rotation=0)
     plt.show()
-
-    if ret:
-        return adj_mat, fig
 
 
 def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
