@@ -53,7 +53,8 @@ def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`supermag.mag_csv_to_Dataset`.\n
+        Note the time dimension must be at least win_len + 2*lag_range.
     station1 : str, optional
         Station for which the time window is fixed.
         If no station is provided, this will default to the first station in ds.
@@ -81,9 +82,16 @@ def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
         Plot of the correlogram; ie heatmap of correlations.
     """
 
+    # check if ds timeseries is long enough
+    nt = len(ds.time.values)
+    if nt < win_len + 2*lag_range:
+        print('Error: ds timeseries < win_len + 2*lag_range')
+        return 'Error: ds timeseries < win_len + 2*lag_range'
+
     # check if stations are provided
     stations = ds.station.values
     if len(stations) <= 1:
+        print('Error: only one station in Dataset')
         return 'Error: only one station in Dataset'
     if station1 is None:
         station1 = stations[0]
@@ -121,9 +129,10 @@ def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
     plt.title('Correlogram', fontsize=30)
     plt.xlabel('Time Window', fontsize=20)
     plt.ylabel('Lag, minutes', fontsize=20)
-    # plt.xticks(x[:-1]+0.5) # show ticks on x-axis
+    if len(x) < 5:
+        plt.xticks(x[:-1]+0.5) # show ticks on x-axis
     plt.yticks(y[:-1]+0.5)
-    plt.colorbar(label='Intensity')
+    plt.colorbar(label='Correlation')
     fig.axes[-1].yaxis.label.set_size(20)
     plt.show()
 

@@ -6,17 +6,6 @@ import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
 
-
-## Dependencies
-# numpy
-# scipy
-# matplotlib.pyplot
-# pandas
-# xarray
-# cartopy
-# rcca (code downloaded from GitHub)
-
-
 ## Unused Packages, but potentially useful
 # import xscale.signal.fitting as xsf # useful functions for xarray data structures
     # pip3 install git+https://github.com/serazing/xscale.git
@@ -24,8 +13,6 @@ import spaceweather.rcca as rcca
 
 
 
-################################################################################
-####################### Restructure ############################################
 def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, **kwargs):
     """
     Read the SuperMAG data as an xarray Dataset, with time as the first dimension.
@@ -69,7 +56,6 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, 
 
     #-----------------------------------------------------------------------
     #---------- optional arguments -----------------------------------------
-    #-----------------------------------------------------------------------
 
     # if MLAT is included, sort and make Dataset
     if MLAT is True:
@@ -123,7 +109,6 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, 
 
     #-----------------------------------------------------------------------
     #---------- build the main DataArray of the measurements ---------------
-    #-----------------------------------------------------------------------
 
     # initialize DataArray (so we can append things to it later)
     cols = np.append('Date_UTC', components)
@@ -153,7 +138,6 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, 
 
     #-----------------------------------------------------------------------
     #---------- build the final DataArray from optional arguments ----------
-    #-----------------------------------------------------------------------
 
     # include MLT
     if MLT is True:
@@ -165,13 +149,8 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, 
 
 
     return ds
-################################################################################
 
 
-
-
-################################################################################
-####################### Detrending #############################################
 def detrend(ds, detr_type='linear', **kwargs):
     """
     Detrend the time series for each component.
@@ -225,13 +204,8 @@ def detrend(ds, detr_type='linear', **kwargs):
     res = da.to_dataset(name = 'measurements')
 
     return res
-################################################################################
 
 
-
-
-################################################################################
-####################### Windowing ##############################################
 def window(ds, win_len=128):
     """
     Window the time series for a given window length.
@@ -267,4 +241,3 @@ def window(ds, win_len=128):
     ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_len')
 
     return ds_roll
-################################################################################

@@ -53,6 +53,10 @@ def thresh_dods(ds, n0=None, **kwargs):
             The coordinates are: first_st, second_st.
     """
 
+    nn = kwargs.get('n0', None)
+    if nn is not None:
+        n0 = nn
+
     # univeral constants
     components = ds.component.values
     stations = ds.station.values
@@ -119,8 +123,7 @@ def threshold(ds, thr_meth='Dods', **kwargs):
 
     # determine method of thresholding
     if thr_meth is 'Dods':
-        n0 = kwargs.get('n0', None)
-        return thresh_dods(ds=ds, n0=n0, **kwargs)
+        return thresh_dods(ds=ds, **kwargs)
     elif thr_meth is 'kf':
         return thresh_kf(ds=ds, **kwargs)
     else:
@@ -135,8 +138,9 @@ def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
 
     This function calculates the pairwise correlations between the stations in ds.
     Then it determines adjacency by comparing those correlations with either\n
-        1) the thresholds provided in thr_array, or
-        2) the thresholds calculated from thr_ds.
+        1) the thresholds provided in thr_xrds,\n
+        2) the thresholds provided in thr_array, or\n
+        3) the thresholds calculated from thr_ds.
 
     Parameters
     ----------
@@ -145,15 +149,16 @@ def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
         This window of a Dataset is used to calculate the pairwise correlations,
         for comparison with the pairwise thresholds.
     thr_xrds : xarray.Dataset, optional
-        like thr_array, but in xarray Dataset format
+        xarray.Dataset containing the threshold values for ds.
+        If not included, either thr_array or thr_ds must be included.
     thr_array : np.ndarray, optional
         Numpy array containing the threshold values for ds.
-        If not included, thr_ds must be included.
+        If not included, either thr_xrds or thr_ds must be included.
     thr_ds : xarray.Dataset, optional
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
         This is used to calculate the pairwise thresholds and must contain the
         same stations as ds. Often this is a longer time series, of which ds is
-        a window. If not included, thr_array must be included.
+        a window. If not included, either thr_xrds or thr_array must be included.
     thr_meth : str, optional
         The method used to calculate the threshold. Options are 'Dods' and 'kf'.
         Default is 'Dods'. Note you may have to add kwargs for the method.
