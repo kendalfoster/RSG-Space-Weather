@@ -26,7 +26,7 @@ Data Functions
 
 Generating Model Data
 ---------------------
-.. automodule:: spaceweather.analysis.generate_model_data
+.. automodule:: spaceweather.analysis.gen_data
  :members:
 
 Thresholding
