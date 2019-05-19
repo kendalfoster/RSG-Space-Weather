@@ -6,7 +6,7 @@ import spaceweather.rcca as rcca
 import spaceweather.analysis.data_funcs as sad
 
 
-def cca(ds, detr=True, components=['N', 'E', 'Z']):
+def cca(ds, detrend='linear'):
     """
     Run canonical correlation analysis between stations.
 
@@ -14,8 +14,9 @@ def cca(ds, detr=True, components=['N', 'E', 'Z']):
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-    components : list, optional
-        List of components in the data. Default is ['N', 'E', 'Z'].
+    detrend : str or bool, optional
+        Type of detrending to perform on ds prior to running canonical correlation
+        analysis. If False is input, detrending will not occur. Default is linear.
 
     Returns
     -------
@@ -35,6 +36,7 @@ def cca(ds, detr=True, components=['N', 'E', 'Z']):
         return 'Error: only one station in Dataset'
 
     # other constants
+    components = ds.component.values
     num_ws = len(components)
     num_cp = len(ds.time)
     times = ds.time.values
@@ -42,8 +44,10 @@ def cca(ds, detr=True, components=['N', 'E', 'Z']):
     uv = ['u', 'v']
 
     # detrend input Dataset
-    if detr:
-        ds = sad.detrend(ds)
+    if detrend is not False:
+        if detrend is True:
+            detrend = 'linear'
+            ds = sad.detrend(ds, type = detrend)
 
 
     #---------------------------------------------------------------------------
@@ -310,8 +314,7 @@ def cca(ds, detr=True, components=['N', 'E', 'Z']):
     return res
 
 
-
-def cca_coeffs(ds, components=['N', 'E', 'Z']):
+def cca_coeffs(ds):
     """
     Calculate the first canonical correlation coefficients between stations.
 
@@ -319,8 +322,6 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-    components : list, optional
-        List of components in the data. Default is ['N', 'E', 'Z'].
 
     Returns
     -------
@@ -335,8 +336,9 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
     ds = ds.dropna(dim = 'time')
 
     # universal constants
-    stations = ds.station
+    stations = ds.station.values
     num_st = len(stations)
+    components = ds.component.values
     num_comp = len(components)
 
     # setup (triangular) array for the correlation coefficients
@@ -367,46 +369,3 @@ def cca_coeffs(ds, components=['N', 'E', 'Z']):
     res = da.to_dataset(name = 'cca_coeffs')
 
     return res
-
-
-def inter_phase_dir_corr(ds, station1, station2, wind_start1, wind_start2, win_len=128, components=None):
-    """
-    Calculates the CCA between two stations for two windows.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-        This is used to calculate the correlations.
-    station1 and station2: float
-        Stations you want to have a corellogram comparing, station1 remains fixed whilst the window is shifted for station2.
-    wind_start1 and wind_start2: int
-        The indexes of the windows you want to comapre.
-    win_len: float, default 128
-        The length of the window applied on the data.
-
-    Returns
-    -------
-    cca_coeffs: float
-        The first CCA coefficient.
-    """
-    # check if readings are provided
-    if components is None:
-        components = ['N', 'E', 'Z']
-
-    num_comp = len(components)
-
-    data = sad.window(ds,win_len)
-
-    data1 = data.measurements.loc[dict(station = station1)][dict(win_start = wind_start1)]
-    data2 = data.measurements.loc[dict(station = station2)][dict(win_start = wind_start2)]
-    comb_st = xr.concat([data1, data2], dim = 'component')
-    comb_st = comb_st.dropna(dim = 'win_rel_time', how = 'any')
-    first_st = comb_st[:, 0:num_comp]
-    second_st = comb_st[:, num_comp:2*num_comp]
-    # run cca, suppress rcca output
-    temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-    ccac = temp_cca.train([first_st, second_st])
-    cca_coeffs = ccac.cancorrs[0]
-
-    return cca_coeffs
