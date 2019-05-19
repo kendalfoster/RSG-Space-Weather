@@ -10,7 +10,7 @@ def plot_mag_data(ds):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
 
     Yields
     -------

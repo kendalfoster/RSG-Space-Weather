@@ -6,17 +6,6 @@ import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
 
-
-## Dependencies
-# numpy
-# scipy
-# matplotlib.pyplot
-# pandas
-# xarray
-# cartopy
-# rcca (code downloaded from GitHub)
-
-
 ## Unused Packages, but potentially useful
 # import xscale.signal.fitting as xsf # useful functions for xarray data structures
     # pip3 install git+https://github.com/serazing/xscale.git
@@ -24,13 +13,9 @@ import spaceweather.rcca as rcca
 
 
 
-################################################################################
-####################### Restructure ############################################
-def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
+def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, **kwargs):
     """
-    Restructure the SuperMAG data as an xarray Dataset.
-
-    Returns an xarray Dataset with time as the first dimension.
+    Read the SuperMAG data as an xarray Dataset, with time as the first dimension.
 
     Parameters
     ----------
@@ -39,9 +24,9 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
     components : list, optional
         List of components in the data. Default is ['N', 'E', 'Z'].
     MLT : bool, optional
-        True if MLT data is included in csv_file, False otherwise.
+        Whether or not MLT data is included in csv_file. Default is False.
     MLAT : bool, optional
-        True if MLAT data is included in csv_file, False otherwise.
+        Whether or not MLAT data is included in csv_file. Default is False.
 
     Returns
     -------
@@ -51,13 +36,26 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
             The coordinates are: time, component, station.
 
     """
+
+    # check if kwargs contains components, MLT, or MLAT
+    cc = kwargs.get('components', None)
+    if cc is not None:
+        components = cc
+
+    mm = kwargs.get('MLT', None)
+    if mm is not None:
+        MLT = mm
+
+    aa = kwargs.get('MLAT', None)
+    if aa is not None:
+        MLAT = aa
+
     # universal constants
     data = pd.read_csv(csv_file)
     times = pd.to_datetime(data['Date_UTC'].unique())
 
     #-----------------------------------------------------------------------
     #---------- optional arguments -----------------------------------------
-    #-----------------------------------------------------------------------
 
     # if MLAT is included, sort and make Dataset
     if MLAT is True:
@@ -80,7 +78,7 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
             da_mlat = da_mlat.expand_dims(station = stations)
             # convert DataArray into Dataset, for merging later
             ds_mlat = da_mlat.to_dataset(name = 'mlats')
-    elif MLAT is not True:
+    else:
         stations = data['IAGA'].unique()
         num_st = len(stations)
 
@@ -111,7 +109,6 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
 
     #-----------------------------------------------------------------------
     #---------- build the main DataArray of the measurements ---------------
-    #-----------------------------------------------------------------------
 
     # initialize DataArray (so we can append things to it later)
     cols = np.append('Date_UTC', components)
@@ -131,6 +128,7 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
                                    dims = ['time', 'component'])
             da = xr.concat([da, temp_da], dim = 'station')
             da = da.transpose('time', 'component', 'station')
+        da = da.assign_coords(station = stations)
     else: # if only one station
         da = da.expand_dims(station = stations)
 
@@ -140,7 +138,6 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
 
     #-----------------------------------------------------------------------
     #---------- build the final DataArray from optional arguments ----------
-    #-----------------------------------------------------------------------
 
     # include MLT
     if MLT is True:
@@ -152,22 +149,17 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
 
 
     return ds
-################################################################################
 
 
-
-
-################################################################################
-####################### Detrending #############################################
-def detrend(ds, type='linear'):
+def detrend(ds, detr_type='linear', **kwargs):
     """
     Detrend the time series for each component.
 
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-    type : str, optional
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
+    detr_type : str, optional
         Type of detrending passed to scipy detrend. Default is 'linear'.
 
     Returns
@@ -178,6 +170,11 @@ def detrend(ds, type='linear'):
             The coordinates are: time, component, station.
     """
 
+    # check if kwargs contains detr_type
+    d_t = kwargs.get('detr_type', None)
+    if d_t is not None:
+        detr_type = d_t
+
     stations = ds.station
     components = ds.component
 
@@ -185,7 +182,7 @@ def detrend(ds, type='linear'):
     temp = ds.measurements.loc[dict(station = stations[0])]
     temp = temp.dropna(dim = 'time', how = 'any')
     temp_times = temp.time
-    det = signal.detrend(data=temp, axis=0, type=type)
+    det = signal.detrend(data=temp, axis=0, type=detr_type)
     da = xr.DataArray(data = det,
                       coords = [temp_times, components],
                       dims = ['time', 'component'])
@@ -194,7 +191,7 @@ def detrend(ds, type='linear'):
         temp = ds.measurements.loc[dict(station = stations[i])]
         temp = temp.dropna(dim = 'time', how = 'any')
         temp_times = temp.time
-        det = signal.detrend(data=temp, axis=0, type=type)
+        det = signal.detrend(data=temp, axis=0, type=detr_type)
         temp_da = xr.DataArray(data = det,
                                coords = [temp_times, components],
                                dims = ['time', 'component'])
@@ -207,13 +204,8 @@ def detrend(ds, type='linear'):
     res = da.to_dataset(name = 'measurements')
 
     return res
-################################################################################
 
 
-
-
-################################################################################
-####################### Windowing ##############################################
 def window(ds, win_len=128):
     """
     Window the time series for a given window length.
@@ -221,7 +213,7 @@ def window(ds, win_len=128):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
     win_len : int, optional
         Length of window in minutes. Default is 128.
 
@@ -230,7 +222,7 @@ def window(ds, win_len=128):
     xarray.Dataset
         Dataset with the SuperMAG data easily accessible and an extra dimension from windowing.
             The data_vars are: measurements, mlts, mlats.\n
-            The coordinates are: time, component, station, window.
+            The coordinates are: win_start, component, station, win_len.
     """
 
     # check for NA values in Dataset
@@ -239,14 +231,13 @@ def window(ds, win_len=128):
         ds = ds.dropna(dim = 'time', how = 'any')
 
     # create a rolling object
-    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna(dim = 'time')
+    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_len').dropna(dim = 'time')
     # fix window coordinates
-    ds_roll = ds_roll.assign_coords(win_rel_time = range(win_len))
+    ds_roll = ds_roll.assign_coords(win_len = range(win_len))
     times = ds_roll.time - np.timedelta64(win_len-1, 'm')
     ds_roll = ds_roll.assign_coords(time = times)
     ds_roll = ds_roll.rename(dict(time = 'win_start'))
     # ensure the coordinates are in the proper order
-    ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_rel_time')
+    ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_len')
 
     return ds_roll
-################################################################################

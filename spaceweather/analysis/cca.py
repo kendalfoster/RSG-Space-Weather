@@ -14,7 +14,7 @@ def cca(ds, detrend='linear'):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
     detrend : str or bool, optional
         Type of detrending to perform on ds prior to running canonical correlation
         analysis. If False is input, detrending will not occur. Default is linear.
@@ -316,14 +316,14 @@ def cca(ds, detrend='linear'):
     return res
 
 
-def cca_coeffs(ds):
+def cca_coeffs(ds, **kwargs):
     """
     Calculate the first canonical correlation coefficients between stations.
 
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
 
     Returns
     -------
@@ -334,7 +334,7 @@ def cca_coeffs(ds):
     """
 
     # detrend input Dataset, remove NAs
-    ds = sad.detrend(ds)
+    ds = sad.detrend(ds, **kwargs)
     ds = ds.dropna(dim = 'time')
 
     # universal constants
