@@ -34,6 +34,7 @@ def cca(ds, detrend='linear'):
     stations = ds.station.values
     num_st = len(stations)
     if num_st <= 1:
+        print('Error: only one station in Dataset')
         return 'Error: only one station in Dataset'
 
     # other constants
