@@ -6,6 +6,7 @@ import spaceweather.rcca as rcca
 import spaceweather.analysis.data_funcs as sad
 
 
+
 def cca(ds, detrend='linear'):
     """
     Run canonical correlation analysis between stations.
