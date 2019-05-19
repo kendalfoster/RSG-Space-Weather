@@ -26,11 +26,9 @@ import spaceweather.rcca as rcca
 
 ################################################################################
 ####################### Restructure ############################################
-def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
+def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, **kwargs):
     """
-    Restructure the SuperMAG data as an xarray Dataset.
-
-    Returns an xarray Dataset with time as the first dimension.
+    Read the SuperMAG data as an xarray Dataset, with time as the first dimension.
 
     Parameters
     ----------
@@ -39,9 +37,9 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
     components : list, optional
         List of components in the data. Default is ['N', 'E', 'Z'].
     MLT : bool, optional
-        True if MLT data is included in csv_file, False otherwise.
+        Whether or not MLT data is included in csv_file. Default is False.
     MLAT : bool, optional
-        True if MLAT data is included in csv_file, False otherwise.
+        Whether or not MLAT data is included in csv_file. Default is False.
 
     Returns
     -------
@@ -51,6 +49,20 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
             The coordinates are: time, component, station.
 
     """
+
+    # check if kwargs contains components, MLT, or MLAT
+    cc = kwargs.get('components', None)
+    if cc is not None:
+        components = cc
+
+    mm = kwargs.get('MLT', None)
+    if mm is not None:
+        MLT = mm
+
+    aa = kwargs.get('MLAT', None)
+    if aa is not None:
+        MLAT = aa
+
     # universal constants
     data = pd.read_csv(csv_file)
     times = pd.to_datetime(data['Date_UTC'].unique())
@@ -80,7 +92,7 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
             da_mlat = da_mlat.expand_dims(station = stations)
             # convert DataArray into Dataset, for merging later
             ds_mlat = da_mlat.to_dataset(name = 'mlats')
-    elif MLAT is not True:
+    else:
         stations = data['IAGA'].unique()
         num_st = len(stations)
 
@@ -131,6 +143,7 @@ def csv_to_Dataset(csv_file, components=['N', 'E', 'Z'], MLT=True, MLAT=True):
                                    dims = ['time', 'component'])
             da = xr.concat([da, temp_da], dim = 'station')
             da = da.transpose('time', 'component', 'station')
+        da = da.assign_coords(station = stations)
     else: # if only one station
         da = da.expand_dims(station = stations)
 
@@ -235,7 +248,7 @@ def window(ds, win_len=128):
     xarray.Dataset
         Dataset with the SuperMAG data easily accessible and an extra dimension from windowing.
             The data_vars are: measurements, mlts, mlats.\n
-            The coordinates are: time, component, station, window.
+            The coordinates are: win_start, component, station, win_len.
     """
 
     # check for NA values in Dataset
@@ -244,14 +257,14 @@ def window(ds, win_len=128):
         ds = ds.dropna(dim = 'time', how = 'any')
 
     # create a rolling object
-    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_rel_time').dropna(dim = 'time')
+    ds_roll = ds.rolling(time=win_len).construct(window_dim='win_len').dropna(dim = 'time')
     # fix window coordinates
-    ds_roll = ds_roll.assign_coords(win_rel_time = range(win_len))
+    ds_roll = ds_roll.assign_coords(win_len = range(win_len))
     times = ds_roll.time - np.timedelta64(win_len-1, 'm')
     ds_roll = ds_roll.assign_coords(time = times)
     ds_roll = ds_roll.rename(dict(time = 'win_start'))
     # ensure the coordinates are in the proper order
-    ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_rel_time')
+    ds_roll = ds_roll.transpose('win_start', 'component', 'station', 'win_len')
 
     return ds_roll
 ################################################################################

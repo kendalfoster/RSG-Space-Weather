@@ -168,6 +168,11 @@ def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
             The coordinates are: first_st, second_st.
     """
 
+    # check if plot is in kwargs
+    pp = kwargs.get('plot', None)
+    if pp is not None:
+        plot = pp
+
     # get constants
     stations = ds.station.values
     num_st = len(stations)

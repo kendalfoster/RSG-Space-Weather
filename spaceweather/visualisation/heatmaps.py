@@ -95,8 +95,8 @@ def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
     windowed = sad.window(ds,win_len)
     ts1 = windowed.loc[dict(station = station1)].measurements
     ts2 = windowed.loc[dict(station = station2)].measurements
-    ts1 = ts1.transpose('win_rel_time', 'component', 'win_start')
-    ts2 = ts2.transpose('win_rel_time', 'component', 'win_start')
+    ts1 = ts1.transpose('win_len', 'component', 'win_start')
+    ts2 = ts2.transpose('win_len', 'component', 'win_start')
 
     # Set up array
     time = range(lag_range+1, len(windowed.win_start)-lag_range+1)

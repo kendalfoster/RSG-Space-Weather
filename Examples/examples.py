@@ -11,6 +11,7 @@ import spaceweather.visualisation.globes as svg
 import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
+import spaceweather.supermag as sm
 import numpy as np
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
@@ -136,6 +137,17 @@ adj_mat = sat.adj_mat(ds=ds2, thr_ds=thr_ds, thr_meth='Dods', plot=True)
 
 ## Dods-style Threshold
 
+################################################################################
+
+
+
+
+################################################################################
+####################### Constructing the Network ###############################
+ds1 = sad.csv_to_Dataset(csv_file="Data/20190403-00-22-supermag.csv", MLAT=True)
+ds1 = ds1[dict(time = slice(147))]
+test = sm.supermag(ds = ds1, MLAT = True)
+test.adj_coeffs.values
 ################################################################################
 
 
