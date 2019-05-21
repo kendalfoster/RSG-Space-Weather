@@ -22,13 +22,13 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 '''before running install cartopy using "conda install -c conda-forge cartopy" '''
 
 
-from cartopy.feature.nightshade import Nightshade
 # import spaceweather.analysis.supermag as sm
 import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 # import spaceweather.vi
 from spaceweather.visualisation import globes as svg
 import spaceweather.visualisation.animations as sva
+import spaceweather.visualisation.lines as svl
 import matplotlib.pyplot as plt
 import matplotlib.colors as plc
 import numpy as np
@@ -38,22 +38,131 @@ import datetime
 
 import pandas as pd
 
-station_readings = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+N330 = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 
-test = sac.cca(station_readings)
+t = station_readings.time[1].data
+t
 
-datetime.utcnow()
-t = station_readings.time[1]
-t.item()
 
-test = pd.to_datetime(t)
+N330.measurements.loc[dict(component = "N", time = t)].data
 
-dt64 = t.data
-type(dt64)
+def vector_normalise(v):
+    return v/np.sqrt(sum(v**2))
 
-dt64.item().astype(datetime)
+n = len(N330.station)
 
-svg.plot_data_globe_colour(station_readings, t.data, ortho_trans = (-90, 90))
+sum_N = sum(N330.measurements.loc[dict(component = "N", time = t)])
+sum_E = sum(N330.measurements.loc[dict(component = "E", time = t)])
+sum_Z = sum(N330.measurements.loc[dict(component = "Z", time = t)])
 
-sva.data_globe_gif(station_readings, time_end = 100)
+normed_sum = np.sqrt(sum_N**2 + sum_E**2 + sum_Z**2)
+normed_sum
+
+# np.sqrt(sum(sum(N330.measurements.loc[dict(station = s, time = t)] for s in N330.station)**2))
+
+
+
+
+v_0 = sum(np.sqrt(sum(N330.measurements.loc[dict(station = s, component = c, time = t)]**2 for c in N330.component)) for s in N330.station)/n
+#average absolute velocity
+
+phi = (normed_sum/(n*v_0)).data.item()
+
+phi
+
+def order_param(data, t, normed = False):
+    #there might be some difference if i normed each reading before doing the calculations, as some stations are more
+    #sensitive than others
+    #need to look into dealing with missing readings - currently looks like
+    #if readings missing from one station then everything is fucked. should be quite simple.
+
+    n = len(data.station)
+
+    sum_N = sum(data.measurements.loc[dict(component = "N", time = t)])
+    sum_E = sum(data.measurements.loc[dict(component = "E", time = t)])
+    sum_Z = sum(data.measurements.loc[dict(component = "Z", time = t)])
+    normed_sum = np.sqrt(sum_N**2 + sum_E**2 + sum_Z**2)
+    # np.sqrt(sum(sum(N330.measurements.loc[dict(station = s, time = t)] for s in N330.station)**2))
+
+    v_0 = sum(np.sqrt(sum(N330.measurements.loc[dict(station = s, component = c, time = t)]**2 for c in N330.component)) for s in N330.station)/n
+    #average absolute velocity
+
+    phi = (normed_sum/(n*v_0)).data.item()
+    #calculates actual order parameter
+
+    return phi
+
+order_param(N330, t)
+
+data = N330
+times = N330.time
+
+def
+params = np.zeros(len(times))
+i = 0
+for t in times:
+    params[i] = order_param(data, t)
+    i += 1
+
+
+i
+
+
+plt.plot(params)
+
+svl.plot_mag_data(data)
+
+
+avg_N = sum(data.measurements.loc[dict(component = "N", time = t)])/n
+avg_E = sum(data.measurements.loc[dict(component = "E", time = t)])/n
+avg_Z = sum(data.measurements.loc[dict(component = "Z", time = t)])/n
+
+np.asarray((avg_N.data.item(), avg_E.data.item(), avg_Z.data.item()))
+
+
+
+avg
+np.dot(avg, data.measurements.loc[dict(station = "BLC", time = t)])
+
+np.sqrt(sum(np.square(data.measurements.loc[(dict(station = "BLC", time = t))].data)))
+
+
+
+n = len(data)
+diffs = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
+
+for t in data.time:
+    avg_N = sum(data.measurements.loc[dict(component = "N", time = t)])/n
+    avg_E = sum(data.measurements.loc[dict(component = "E", time = t)])/n
+    avg_Z = sum(data.measurements.loc[dict(component = "Z", time = t)])/n
+
+    avg = np.asarray((avg_N.data.item(), avg_E.data.item(), avg_Z.data.item()))
+    abs_avg = np.sqrt(sum(np.square(avg)))
+
+    for s in data.station:
+        dot = np.dot(avg, data.measurements.loc[dict(station = s, time = t)])
+        abs_st = np.sqrt(sum(np.square(data.measurements.loc[dict(station = "BLC", time = t)].data)))
+        #magnitude of the reading at station s time t
+
+        diff = np.rad2deg(np.arccos(dot/(abs_avg*abs_st)))
+        diffs.measurements.loc[dict(station = s, time = t)] = diff
+
+
+
+diffs
+
+
+
+
+
+
+
+
+
+for t in data.time:
+    for s in data.station:
+        diffs.measurements.loc[dict(station = s, time = t)] -= avg
+
+diffs
