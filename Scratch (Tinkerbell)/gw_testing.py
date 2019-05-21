@@ -94,8 +94,18 @@ ds2 = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv",MLT = Tru
 components=['N', 'E', 'Z']
 # ds = data_funcs.mag_detrend(ds1)
 
+scratch = sac.cca(ds1)
+
+# scratch.loc[dict(first_st = 'TAL')]
+
 
 # write a function that takes two time series and generates a graph showing how the angles between a and b vary over time
-
 def angles(ts1, ts2):
     # ts1 and ts2 are Datasets
+
+    scratch = sac.cca(ds1)
+    return
+
+scratch_threshold = sat.threshold(ds1)
+
+sat.adj_mat(ds1,plot=True,thr_xrds=scratch_threshold)

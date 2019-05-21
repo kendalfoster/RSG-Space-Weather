@@ -39,9 +39,9 @@ def plot_adj_mat(adj_mat, stations, rns):
     fig.axes[-1].yaxis.label.set_size(20)
     plt.title('Adjacency Matrix', fontsize=30)
     plt.xlabel('Station 1', fontsize=20)
-    plt.xticks(ticks=rns, labels=stations, rotation=0)
+    plt.xticks(rns, stations, rotation=0)
     plt.ylabel('Station 2', fontsize=20)
-    plt.yticks(ticks=rns, labels=stations, rotation=0)
+    plt.yticks(rns, stations, rotation=0)
     plt.show()
 
 
