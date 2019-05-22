@@ -4,6 +4,7 @@ import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
 import spaceweather.analysis.data_funcs as sad
+import spaceweather.visualisation.heatmaps as svh
 
 
 
@@ -371,3 +372,89 @@ def cca_coeffs(ds, **kwargs):
     res = da.to_dataset(name = 'cca_coeffs')
 
     return res
+
+
+def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
+            plot=False, **kwargs):
+    """
+    Calculate a heatmap of correlations between two stations over time windows and lag.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
+        Note the time dimension must be at least win_len + 2*lag_range.
+    station1 : str, optional
+        Station for which the time window is fixed.
+        If no station is provided, this will default to the first station in ds.
+    station2 : str, optional
+        Station for which the time window will be shifted according to lag_range.
+        If no station is provided, this will default to the second station in ds.
+    lag_range: int, optional
+        The range, in minutes, of positive and negative shifts for station2.
+        Default is 10.
+    win_len : int, optional
+        Length of window in minutes. Default is 128.
+    plot : bool, optional
+        Whether or not to plot and return the correlation matrix as a heatmap.
+        Default is False.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the correlation coefficients.
+            The data_vars are: cor_coeffs.\n
+            The coordinates are: time_win, lag.
+    matplotlib.figure.Figure
+        Plot of the correlogram; ie heatmap of correlations.
+    """
+
+    # check if ds timeseries is long enough
+    nt = len(ds.time.values)
+    if nt < win_len + 2*lag_range:
+        print('Error: ds timeseries < win_len + 2*lag_range')
+        return 'Error: ds timeseries < win_len + 2*lag_range'
+
+    # check if stations are provided
+    stations = ds.station.values
+    if len(stations) <= 1:
+        print('Error: only one station in Dataset')
+        return 'Error: only one station in Dataset'
+    if station1 is None:
+        station1 = stations[0]
+    if station2 is None:
+        station2 = stations[1]
+
+    # Select the stations and window the data
+    ds = ds.loc[dict(station = [station1,station2])]
+    windowed = sad.window(ds,win_len)
+    ts1 = windowed.loc[dict(station = station1)].measurements
+    ts2 = windowed.loc[dict(station = station2)].measurements
+    ts1 = ts1.transpose('win_len', 'component', 'win_start')
+    ts2 = ts2.transpose('win_len', 'component', 'win_start')
+
+    # Set up array
+    time = range(lag_range+1, len(windowed.win_start)-lag_range+1)
+    lag = range(-lag_range, lag_range+1)
+    corr = np.zeros(shape = (len(lag), len(time)))
+
+    # Calculate correlations
+    for j in range(len(time)):
+        for i in range(len(lag)):
+            ts1_temp = ts1[dict(win_start = time[j]-1)]
+            ts2_temp = ts2[dict(win_start = time[j]+lag[i]-1)]
+            # run cca, suppress rcca output
+            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+            ccac = temp_cca.train([ts1_temp, ts2_temp])
+            corr[i,j] = ccac.cancorrs[0]
+
+    lag_mat = xr.Dataset(data_vars = {'lag_coeffs': (['lag', 'time_win'], corr)},
+                         coords = {'lag': lag,
+                                   'time_win': time})
+
+    # plot adjacency matrix
+    if plot:
+        fig = svh.plot_lag_mat(lag_mat = lag_mat, time_win = time, lag = lag)
+        return adj_mat, fig
+    else:
+        return adj_mat

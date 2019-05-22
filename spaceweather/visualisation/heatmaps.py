@@ -6,7 +6,7 @@ import xarray as xr # if gives error, just rerun
 import spaceweather.rcca as rcca
 import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
-# import spaceweather.analysis.threshold as sat
+
 
 
 def plot_adj_mat(adj_mat, stations, rns):
@@ -45,42 +45,28 @@ def plot_adj_mat(adj_mat, stations, rns):
     plt.show()
 
 
-def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
-                ret=True):
+def plot_lag_mat(lag_mat, time_win, lag):
     """
-    Calculate and plot a heatmap of correlations between two stations over time windows and lag.
+    Plot a heatmap of correlations between two stations over time windows and lag.
+
+    This function is called from :func:`spaceweather.analysis.cca.lag_mat`,
+    and is not intended for external use.
 
     Parameters
     ----------
-    ds : xarray.Dataset
-        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
-        Note the time dimension must be at least win_len + 2*lag_range.
-    station1 : str, optional
-        Station for which the time window is fixed.
-        If no station is provided, this will default to the first station in ds.
-    station2 : str, optional
-        Station for which the time window will be shifted according to lag_range.
-        If no station is provided, this will default to the second station in ds.
-    lag_range: int, optional
-        The range, in minutes, of positive and negative shifts for station2.
-        Default is 10.
-    win_len : int, optional
-        Length of window in minutes. Default is 128.
-    ret : bool, optional
-        Boolean value of whether or not to return related objects.
-        The objects are time, lag, correlations, and figure. Default is True.
+    lag_mat : numpy.ndarray
+        Numpy array of correlations to be plotted.
+    time_win : range
+        A range of the indices of the time windows used in calculating the correlations.
+    lag : range
+        A range of the lags used in calculating the correlations.
 
     Returns
     -------
-    range
-        Range of times used in the correlogram.
-    range
-        Range of lags used in the correlogram.
-    numpy.ndarray
-        Numpy array of correlations.
     matplotlib.figure.Figure
         Plot of the correlogram; ie heatmap of correlations.
     """
+
 
     # check if ds timeseries is long enough
     nt = len(ds.time.values)
@@ -129,20 +115,4 @@ def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
             ccac = temp_cca.train([ts1_temp, ts2_temp])
             corr[i,j] = ccac.cancorrs[0]
 
-    # Produce heatmap
-    x = np.arange(time[0], time[-1]+2)-0.5
-    y = np.arange(lag[0], lag[-1]+2)-0.5
-    fig = plt.figure(figsize=(10,8))
-    plt.pcolormesh(x, y, corr)
-    plt.title('Correlogram', fontsize=30)
-    plt.xlabel('Time Window', fontsize=20)
-    plt.ylabel('Lag, minutes', fontsize=20)
-    if len(x) < 5:
-        plt.xticks(x[:-1]+0.5) # show ticks on x-axis
-    plt.yticks(y[:-1]+0.5)
-    plt.colorbar(label='Correlation')
-    fig.axes[-1].yaxis.label.set_size(20)
-    plt.show()
 
-    if ret:
-        return time, lag, corr, fig
