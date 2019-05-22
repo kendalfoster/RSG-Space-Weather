@@ -66,50 +66,20 @@ def plot_lag_mat(lag_mat, time_win, lag):
         Plot of the correlogram; ie heatmap of correlations.
     """
 
+    # Produce heatmap
+    x = np.arange(time_win[0], time_win[-1]+1)-0.5
+    y = np.arange(lag[0], lag[-1]+1)-0.5
 
-    # check if ds timeseries is long enough
-    nt = len(ds.time.values)
-    if nt < win_len + 2*lag_range:
-        print('Error: ds timeseries < win_len + 2*lag_range')
-        return 'Error: ds timeseries < win_len + 2*lag_range'
+    fig = plt.figure(figsize=(10,8))
 
-    # check if stations are provided
-    stations = ds.station.values
-    if len(stations) <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
-    if station1 is None:
-        print('No station1 provided; using station1 = %s' % (stations[0]))
-        station1 = stations[0]
-        if station2 is None:
-            print('No station2 provided; using station2 = %s' % (stations[1]))
-            station2 = stations[1]
-    elif station2 is None and not station1 == stations[0]:
-        print('No station2 provided; using station2 = %s' % (stations[0]))
-        station2 = stations[0]
-    elif station2 is None and station1 == stations[0]:
-        print('No station2 provided; using station2 = %s' % (stations[1]))
-        station2 = stations[1]
+    lag_mat.lag_coeffs.plot.pcolormesh(cbar_kwargs={'label': 'Correlation'})
+    fig.axes[-1].yaxis.label.set_size(20)
+    plt.title('Lag Correlogram', fontsize=30)
+    plt.xlabel('Time Window', fontsize=20)
+    plt.ylabel('Lag, minutes', fontsize=20)
+    if len(x) < 5:
+        plt.xticks(x[:-1]+0.5) # show ticks on x-axis
+    plt.yticks(y[:-1]+0.5)
+    plt.show()
 
-    # Select the stations and window the data
-    ds = ds.loc[dict(station = [station1,station2])]
-    windowed = sad.window(ds,win_len)
-    ts1 = windowed.loc[dict(station = station1)].measurements
-    ts2 = windowed.loc[dict(station = station2)].measurements
-    ts1 = ts1.transpose('win_len', 'component', 'win_start')
-    ts2 = ts2.transpose('win_len', 'component', 'win_start')
-
-    # Set up array
-    time = range(lag_range+1, len(windowed.win_start)-lag_range+1)
-    lag = range(-lag_range, lag_range+1)
-    corr = np.zeros(shape = (len(lag), len(time)))
-
-    # Calculate correlations
-    for j in range(len(time)):
-        for i in range(len(lag)):
-            ts1_temp = ts1[dict(win_start = time[j]-1)]
-            ts2_temp = ts2[dict(win_start = time[j]+lag[i]-1)]
-            # run cca, suppress rcca output
-            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-            ccac = temp_cca.train([ts1_temp, ts2_temp])
-            corr[i,j] = ccac.cancorrs[0]
+    return fig
