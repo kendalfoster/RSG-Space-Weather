@@ -8,6 +8,7 @@ import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 
 
+
 def plot_adj_mat(adj_mat, stations, rns):
     """
     Plot the adjacency matrix as a heatmap for a set of stations.
