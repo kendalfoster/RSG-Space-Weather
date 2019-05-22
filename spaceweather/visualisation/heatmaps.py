@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.rcca as rcca
-import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 
 
@@ -114,5 +113,3 @@ def plot_lag_mat(lag_mat, time_win, lag):
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
             ccac = temp_cca.train([ts1_temp, ts2_temp])
             corr[i,j] = ccac.cancorrs[0]
-
-
