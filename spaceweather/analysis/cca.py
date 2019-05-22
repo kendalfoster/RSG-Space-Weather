@@ -463,6 +463,6 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
     # plot adjacency matrix
     if plot:
         fig = svh.plot_lag_mat(lag_mat = lag_mat, time_win = time, lag = lag)
-        return adj_mat, fig
+        return lag_mat, fig
     else:
-        return adj_mat
+        return lag_mat
