@@ -65,7 +65,6 @@ def plot_lag_mat(lag_mat, time_win, lag):
     matplotlib.figure.Figure
         Plot of the correlogram; ie heatmap of correlations.
     """
-
     # Produce heatmap
     x = np.arange(time_win[0], time_win[-1]+1)-0.5
     y = np.arange(lag[0], lag[-1]+1)-0.5
