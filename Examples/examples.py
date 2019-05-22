@@ -81,13 +81,19 @@ ds2_win = sad.window(ds2)
 
 
 ####################### cca ####################################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### cca ----------------------------------------------------------------------
 cca_ex = sac.cca(ds = ds1)
 
 ##### cca_coeffs ---------------------------------------------------------------
 coeffs_ex = sac.cca_coeffs(ds = ds1)
+
+##### lag_mat ------------------------------------------------------------------
+ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
+lag_mat = sac.lag_mat(ds = ds2)
+lag_mat2 = sac.lag_mat(ds2, station1 = 'EKP', station2 = 'BLC',
+                       lag_range = 10, win_len = 128, plot = False)
 ################################################################################
 
 
@@ -171,7 +177,7 @@ svg.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_tra
 
 
 ####################### heatmaps ###############################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### plot_adj_mat -------------------------------------------------------------
 fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], thr_ds = ds1),
@@ -180,9 +186,10 @@ fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], t
 
 ##### correlogram --------------------------------------------------------------
 ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
-time, lag, corr, fig = svh.correlogram(ds2)
-time, lag, corr, fig = svh.correlogram(ds2, station1 = 'EKP', station2 = 'DLR')
-time, lag, corr, fig = svh.correlogram(ds2, lag_range = 3, win_len = 64)
+lag_mat = sac.lag_mat(ds2, station1 = 'TAL', station2 = 'BLC')
+fig = svh.plot_lag_mat(lag_mat = lag_mat,
+                       time_win = lag_mat.time_win.values,
+                       lag = lag_mat.lag.values)
 ################################################################################
 
 
