@@ -163,7 +163,8 @@ def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
         The method used to calculate the threshold. Options are 'Dods' and 'kf'.
         Default is 'Dods'. Note you may have to add kwargs for the method.
     plot : bool, optional
-        Whether or not to plot the adjacency matrix as a heatmap. Default is False.
+        Whether or not to plot and return the adjacency matrix as a heatmap.
+        Default is False.
 
     Returns
     -------
@@ -171,6 +172,8 @@ def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
         Dataset containing the adjacency coefficients.
             The data_vars are: adj_coeffs.\n
             The coordinates are: first_st, second_st.
+    matplotlib.figure.Figure
+        Plot of the adjacency matrix.
     """
 
     # check if plot is in kwargs
@@ -213,5 +216,6 @@ def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
     # plot adjacency matrix
     if plot:
         fig = svh.plot_adj_mat(adj_mat = adj_mat, stations = stations, rns = rns)
-
-    return adj_mat
+        return adj_mat, fig
+    else:
+        return adj_mat
