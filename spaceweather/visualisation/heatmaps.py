@@ -94,8 +94,16 @@ def correlogram(ds, station1=None, station2=None, lag_range=10, win_len=128,
         print('Error: only one station in Dataset')
         return 'Error: only one station in Dataset'
     if station1 is None:
+        print('No station1 provided; using station1 = %s' % (stations[0]))
         station1 = stations[0]
-    if station2 is None:
+        if station2 is None:
+            print('No station2 provided; using station2 = %s' % (stations[1]))
+            station2 = stations[1]
+    elif station2 is None and not station1 == stations[0]:
+        print('No station2 provided; using station2 = %s' % (stations[0]))
+        station2 = stations[0]
+    elif station2 is None and station1 == stations[0]:
+        print('No station2 provided; using station2 = %s' % (stations[1]))
         station2 = stations[1]
 
     # Select the stations and window the data
