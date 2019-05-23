@@ -6,8 +6,8 @@ import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.gen_data as sag
 import spaceweather.analysis.threshold as sat
-import spaceweather.visualisation.animations as sva
-import spaceweather.visualisation.globes as svg
+###import spaceweather.visualisation.animations as sva
+###import spaceweather.visualisation.globes as svg
 import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
@@ -88,6 +88,14 @@ cca_ex = sac.cca(ds = ds1)
 
 ##### cca_coeffs ---------------------------------------------------------------
 coeffs_ex = sac.cca_coeffs(ds = ds1)
+<<<<<<< HEAD
+=======
+
+## Correlogram
+time, lag, corr, fig = svh.correlogram(ds1)
+time, lag, corr, fig = svh.correlogram(ds1, station1 = 'EKP', station2 = 'DLR')
+time, lag, corr, fig = svh.correlogram(ds1, lag_range = 3, win_len = 256)
+>>>>>>> d26479a469606d3689e0a3cd59b66a68f6008a3d
 ################################################################################
 
 
