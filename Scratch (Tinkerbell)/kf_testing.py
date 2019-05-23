@@ -1,15 +1,3 @@
-scrap way we do adj_mat
-
-for each station pair,
-    for each time window,
-        get the lag which produces the maximum correlation (like from correlogram stuff)
-        store all of this in a 4-dimensional Dataset
-        run threshold (like avg over time series) over this to get new-style adj_mat
-return the adj_mat with dimensions:
-                                   - first_st
-                                   - second_st
-                                   - time_win (index/win_start_time, ideally win_start)
-
 import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import numpy as np
@@ -18,9 +6,8 @@ import xarray as xr # if gives error, just rerun
 
 
 
-ds = sad.csv_to_Dataset(csv_file="Data/20190403-00-22-supermag.csv", MLAT=True)
-ds = ds[dict(station = range(2))]
-ds = ds[dict(time = slice(137), station = range(4))]
+ds1 = sad.csv_to_Dataset(csv_file="Data/20190403-00-22-supermag.csv", MLAT=True)
+ds2 = ds1[dict(time = slice(177), station = range(4))]
 lags = np.array([-2,0,1,3])
 
 
@@ -28,6 +15,7 @@ am = sat.adj_mat(ds)
 
 thresh_lag(ds, lags)
 max_corr_lag(ds, 10)
+adj_mat = lag_adj_mat(ds = ds2, win_len = 128, lag_range = 10)
 
 def thresh_lag(ds, lags, **kwargs):
     """
@@ -189,7 +177,7 @@ def lag_adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     num_win = len(win_start)
 
     # shrinking nested for loops to get all the pairs of stations
-    for i in range(0, num_st-1):i=2
+    for i in range(0, num_st-1):
         for j in range(i+1, num_st):
             for k in range(num_win):
                 # calculate maximum correlation and associated lag
@@ -224,26 +212,43 @@ def lag_adj_mat(ds, win_len=128, lag_range=10, **kwargs):
                 adj_mat_ss = xr.concat([adj_mat_ss, max_corr], dim = 'second_st')
 
         # adjust second_st coordinates
-        if i == num_st-1 and j == num_st:
-            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[num_st-1])
+        if i == num_st-2 and j == num_st-1:
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[num_st-1],
+                                                  first_st = stations[i])
         else:
-            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[range(i+1, num_st-1)])
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[i+1: num_st],
+                                                  first_st = stations[i])
 
         # append to master Dataset: dimension = first_st
         if i == 0:
             adj_mat = adj_mat_ss
         elif i < num_st-2:
             adj_mat = xr.concat([adj_mat, adj_mat_ss], dim = 'first_st')
-        else:
+        else: # if i = num_st-2
             dummy = adj_mat_ss.copy(deep = True)
-            dummy.values = np.zeros(num_win)
+            dummy.values = np.full(shape = (num_win), fill_value = np.nan)
             dummy = dummy.assign_coords(second_st = stations[num_st-2])
             adj_dum = xr.concat([adj_mat_ss, dummy], dim = 'second_st')
             adj_mat = xr.concat([adj_mat, adj_dum], dim = 'first_st')
-            # adj_mat = adj_mat.transpose('first_st', 'second_st')
 
-    # adjust first_st coordinates
-    adj_mat = adj_mat.assign_coords(first_st = stations[0:num_st-1])
+    # finish the DataArrays
+    adj_blank = np.full(shape=(num_st, num_st, num_win), fill_value = np.nan)
+    adj_bda = xr.DataArray(data = adj_blank,
+                           coords = [stations, stations, win_start],
+                           dims = ['first_st', 'second_st',  'win_start'])
+    adj_mat = adj_mat.combine_first(adj_bda)
 
-adj_mat.second_st
-stations
+    # reorder the stations coordinates because xr.concat messed them up
+    da1 = adj_mat.loc[dict(first_st = stations[0])]
+    for i in range(1, num_st):
+        da1 = xr.concat([da1, adj_mat.loc[dict(first_st = stations[i])]], dim = 'first_st')
+    da2 = da1.loc[dict(second_st = stations[0])]
+    for i in range(1, num_st):
+        da2 = xr.concat([da2, da1.loc[dict(second_st = stations[i])]], dim = 'second_st')
+    da = da2.transpose('first_st', 'second_st', 'win_start')
+
+
+    # convert DataArray to Dataset
+    res = da.to_dataset(name = 'adj_coeffs')
+
+    return res
