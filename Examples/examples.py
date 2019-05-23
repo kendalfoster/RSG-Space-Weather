@@ -1,3 +1,29 @@
+"""
+========
+Contents
+========
+
+Supermag
+--------
+supermag
+
+Analysis
+--------
+- cca
+- data_funcs
+- gen_data
+- threshold
+
+Visualisation
+-------------
+- animations
+- globes
+- heatmaps
+- lines
+- spectral_analysis
+"""
+
+
 # need to be in RSG-Space-Weather folder
 pwd()
 
@@ -81,7 +107,7 @@ ds2_win = sad.window(ds2)
 
 
 ####################### cca ####################################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### cca ----------------------------------------------------------------------
 cca_ex = sac.cca(ds = ds1)
@@ -104,24 +130,19 @@ scratch_ds.measurements[480:510,:,:].plot.line(x='time', hue='component', col='s
 
 
 ####################### threshold ##############################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
-
-##### thresh_kf ----------------------------------------------------------------
-thr_kf = sat.thresh_kf(ds = ds1)
-
-##### thresh_dods --------------------------------------------------------------
-thr_dods = sat.thresh_dods(ds = ds1)
-thr_dods_25 = sat.thresh_dods(ds = ds1, n0 = 0.25)
+ds1 = sad.csv_to_Dataset(csv_file="Data/20190403-00-22-supermag.csv", MLAT=True)
+ds2 = ds1[dict(time = slice(177), station = range(4))]
 
 ##### threshold ----------------------------------------------------------------
-thresh_kf = sat.threshold(ds = ds1, thr_meth = 'kf')
-thresh_dods = sat.threshold(ds = ds1, thr_meth = 'Dods')
-thresh_dods_25 = sat.threshold(ds = ds1, thr_meth = 'Dods', n0 = 0.25)
+lags = np.array([-2,0,1,3])
+
+thresh = sat.threshold(ds = ds2, lags = lags)
+
+##### max_corr_lag -------------------------------------------------------------
+max_corr = sat.max_corr_lag(ds = ds2, lag_range = 10)
 
 ##### adj_mat ------------------------------------------------------------------
-thr_ds = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv")
-ds2 = thr_ds.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
-adj_mat = sat.adj_mat(ds=ds2, thr_ds=thr_ds, thr_meth='Dods', plot=False)
+adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
 ################################################################################
 
 
@@ -171,7 +192,7 @@ svg.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_tra
 
 
 ####################### heatmaps ###############################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### plot_adj_mat -------------------------------------------------------------
 fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], thr_ds = ds1),
@@ -188,7 +209,7 @@ fig = svh.plot_lag_mat(lag_mat = lag_mat,
 
 
 ####################### lines ##################################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### plot_mag_data ------------------------------------------------------------
 svl.plot_mag_data(ds=ds1)

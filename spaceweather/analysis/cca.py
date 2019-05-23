@@ -1,3 +1,13 @@
+"""
+Contents
+--------
+
+- cca
+- cca_coeffs
+- lag_mat
+"""
+
+
 ## Packages
 import numpy as np
 import xarray as xr # if gives error, just rerun

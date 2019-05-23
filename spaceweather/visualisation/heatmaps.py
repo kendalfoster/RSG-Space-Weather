@@ -1,3 +1,12 @@
+"""
+Contents
+--------
+
+- plot_adj_mat
+- plot_lag_mat
+"""
+
+
 ## Packages
 import numpy as np
 import matplotlib.pyplot as plt

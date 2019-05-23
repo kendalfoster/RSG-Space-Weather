@@ -1,3 +1,13 @@
+"""
+Contents
+--------
+
+- csv_to_Dataset
+- detrend
+- window
+"""
+
+
 ## Packages
 import numpy as np
 import scipy.signal as signal
