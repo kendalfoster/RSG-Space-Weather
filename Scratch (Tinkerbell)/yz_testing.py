@@ -41,6 +41,9 @@ import pandas as pd
 
 data = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
+original = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
+
 
 t = N330.time[1].data
 t
@@ -157,38 +160,96 @@ np.sqrt(np.nansum(test**2))
 
 
 
+def pcf(data, dr = 0.3):
+    # dr = 0.3
+    r_range = np.linspace(0, 2, 21)
+    t = data.time[5]
+    N = len(data.station) #number of points
+    results = np.zeros((len(r_range), len(data.time[0:500]))) #pair correlation function
 
-dr = 0.5
-r_range = np.linspace(0, 2, 21)
-t = data.time[5]
-N = len(data.station) #number of points
-pcf = np.zeros((len(r_range), len(data.time[0:100]))) #pair correlation function
+    for time_index in range(len(data.time[0:500])):
+        t = data.time[time_index]
+        for s in data.station:
+            data.measurements.loc[dict(station = s, time = t)] = vector_normalise(data.measurements.loc[dict(station = s, time = t)].data)
 
-for time_index in range(len(data.time[0:100])):
-    t = data.time[time_index]
-    for s in data.station:
-        data.measurements.loc[dict(station = s, time = t)] = vector_normalise(data.measurements.loc[dict(station = s, time = t)].data)
+        for r_index in range(len(r_range)):
+            r = r_range[r_index]
+            count = 0
 
-    for r_index in range(len(r_range)):
-        r = r_range[r_index]
-        count = 0
+            for s1 in data.station:
+                for s2 in data.station:
+                    diff = data.measurements.loc[dict(station = s1, time = t)] - data.measurements.loc[dict(station = s2, time = t)]
+                    dist = np.sqrt(np.nansum(diff**2))
+                    if (max(0, r) < dist and dist < r+dr):
+                        count += 1
 
-        for s1 in data.station:
-            for s2 in data.station:
-                diff = data.measurements.loc[dict(station = s1, time = t)] - data.measurements.loc[dict(station = s2, time = t)]
-                dist = np.sqrt(np.nansum(diff**2))
-                if (max(0, r) < dist and dist < r+dr):
-                    count += 1
+            results[r_index, time_index] = (r*count)/(3*dr*N**2)
 
-        pcf[r_index, time_index] = (r*count)/(3*dr*N**2)
+    return results
 
 
-pcf
-plt.figure(figsize = (20, 8))
+
+
+
+
+plt.figure(figsize = (24.5, 8))
+plt.plot(params[0:500])
+plt.title("order parameter new")
+plt.xlabel("time")
+# plt.xticks(data.time.data)
+plt.ylabel("phi")
+
+
+plt.figure(figsize = (27, 8))
 plt.pcolormesh(pcf)
 plt.xlabel("time", fontsize = 20)
 plt.ylabel("r", fontsize = 20)
 plt.colorbar()
+
+
+
+
+
+plt.figure(figsize = (27, 8))
+plt.pcolormesh(first6pcf > 0.5)
+plt.xlabel("time", fontsize = 20)
+plt.ylabel("r", fontsize = 20)
+plt.colorbar()
+
+original.measurements.loc[dict(time = original.time[range(500)])].plot.line(x='time', hue='component', col='station', figsize = (20, 20), col_wrap=1)
+
+
+
+
+
+
+
+
+
+fig = plt.figure(figsize = (20, 20))
+tal = plt.subplot(311)
+blc = plt.subplot(312, sharex = tal)
+pcm = plt.subplot(313, sharex = tal)
+
+tal.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "TAL")])
+tal.title.set_text("TAL")
+blc.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "BLC")])
+blc.title.set_text("BLC")
+
+pcm.pcolormesh(first6pcf)
+pcm.xlabel("time", fontsize = 20)
+pcm.ylabel("r", fontsize = 20)
+pcm.colorbar()
+
+tal.get_shared_x_axes().join(tal, blc, pcm)
+tal.set_xticklabels([])
+
+plt.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "BLC")])
+plt.xticks()
+
+
+
+data.station[:6]
 
 
 plt.figure(figsize = (20, 8))
@@ -203,9 +264,11 @@ vector_normalise(data.measurements.loc[dict(station = "BLC", time = t)].data)
 
 
 
+first6stns = data.loc[dict(station = data.station[:6])]
+first6pcf = pcf(first6stns)
 
 
-data.measurements
+data.measurements.loc[dict(station = data.station[:6])].loc[dict(time = t)]
 
 data.measurements.loc[dict(time = data.time[range(100)])]
 
