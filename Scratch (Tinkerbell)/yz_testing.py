@@ -62,6 +62,12 @@ for s in data.station:
     if
 
 
+
+
+
+sva.data_globe_gif(original, time_end = 20)
+
+
 np.nansum(N330.measurements.loc[dict(component = "N", time = data.time[800])])
 
 
@@ -163,7 +169,7 @@ np.sqrt(np.nansum(test**2))
 def pcf(data, dr = 0.3):
     # dr = 0.3
     r_range = np.linspace(0, 2, 21)
-    t = data.time[5]
+    # t = data.time[5]
     N = len(data.station) #number of points
     results = np.zeros((len(r_range), len(data.time[0:500]))) #pair correlation function
 
@@ -189,7 +195,7 @@ def pcf(data, dr = 0.3):
 
 
 
-
+allpcf = pcf(original.loc[dict(time = original.time[:500])])
 
 
 plt.figure(figsize = (24.5, 8))
@@ -211,7 +217,7 @@ plt.colorbar()
 
 
 plt.figure(figsize = (27, 8))
-plt.pcolormesh(first6pcf > 0.5)
+plt.pcolormesh(first6pcf)
 plt.xlabel("time", fontsize = 20)
 plt.ylabel("r", fontsize = 20)
 plt.colorbar()
@@ -219,27 +225,48 @@ plt.colorbar()
 original.measurements.loc[dict(time = original.time[range(500)])].plot.line(x='time', hue='component', col='station', figsize = (20, 20), col_wrap=1)
 
 
+order = order_param(original.loc[dict(time = original.time[range(500)])])
+
+order
+
+
+
+
+
+fig = plt.figure(figsize = (20, 30))
+nplots = len(original.station) + 2
+pcm = plt.subplot(nplots, 1, 1)
+osp = plt.subplot(nplots, 1, 2) #order sub plot
+
+pcm.pcolormesh(first6pcf)
+# pcm.xlabel("time", fontsize = 20)
+# pcm.ylabel("r", fontsize = 20)
+# pcm.colorbar()
+osp.plot(order[:500])
+
+for i in range(nplots-2):
+    s = data.station[i]
+    ax = plt.subplot(nplots, 1, i+3, sharex = pcm)
+    ax.plot(original.measurements.loc[dict(time = original.time[range(500)], station = s)])
+    ax.title.set_text(s.data)
+
+fig.savefig("test.png")
 
 
 
 
 
 
+tal = plt.subplot(312)
+blc = plt.subplot(313, sharex = tal)
 
-fig = plt.figure(figsize = (20, 20))
-tal = plt.subplot(311)
-blc = plt.subplot(312, sharex = tal)
-pcm = plt.subplot(313, sharex = tal)
 
 tal.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "TAL")])
 tal.title.set_text("TAL")
 blc.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "BLC")])
 blc.title.set_text("BLC")
 
-pcm.pcolormesh(first6pcf)
-pcm.xlabel("time", fontsize = 20)
-pcm.ylabel("r", fontsize = 20)
-pcm.colorbar()
+
 
 tal.get_shared_x_axes().join(tal, blc, pcm)
 tal.set_xticklabels([])
