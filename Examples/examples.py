@@ -180,9 +180,10 @@ fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], t
 
 ##### correlogram --------------------------------------------------------------
 ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
-time, lag, corr, fig = svh.correlogram(ds2)
-time, lag, corr, fig = svh.correlogram(ds2, station1 = 'EKP', station2 = 'DLR')
-time, lag, corr, fig = svh.correlogram(ds2, lag_range = 3, win_len = 64)
+lag_mat = sac.lag_mat(ds2, station1 = 'TAL', station2 = 'BLC')
+fig = svh.plot_lag_mat(lag_mat = lag_mat,
+                       time_win = lag_mat.time_win.values,
+                       lag = lag_mat.lag.values)
 ################################################################################
 
 

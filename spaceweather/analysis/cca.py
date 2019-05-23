@@ -427,7 +427,7 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
 
     # Select the stations and window the data
     ds = ds.loc[dict(station = [station1,station2])]
-    windowed = sad.window(ds,win_len)
+    windowed = sad.window(ds, win_len)
     ts1 = windowed.loc[dict(station = station1)].measurements
     ts2 = windowed.loc[dict(station = station2)].measurements
     ts1 = ts1.transpose('win_len', 'component', 'win_start')
@@ -446,6 +446,8 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
             # run cca, suppress rcca output
             temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
             ccac = temp_cca.train([ts1_temp, ts2_temp])
+            if ccac.cancorrs[0] < 0:
+                print(i, j, "\n")
             corr[i,j] = ccac.cancorrs[0]
 
     lag_mat = xr.Dataset(data_vars = {'lag_coeffs': (['lag', 'time_win'], corr)},
