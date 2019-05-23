@@ -23,6 +23,9 @@ ds = ds[dict(station = range(2))]
 ds = ds[dict(time = slice(137), station = range(4))]
 lags = np.array([-2,0,1,3])
 
+
+am = sat.adj_mat(ds)
+
 thresh_lag(ds, lags)
 max_corr_lag(ds, 10)
 
@@ -186,7 +189,7 @@ def lag_adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     num_win = len(win_start)
 
     # shrinking nested for loops to get all the pairs of stations
-    for i in range(0, num_st-1):
+    for i in range(0, num_st-1):i=2
         for j in range(i+1, num_st):
             for k in range(num_win):
                 # calculate maximum correlation and associated lag
@@ -222,8 +225,9 @@ def lag_adj_mat(ds, win_len=128, lag_range=10, **kwargs):
 
         # adjust second_st coordinates
         if i == num_st-1 and j == num_st:
-            adj_mat_ss = adj_mat_ss.expand_dims(name = 'second_st')
-        adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[range(i+1, num_st)])
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[num_st-1])
+        else:
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[range(i+1, num_st-1)])
 
         # append to master Dataset: dimension = first_st
         if i == 0:
@@ -231,14 +235,15 @@ def lag_adj_mat(ds, win_len=128, lag_range=10, **kwargs):
         elif i < num_st-2:
             adj_mat = xr.concat([adj_mat, adj_mat_ss], dim = 'first_st')
         else:
-            dum = np.zeros(num_win)
-            dummy = xr.DataArray(data = dum,
-                                 coords = [win_start],
-                                 dims = ['win_start'])
-            dummy = dummy.assign_coords(first_st = num_st-2, second_st = num_st-2)
+            dummy = adj_mat_ss.copy(deep = True)
+            dummy.values = np.zeros(num_win)
+            dummy = dummy.assign_coords(second_st = stations[num_st-2])
             adj_dum = xr.concat([adj_mat_ss, dummy], dim = 'second_st')
             adj_mat = xr.concat([adj_mat, adj_dum], dim = 'first_st')
-            adj_mat = adj_mat.transpose('first_st', 'second_st')
+            # adj_mat = adj_mat.transpose('first_st', 'second_st')
 
     # adjust first_st coordinates
-    adj_mat = adj_mat.assign_coords(first_st = stations)
+    adj_mat = adj_mat.assign_coords(first_st = stations[0:num_st-1])
+
+adj_mat.second_st
+stations
