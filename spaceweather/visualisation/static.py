@@ -304,4 +304,8 @@ def plot_connections_globe(adj_matrix, ds=None, list_of_stations=None, time=None
     if daynight:
         ax.add_feature(Nightshade(time), alpha = 0.2)
 
+    # add timestamp as plot title
+    mytime = time.strftime('%Y.%m.%d %H:%M')
+    plt.title("%s" %mytime, fontsize = 30)
+
     return fig
