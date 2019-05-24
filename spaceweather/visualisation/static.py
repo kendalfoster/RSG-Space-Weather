@@ -6,7 +6,6 @@ Contents
 - auto_ortho
 - plot_stations
 - plot_data_globe
-- plot_data_globe_colour
 - plot_connections_globe
 """
 
@@ -131,36 +130,73 @@ def plot_stations(list_of_stations, ortho_trans, **kwargs):
     return fig
 
 
-##
-def plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0)):
+def plot_data_globe(ds, list_of_stations=None, list_of_components=['N', 'E'],
+                     t=0, ortho_trans=None, daynight=True, colour=False, **kwargs):
+    '''
+    Plot the data as vectors for each station on a globe for a single time
+    with an optional shadow for nighttime and optional data colouration.
 
-    # plots N and E components of the vector readings for a single time step t
-    # by default it plots data from all stations fed to it in station_readings unless
-    # specified otherwise in list_of_stations.
-    # ortho_trans specifies the angle from which we see the plot(earth) at.
-    # if left at default, yz.auto_ortho(list_of_stations) centres the view on the centre of all stations in list_of_stations.
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
+    list_of_stations : list, optional
+        List of stations in ds to be used on the plot.
+    list_of_components : list, optional
+        List of components in ds to be used on the plot. Must be of length 2.
+    t : int or numpy.datetime64, optional
+        Either\n
+        1) the index of the time in ds, or\n
+        2) the long-format time time in ds\n
+        to be used to plot the data. Defaults to the first time in ds.
+    ortho_trans : tuple, optional
+        Orientation of the plotted globe; determines at what angle we view the globe.
+        Defaults to average location of all stations.
+    daynight : bool, optional
+        Whether or not to include a shadow for nighttime. Default is True.
+    colour : bool, optional
+        Whether or not to colour the data vectors. Also accepts 'color' for
+        Americans who can't spell properly.
 
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Plot of the network on the globe.
+    '''
 
-    if np.all(list_of_stations == None):
-        list_of_stations = station_components.station
-    if np.all(ortho_trans == (0, 0)):
+    # check kwargs for color
+    cl = kwargs.get('color', None)
+    if cl is not None:
+        colour = cl
+
+    # check inputs
+    if len(list_of_components) != 2:
+        print('Error: please input two components in list_of_components')
+        return 'Error: please input two components in list_of_components'
+    if list_of_stations is None:
+        list_of_stations = ds.station.values
+    if ortho_trans is None:
         ortho_trans = auto_ortho(list_of_stations)
+    if isinstance(t, int):
+        t = ds[dict(time = t)].time.values # extract time at t
 
+    # get constants
     station_coords = csv_to_coords()
     num_stations = len(list_of_stations)
-    x = np.zeros(num_stations)
-    y = np.zeros(num_stations)
-    u = np.zeros(num_stations)
-    v = np.zeros(num_stations)
-    i = 0
 
-    for station in list_of_stations:
-        x[i] = station_coords.longitude.loc[dict(station = station)]
-        y[i] = station_coords.latitude.loc[dict(station = station)]
-        u[i] = station_components.measurements.loc[dict(station = station, time = t, component = "E")]
-        v[i] = station_components.measurements.loc[dict(station = station, time = t, component = "N")]
-        i += 1
+    # store latitude and longitude of the stations
+    x = station_coords.longitude.loc[dict(station = list_of_stations)].values
+    y = station_coords.latitude.loc[dict(station = list_of_stations)].values
 
+    # store measurements for each coordinate
+    u = ds.measurements.loc[dict(time = t,
+                                 station = list_of_stations,
+                                 component = list_of_components[1])].values
+    v = ds.measurements.loc[dict(time = t,
+                                 station = list_of_stations,
+                                 component = list_of_components[0])].values
+
+    # create figure
     fig = plt.figure(figsize = (20, 20))
     ax = fig.add_subplot(1, 1, 1, projection=ccrs.Orthographic(ortho_trans[0], ortho_trans[1])) #(long, lat)
     ax.add_feature(cfeature.OCEAN, zorder=0)
@@ -170,68 +206,31 @@ def plot_data_globe(station_components, t, list_of_stations = None, ortho_trans 
     ax.set_global()
     ax.gridlines()
 
-    ax.scatter(x, y, transform = ccrs.Geodetic()) #plots stations
-    ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
-              width = 0.002, color = "g")
-
-    return fig
-
-
-##
-def plot_data_globe_colour(station_readings, t, list_of_stations = None, ortho_trans = (0, 0), daynight = True):
-    if np.all(list_of_stations == None):
-        list_of_stations = station_readings.station
-    if np.all(ortho_trans == (0, 0)):
-        ortho_trans = auto_ortho(list_of_stations)
-
-    dt = pd.to_datetime(t)
-    station_coords = csv_to_coords()
-    num_stations = len(list_of_stations)
-    x = np.zeros(num_stations)
-    y = np.zeros(num_stations)
-    u = np.zeros(num_stations)
-    v = np.zeros(num_stations)
-    i = 0
-
-    for station in list_of_stations:
-        x[i] = station_coords.longitude.loc[dict(station = station)]
-        y[i] = station_coords.latitude.loc[dict(station = station)]
-        u[i] = station_readings.measurements.loc[dict(station = station, time = t, component = "E")]
-        v[i] = station_readings.measurements.loc[dict(station = station, time = t, component = "N")]
-        i += 1
-
-    fig = plt.figure(figsize = (20, 20))
-    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Orthographic(ortho_trans[0], ortho_trans[1])) #(long, lat)
-    ax.add_feature(cfeature.OCEAN, zorder=0)
-    ax.add_feature(cfeature.LAND, zorder=0, edgecolor='grey')
-    ax.add_feature(cfeature.BORDERS, zorder=0, edgecolor='grey')
-    ax.add_feature(cfeature.LAKES, zorder=0)
-    if daynight:
-        ax.add_feature(Nightshade(dt), alpha = 0.2)
-    ax.set_global()
-    ax.gridlines()
-
+    # plot stations and measurement vectors
     ax.scatter(x, y, color = "k", transform = ccrs.Geodetic()) #plots stations
+    if colour:
+        colours = np.ones((num_stations, 3))
+        colours[:, 0] = x/360
+        colours[:, 2] = (y-10)/80
+        colours = plc.hsv_to_rgb(colours)
+        ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
+              width = 0.002, color = colours)
+    else:
+        ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
+                  width = 0.002, color = "g")
 
-    colours = np.ones((num_stations, 3))
+    # add shadow for nighttime
+    if daynight:
+        ax.add_feature(Nightshade(pd.to_datetime(t)), alpha = 0.2)
 
-    for i in range(num_stations):
-        colours[i, 0] = station_coords.longitude.loc[dict(station = list_of_stations[i])]/360
-        colours[i, 2] = (station_coords.latitude.loc[dict(station = list_of_stations[i])]-10)/80
-
-    colours = plc.hsv_to_rgb(colours)
-
-    ax.quiver(x, y, u, v, transform = ccrs.PlateCarree(), #plots vector data
-          width = 0.002, color = colours)
-
+    # add timestamp as plot title
+    dt = pd.to_datetime(t)
     mytime = dt.strftime('%Y.%m.%d %H:%M')
-
     plt.title("%s" %mytime, fontsize = 30)
 
     return fig
 
 
-##
 def plot_connections_globe(adj_matrix, ds=None, list_of_stations=None, time=None,
                            ortho_trans=None, daynight=True, **kwargs):
     '''
@@ -245,7 +244,7 @@ def plot_connections_globe(adj_matrix, ds=None, list_of_stations=None, time=None
     list_of_stations : list, optional
         List of stations in ds to be used on the plot.
         If list_of_stations is not included then ds must be included.
-    time : pandas._libs.tslibs.timestamps.Timestamp, optional
+    time : numpy.datetime64, optional
         The time and date for the adj_matrix.
         If time is not included then ds must be included, and time defaults to
         the first time in ds.
@@ -274,11 +273,12 @@ def plot_connections_globe(adj_matrix, ds=None, list_of_stations=None, time=None
     else:
         list_of_stations = ds.station
         time = pd.to_datetime(ds.time.values[0])
+    time = pd.to_datetime(time)
 
     if ortho_trans is None:
         ortho_trans = auto_ortho(list_of_stations)
 
-    # get contstants
+    # get constants
     num_sta = len(list_of_stations)
     station_coords = csv_to_coords()
 

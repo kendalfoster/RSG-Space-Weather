@@ -177,15 +177,14 @@ plot_of_stations = svs.plot_stations(list_of_stations = list_of_stations,
                                      ortho_trans = aut_orth)
 
 ##### plot_data_globe ----------------------------------------------------------
-t = ds1.time[1]
-globe_data = svg.plot_data_globe(ds1, t, list_of_stations = None, ortho_trans = (0, 0))
-# plots N and E components of the vector readings for a single time step t
-# by default it plots data from all stations fed to it in station_readings unless
-# specified otherwise in list_of_stations.
-# ortho_trans specifies the angle from which we see the plot(earth) at.
-# if left at default, yz.auto_ortho(list_of_stations) centres the view on the centre of all stations in list_of_stations.
-
-##### plot_data_globe_colour ---------------------------------------------------
+data_globe = svs.plot_data_globe(ds1)
+data_globe2 = svs.plot_data_globe(ds = ds1, list_of_stations = ds1.station[2:6].values)
+data_globe2 = svs.plot_data_globe(ds = ds1, list_of_components = ['N', 'Z'])
+data_globe3 = svs.plot_data_globe(ds = ds1, t = 4)
+data_globe4 = svs.plot_data_globe(ds = ds1, t = ds1.time[4].values)
+data_globe5 = svs.plot_data_globe(ds = ds1, daynight=False)
+data_globe6 = svs.plot_data_globe(ds1, colour=True)
+data_globe7 = svs.plot_data_globe(ds1, color=True)
 
 ##### plot_connections_globe ---------------------------------------------------
 import numpy as np
@@ -202,16 +201,16 @@ ds1 = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_da
 ds2 = ds1[dict(time = slice(150), station = range(4))]
 
 ##### data_globe_gif -----------------------------------------------------------
-sva.data_globe_gif(ds1, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
-#makes sandra.gif in the /gif folder
+sva.data_globe_gif(ds = ds2,
+                   filepath = 'Scratch (Tinkerbell)/data_gif',
+                   filename = 'globe_data',
+                   colour = True)
 
-##### data_globe_gif_colour ----------------------------------------------------
-
-##### anim_connections_globe ---------------------------------------------------
-adj_mat = sat.adj_mat(ds = ds1, win_len = 128, lag_range = 10)
-sva.anim_connections_globe(adj_mat_ds = adj_mat,
-                           filepath = 'Scratch (Tinkerbell)/connections_gif',
-                           filename = 'globe_connections')
+##### connections_globe_gif ----------------------------------------------------
+adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
+sva.connections_globe_gif(adj_mat_ds = adj_mat,
+                          filepath = 'Scratch (Tinkerbell)/connections_gif',
+                          filename = 'globe_connections')
 ################################################################################
 
 
