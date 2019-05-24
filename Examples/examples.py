@@ -114,6 +114,12 @@ cca_ex = sac.cca(ds = ds1)
 
 ##### cca_coeffs ---------------------------------------------------------------
 coeffs_ex = sac.cca_coeffs(ds = ds1)
+
+##### lag_mat ------------------------------------------------------------------
+ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
+lag_mat = sac.lag_mat(ds = ds2)
+lag_mat2 = sac.lag_mat(ds2, station1 = 'EKP', station2 = 'BLC',
+                       lag_range = 10, win_len = 128, plot = False)
 ################################################################################
 
 
