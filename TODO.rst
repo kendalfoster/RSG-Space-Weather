@@ -22,7 +22,7 @@ Do Now
 - |ss| fix window/correlation coeffs for correlogram |se|
 - |ss| normalize/threshold the corr coeffs |se|
 - animate correlation coeffs in matrix over time
-- animate network on globe, with day n nite
+- |ss| animate network on globe, with day n nite |se|
 - one chain, fixed longitude
 - find good-looking event for report
 
