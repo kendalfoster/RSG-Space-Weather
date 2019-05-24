@@ -131,7 +131,6 @@ def max_corr_lag(ds, lag_range, **kwargs):
 
     return res
 
-
 def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     """
     Calculate the adjacency matrix for a set of stations using lag.
