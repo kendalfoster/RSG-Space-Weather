@@ -1,3 +1,13 @@
+"""
+Contents
+--------
+
+- cca
+- cca_coeffs
+- lag_mat
+"""
+
+
 ## Packages
 import numpy as np
 import xarray as xr # if gives error, just rerun
@@ -435,7 +445,8 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
 
     # Select the stations and window the data
     ds = ds.loc[dict(station = [station1,station2])]
-    windowed = sad.window(ds,win_len)
+    windowed = sad.window(ds, win_len)
+
     ts1 = windowed.loc[dict(station = station1)].measurements
     ts2 = windowed.loc[dict(station = station2)].measurements
     ts1 = ts1.transpose('win_len', 'component', 'win_start')

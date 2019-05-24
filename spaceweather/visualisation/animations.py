@@ -1,3 +1,12 @@
+"""
+Contents
+--------
+
+- data_globe_gif
+- data_globe_gif_colour
+"""
+
+
 ## Packages
 import numpy as np
 import matplotlib.pyplot as plt

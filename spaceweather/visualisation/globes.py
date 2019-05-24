@@ -1,3 +1,16 @@
+"""
+Contents
+--------
+
+- csv_to_coords
+- auto_ortho
+- plot_stations
+- plot_data_globe
+- plot_data_globe_colour
+- plot_connections_globe
+"""
+
+
 ## Packages
 import numpy as np
 import matplotlib.pyplot as plt
