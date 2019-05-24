@@ -14,7 +14,6 @@ import xarray as xr # if gives error, just rerun
 
 
 
-
 def plot_adj_mat(adj_mat, stations, rns):
     """
     Plot the adjacency matrix as a heatmap for a set of stations.
@@ -78,6 +77,7 @@ def plot_lag_mat(lag_mat, time_win, lag):
     y = np.arange(lag[0], lag[-1]+1)-0.5
 
     fig = plt.figure(figsize=(10,8))
+
     lag_mat.lag_coeffs.plot.pcolormesh(cbar_kwargs={'label': 'Correlation'})
     fig.axes[-1].yaxis.label.set_size(20)
     plt.title('Lag Correlogram', fontsize=30)
