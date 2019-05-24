@@ -16,15 +16,17 @@ To-Do List
 Do Now
 ------
 
+- add documentation to functions
 - |ss| fix all function calls and names |se|
 - |ss| fix cca function in cca.py |se|
 - |ss| fix window/correlation coeffs for correlogram |se|
-- add documentation to functions
+- |ss| normalize/threshold the corr coeffs |se|
+- animate correlation coeffs in matrix over time
+- animate network on globe, with day n nite
+- one chain, fixed longitude
+- find good-looking event for report
 
 Do in Near Future
 -----------------
-- animate correlation coeffs in matrix over time
-- |ss| normalize/threshold the corr coeffs |se|
 - get network parameters
-- |ss| animate network on globe, with day n nite |se|
-- one chain, fixed longitude
+- start outlining report

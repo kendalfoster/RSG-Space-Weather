@@ -1,3 +1,11 @@
+"""
+Contents
+--------
+
+- plot_mag_data
+"""
+
+
 ## Packages
 import matplotlib.pyplot as plt # maybe can delete this
 import xarray as xr # if gives error, just rerun

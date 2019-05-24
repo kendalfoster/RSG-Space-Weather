@@ -1,10 +1,16 @@
+"""
+Contents
+--------
+
+- plot_adj_mat
+- plot_lag_mat
+"""
+
+
 ## Packages
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray as xr # if gives error, just rerun
-# Local Packages
-import spaceweather.rcca as rcca
-import spaceweather.analysis.data_funcs as sad
 
 
 
@@ -12,6 +18,7 @@ def plot_adj_mat(adj_mat, stations, rns):
     """
     Plot the adjacency matrix as a heatmap for a set of stations.
 
+    This function is currently not in use.
     This function is called from :func:`spaceweather.analysis.threshold.adj_mat`,
     and is not intended for external use.
 
@@ -65,6 +72,7 @@ def plot_lag_mat(lag_mat, time_win, lag):
     matplotlib.figure.Figure
         Plot of the correlogram; ie heatmap of correlations.
     """
+
     # Produce heatmap
     x = np.arange(time_win[0], time_win[-1]+1)-0.5
     y = np.arange(lag[0], lag[-1]+1)-0.5

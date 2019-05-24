@@ -7,9 +7,9 @@ import xarray as xr # if gives error, just rerun
 
 
 ################################################################################
-########## Constructing xarray data structures ##########
+####################### Constructing xarray data structures ####################
 
-#------------------ From Numpy Arrays ------------------------------------------
+#---------------------- From Numpy Arrays --------------------------------------
 # define some vectors for later ease
 times = [2011, 2012]
 components = ['N', 'E', 'Z']
@@ -46,7 +46,7 @@ george_ds.measurements
 george_da2ds.measurements
 
 
-#------------------ Concatenating xarray Data Structures -----------------------
+#---------------------- Concatenating xarray Data Structures -------------------
 # concatenation allows for "stacking" arrays of different lengths, filling with nans
 
 # define some vectors for later ease
@@ -89,4 +89,34 @@ jorge_ds
 ### Rearrange coordinates (supermag.py functions assume 'time' first)
 jorge_da2ds = jorge_da2ds.transpose('time', 'component', 'station')
 jorge_ds = jorge_ds.transpose('time', 'component', 'station')
+################################################################################
+
+
+
+
+################################################################################
+####################### Saving and Loading xarray Data Structures ##############
+### Make a Dataset
+times = [2011, 2012]
+components = ['N', 'E', 'Z']
+stations = ['TAL', 'BLC', 'EKS', 'BLS']
+arr = np.ones(shape = (2,3,4))
+
+example_da = xr.DataArray(data = arr,
+                          coords = [times, components, stations],
+                          dims = ['time', 'component', 'station'])
+
+example_ds = xr.Dataset(data_vars = {'measurements': (['time', 'component', 'station'], arr)},
+                        coords = {'time': times,
+                                  'component': components,
+                                  'station': stations})
+
+# xarray Data Structures are stored as NetCDF files
+#---------------------- Saving xarray Data Structures --------------------------
+example_ds.to_netcdf(path = 'Examples/example_ds.nc')
+example_da.to_netcdf(path = 'Examples/example_da.nc')
+
+#---------------------- Loading xarray Data Structures -------------------------
+another_ds = xr.open_dataset('Examples/example_ds.nc')
+another_da = xr.open_dataarray('Examples/example_da.nc')
 ################################################################################

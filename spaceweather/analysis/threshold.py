@@ -1,221 +1,252 @@
+"""
+Contents
+--------
+
+- threshold
+- max_corr_lag
+- adj_mat
+"""
+
 ## Packages
 import numpy as np
 import xarray as xr # if gives error, just rerun
 # Local Packages
-import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.visualisation.heatmaps as svh
+import spaceweather.rcca as rcca
 
 
-def thresh_kf(ds, **kwargs):
+def threshold(ds, lags, **kwargs):
     """
-    Calculate the threshold for each station pair, my method.
-
-    This function simply uses the first canonical correlation coefficients
-    across the entire time series for each station pair.
+    Calculate the pairwise thresholds for one station pair, using lag.
 
     Parameters
     ----------
     ds : xarray.Dataset
         Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
+    lags : np.ndarray
+        Numpy array of lags at which maximum correlation is achieved.
 
     Returns
     -------
     xarray.Dataset
-        Dataset containing the thresholds for each station pair.
+        Dataset containing the thresholds for the station pair and the lag.
             The data_vars are: thresholds.\n
-            The coordinates are: first_st, second_st.
+            The coordinates are: lag.
     """
 
-    thr = sac.cca_coeffs(ds=ds, **kwargs)
-    thr = thr.rename(dict(cca_coeffs = 'thresholds'))
-    return thr
+    # detrend the data
+    ds = sad.detrend(ds, **kwargs)
 
-
-def thresh_dods(ds, n0=None, **kwargs):
-    """
-    Calculate the threshold for each station pair using the method in the
-    Dods et al (2015) paper.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
-    n0 : float, optional
-        The desired expected normalized degree of each station.
-        Default is 1/[number of stations - 1].
-
-    Returns
-    -------
-    xarray.Dataset
-        Dataset containing the thresholds for each station pair.
-            The data_vars are: thresholds.\n
-            The coordinates are: first_st, second_st.
-    """
-
-    nn = kwargs.get('n0', None)
-    if nn is not None:
-        n0 = nn
-
-    # univeral constants
-    components = ds.component.values
+    # get constants
     stations = ds.station.values
     num_st = len(stations)
-    if n0 is None:
-        n0 = 1/(num_st-1)
-    cca_coeffs = sac.cca_coeffs(ds=ds, **kwargs)
-    ct_vec = np.linspace(start=0, stop=1, num=101)
+    num_comp = len(ds.component.values)
+    num_lag = len(lags)
+    lag_range = np.max(abs(lags))
+    time_fix = np.arange(lag_range, len(ds.time)-lag_range)
+    ds_fix = ds[dict(time = time_fix)]
 
-    # initialize
-    ct_arr = np.zeros(shape = (len(ct_vec), num_st))
-    # iterate through all possible ct values
-    for i in range(len(ct_vec)):
-        temp = cca_coeffs.where(cca_coeffs > ct_vec[i], 0) # it looks opposite, but it's right
-        temp = temp.where(temp <= ct_vec[i], 1)
-        for j in range(num_st):
-            ct_arr[i,j] = sum(temp.loc[dict(first_st = stations[j])].cca_coeffs.values)
-    # normalize
-    ct_arr = ct_arr/(num_st-1)
+    # set up array
+    thresh = np.zeros(num_lag)
 
-    # find indices roughly equal to n0 and get their values
-    thr = np.zeros(num_st)
-    for i in range(num_st):
-        thr[i] = ct_vec[int(np.where(ct_arr[:,i] <= n0)[0][0])]
+    ts1 = ds_fix[dict(station = 0)].measurements
+    ts2 = ds[dict(station = 1)]
+    # loop through lags
+    for k in range(num_lag):
+        ts2_temp = ts2[dict(time = time_fix+lags[k])].measurements
+        # remove NaNs from data (will mess up cca)
+        both_ts = xr.concat([ts1, ts2_temp], dim = 'component')
+        both_ts = both_ts.dropna(dim = 'time', how = 'any')
+        ts1 = both_ts[:, 0:num_comp]
+        ts2_temp = both_ts[:, num_comp:2*num_comp]
+        # run cca, suppress rcca output
+        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+        ccac = temp_cca.train([ts1, ts2_temp])
+        thresh[k] = ccac.cancorrs[0]
 
-    # create threshold matrix using smaller threshold in each pair
-    threshold = np.zeros(shape = (num_st, num_st))
-    for i in range(num_st):
-        for j in range(i+1, num_st):
-            if thr[i] < thr[j]:
-                threshold[i,j] = thr[i]
-                threshold[j,i] = thr[i]
-            else:
-                threshold[i,j] = thr[j]
-                threshold[j,i] = thr[j]
-
-    # restructure into Dataset
-    res = xr.Dataset(data_vars = {'thresholds': (['first_st', 'second_st'], threshold)},
-                     coords = {'first_st': stations,
-                               'second_st': stations})
+    # construct Dataset from array
+    res = xr.Dataset(data_vars = {'thresholds': (['lag'], thresh)},
+                     coords = {'lag': lags})
 
     return res
 
 
-def threshold(ds, thr_meth='Dods', **kwargs):
+def max_corr_lag(ds, lag_range, **kwargs):
     """
-    Calculate the pairwise thresholds for each station pair, using the provided method.
+    Calculate the maximum correlaion between the two stations over time.
 
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
-    thr_meth : str, optional
-        The method used to calculate the threshold. Options are 'Dods' and 'kf'.
-        Default is 'Dods'. Note you may have to add kwargs for the method.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
+        ds is assumed to only have two stations.
+    lag_range: int
+        The range, in minutes, of positive and negative shifts for station2.
 
     Returns
     -------
-    xarray.Dataset
-        Dataset containing the thresholds for each station pair.
-            The data_vars are: thresholds.\n
-            The coordinates are: first_st, second_st.
+    xarray.DataArray
+        DataArray containing the correlation coefficient.
+            The coordinate is: lag.
     """
 
-    # determine method of thresholding
-    if thr_meth is 'Dods':
-        return thresh_dods(ds=ds, **kwargs)
-    elif thr_meth is 'kf':
-        return thresh_kf(ds=ds, **kwargs)
-    else:
-        print('Error: not a valid thresholding method')
-        return 'Error: not a valid thresholding method'
+    # check if stations are provided
+    stations = ds.station.values
+    if len(stations) <= 1:
+        print('Error: only one station in Dataset')
+        return 'Error: only one station in Dataset'
 
+    # get constants
+    num_comp = len(ds.component.values)
+    lags = np.arange(-lag_range, lag_range+1)
+    num_lag = len(lags)
+    time_fix = np.arange(lag_range, len(ds.time)-lag_range)
+    ds_fix = ds[dict(time = time_fix)]
 
-def adj_mat(ds, thr_xrds=None, thr_array=None, thr_ds=None, thr_meth='Dods',
-            plot=False, **kwargs):
+    # set up array
+    cca_coeffs = np.zeros(num_lag)
+
+    # loop through lags
+    ts1 = ds_fix[dict(station = 0)].measurements
+    for k in range(num_lag):
+        ts2 = ds[dict(time = time_fix+lags[k], station = 1)].measurements
+        # remove NaNs from data (will mess up cca)
+        both_ts = xr.concat([ts1, ts2], dim = 'component')
+        both_ts = both_ts.dropna(dim = 'time', how = 'any')
+        ts1 = both_ts[:, 0:num_comp]
+        ts2 = both_ts[:, num_comp:2*num_comp]
+        # run cca, suppress rcca output
+        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+        ccac = temp_cca.train([ts1, ts2])
+        cca_coeffs[k] = ccac.cancorrs[0]
+
+    # pick maximum correlation
+    max = np.max(cca_coeffs)
+    lag = np.argmax(cca_coeffs)
+
+    # convert to DataArray
+    res = xr.DataArray(data = max)
+    res = res.assign_coords(lag = lag)
+
+    return res
+
+def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     """
-    Calculate the adjacency matrix for a set of stations.
-
-    This function calculates the pairwise correlations between the stations in ds.
-    Then it determines adjacency by comparing those correlations with either\n
-        1) the thresholds provided in thr_xrds,\n
-        2) the thresholds provided in thr_array, or\n
-        3) the thresholds calculated from thr_ds.
+    Calculate the adjacency matrix for a set of stations using lag.
 
     Parameters
     ----------
     ds : xarray.Dataset
-        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
-        This window of a Dataset is used to calculate the pairwise correlations,
-        for comparison with the pairwise thresholds.
-    thr_xrds : xarray.Dataset, optional
-        xarray.Dataset containing the threshold values for ds.
-        If not included, either thr_array or thr_ds must be included.
-    thr_array : np.ndarray, optional
-        Numpy array containing the threshold values for ds.
-        If not included, either thr_xrds or thr_ds must be included.
-    thr_ds : xarray.Dataset, optional
-        Data as converted by :func:`supermag.mag_csv_to_Dataset`.
-        This is used to calculate the pairwise thresholds and must contain the
-        same stations as ds. Often this is a longer time series, of which ds is
-        a window. If not included, either thr_xrds or thr_array must be included.
-    thr_meth : str, optional
-        The method used to calculate the threshold. Options are 'Dods' and 'kf'.
-        Default is 'Dods'. Note you may have to add kwargs for the method.
-    plot : bool, optional
-        Whether or not to plot and return the adjacency matrix as a heatmap.
-        Default is False.
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
+        ds is assumed to only have two stations.
+    win_len : int, optional
+        Length of window in minutes. Default is 128.
+    lag_range: int, optional
+        The range, in minutes, of positive and negative shifts for the second
+        station in each pair. Default is 10.
 
     Returns
     -------
     xarray.Dataset
         Dataset containing the adjacency coefficients.
             The data_vars are: adj_coeffs.\n
-            The coordinates are: first_st, second_st.
-    matplotlib.figure.Figure
-        Plot of the adjacency matrix.
+            The coordinates are: first_st, second_st, win_start.
     """
 
-    # check if plot is in kwargs
-    pp = kwargs.get('plot', None)
-    if pp is not None:
-        plot = pp
+    # check if ds timeseries is long enough
+    nt = len(ds.time.values)
+    if nt < win_len + 2*lag_range:
+        print('Error: ds timeseries < win_len + 2*lag_range')
+        return 'Error: ds timeseries < win_len + 2*lag_range'
 
-    # get constants
+    # check if stations are provided
     stations = ds.station.values
     num_st = len(stations)
-    rns = range(num_st)
+    if num_st <= 1:
+        print('Error: only one station in Dataset')
+        return 'Error: only one station in Dataset'
 
-    if thr_xrds is None:
-        if thr_array is None:
-            if thr_ds is None:
-                print('Error: you must include one of:\n 1) thr_xrds\n 2) thr_array\n 3) thr_ds')
-                # return 'Error: you must include one of:\n 1) thr_xrds\n 2) thr_array\n 3) thr_ds'
+    # window the data
+    ds_win = sad.window(ds, win_len)
+
+    # constants
+    win_start = ds_win.win_start
+    num_win = len(win_start)
+
+    # shrinking nested for loops to get all the pairs of stations
+    for i in range(0, num_st-1):
+        for j in range(i+1, num_st):
+            for k in range(num_win):
+                # calculate maximum correlation and associated lag
+                temp_ds = ds_win[dict(station = [i,j], win_start = k)]
+                temp_ds = temp_ds.rename(win_len = 'time')
+                temp_ds = temp_ds.transpose('time', 'station', 'component')
+                max_temp = max_corr_lag(ds = temp_ds, lag_range = lag_range, **kwargs)
+
+                # append to master DataArray
+                if k == 0:
+                    max_corr = max_temp
+                else:
+                    max_corr = xr.concat([max_corr, max_temp], dim = 'win_start')
+            max_corr = max_corr.assign_coords(win_start = win_start)
+
+            # set up thresholds
+            thresh = threshold(ds = ds[dict(station = [i,j])],
+                               lags = np.unique(max_corr.lag), **kwargs)
+
+            # apply threshold for each time window
+            for k in range(num_win):
+                max_corr.values[k] = max_corr.values[k] - thresh.loc[dict(lag = max_corr[k].lag.values)].thresholds.values
+            values = max_corr.values
+            values[values > 0] = 1
+            values[values <= 0] = 0
+            max_corr.values = values
+
+            # append to master Dataset: dimension = second_st
+            if j == i+1:
+                adj_mat_ss = max_corr
             else:
-                thresh = threshold(ds=thr_ds, thr_meth=thr_meth, **kwargs)
-                thresh = thresh.assign_coords(first_st = rns, second_st = rns)
+                adj_mat_ss = xr.concat([adj_mat_ss, max_corr], dim = 'second_st')
+
+        # adjust second_st coordinates
+        if i == num_st-2 and j == num_st-1:
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[num_st-1],
+                                                  first_st = stations[i])
         else:
-            thresh = xr.Dataset(data_vars = {'thresholds': (['first_st', 'second_station'], thr_array)},
-                                coords = {'first_st': rns,
-                                          'second_st': rns})
-    else:
-        thresh = thr_xrds.assign_coords(first_st = rns, second_st = rns)
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[i+1: num_st],
+                                                  first_st = stations[i])
 
-    # calculate pairwise CCA coefficients
-    cca = sac.cca_coeffs(ds=ds, **kwargs)
-    cca = cca.assign_coords(first_st = rns, second_st = rns)
+        # append to master Dataset: dimension = first_st
+        if i == 0:
+            adj_mat = adj_mat_ss
+        elif i < num_st-2:
+            adj_mat = xr.concat([adj_mat, adj_mat_ss], dim = 'first_st')
+        else: # if i = num_st-2
+            dummy = adj_mat_ss.copy(deep = True)
+            dummy.values = np.full(shape = (num_win), fill_value = np.nan)
+            dummy = dummy.assign_coords(second_st = stations[num_st-2])
+            adj_dum = xr.concat([adj_mat_ss, dummy], dim = 'second_st')
+            adj_mat = xr.concat([adj_mat, adj_dum], dim = 'first_st')
 
-    adj_mat = cca - thresh.thresholds
-    values = adj_mat.cca_coeffs.values
-    values[values > 0] = 1
-    values[values <= 0] = 0
-    adj_mat.cca_coeffs.values = values
-    adj_mat = adj_mat.assign_coords(first_st = stations, second_st = stations)
-    adj_mat = adj_mat.rename(name_dict=dict(cca_coeffs = 'adj_coeffs'))
+    # finish the DataArrays
+    adj_blank = np.full(shape=(num_st, num_st, num_win), fill_value = np.nan)
+    adj_bda = xr.DataArray(data = adj_blank,
+                           coords = [stations, stations, win_start],
+                           dims = ['first_st', 'second_st',  'win_start'])
+    adj_mat = adj_mat.combine_first(adj_bda)
 
-    # plot adjacency matrix
-    if plot:
-        fig = svh.plot_adj_mat(adj_mat = adj_mat, stations = stations, rns = rns)
-        return adj_mat, fig
-    else:
-        return adj_mat
+    # reorder the stations coordinates because xr.concat messed them up
+    da1 = adj_mat.loc[dict(first_st = stations[0])]
+    for i in range(1, num_st):
+        da1 = xr.concat([da1, adj_mat.loc[dict(first_st = stations[i])]], dim = 'first_st')
+    da2 = da1.loc[dict(second_st = stations[0])]
+    for i in range(1, num_st):
+        da2 = xr.concat([da2, da1.loc[dict(second_st = stations[i])]], dim = 'second_st')
+    da = da2.transpose('first_st', 'second_st', 'win_start')
+
+
+    # convert DataArray to Dataset
+    res = da.to_dataset(name = 'adj_coeffs')
+
+    return res
