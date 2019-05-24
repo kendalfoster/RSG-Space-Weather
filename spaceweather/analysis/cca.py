@@ -4,6 +4,7 @@ Contents
 
 - cca
 - cca_coeffs
+- lag_mat_pair
 - lag_mat
 """
 
@@ -384,10 +385,10 @@ def cca_coeffs(ds, **kwargs):
     return res
 
 
-def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
-            plot=False, **kwargs):
+def lag_mat_pair(ds, station1=None, station2=None, lag_range=10, win_len=128,
+                 plot=False, **kwargs):
     """
-    Calculate a heatmap of correlations between two stations over time windows and lag.
+    Calculate and plot a heatmap of correlations between two stations over time windows and lag.
 
     Parameters
     ----------
@@ -414,7 +415,7 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
     xarray.Dataset
         Dataset containing the correlation coefficients.
             The data_vars are: cor_coeffs.\n
-            The coordinates are: time_win, lag.
+            The coordinates are: time_win, lag, first_st, second_st, win_start.
     matplotlib.figure.Figure
         Plot of the correlogram; ie heatmap of correlations.
     """
@@ -444,7 +445,7 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
         station2 = stations[1]
 
     # Select the stations and window the data
-    ds = ds.loc[dict(station = [station1,station2])]
+    ds = ds.loc[dict(station = [station1, station2])]
     windowed = sad.window(ds, win_len)
 
     ts1 = windowed.loc[dict(station = station1)].measurements
@@ -471,9 +472,106 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
                          coords = {'lag': lag,
                                    'time_win': time})
 
-    # plot adjacency matrix
+    # add first_st and second_st as coordinates
+    lag_mat = lag_mat.assign_coords(first_st = station1,
+                                    second_st = station2,
+                                    win_start = windowed.win_start.values[time])
+
+    # plot correlogram heatmap
     if plot:
-        fig = svh.plot_lag_mat(lag_mat = lag_mat, time_win = time, lag = lag)
+        fig = svh.plot_lag_mat_pair(lag_mat = lag_mat, time_win = time, lag = lag)
         return lag_mat, fig
     else:
         return lag_mat
+
+
+def lag_mat(ds, lag_range=10, win_len=128, **kwargs):
+    """
+    Calculate a heatmap of correlations between every station pair over time windows and lag.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
+        Note the time dimension must be at least win_len + 2*lag_range.
+    lag_range: int, optional
+        The range, in minutes, of positive and negative shifts for station2.
+        Default is 10.
+    win_len : int, optional
+        Length of window in minutes. Default is 128.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the correlation coefficients.
+            The data_vars are: cor_coeffs.\n
+            The coordinates are: time_win, lag, first_st, second_st, win_start.
+    """
+
+    # get constants
+    stations = ds.station.values
+    num_st = len(stations)
+
+    # check there are at least two stations
+    if num_st <= 1:
+        print('Error: only one station in Dataset')
+        return 'Error: only one station in Dataset'
+
+    # shrinking nested for loops to get all the pairs of stations
+    for i in range(0, num_st-1):
+        for j in range(i+1, num_st):
+            lm = lag_mat_pair(ds = ds,
+                              station1 = stations[i],
+                              station2 = stations[j],
+                              lag_range = lag_range,
+                              win_len = win_len,
+                              **kwargs)
+
+            # append to master Dataset: dimension = second_st
+            if j == i+1:
+                lag_mat_ss = lm
+            else:
+                lag_mat_ss = xr.concat([lag_mat_ss, lm], dim = 'second_st')
+
+        # append to master Dataset: dimension = first_st
+        if i == 0:
+            lag_mat = lag_mat_ss
+        elif i < num_st-2:
+            lag_mat = xr.concat([lag_mat, lag_mat_ss], dim = 'first_st')
+        else: # if i = num_st-2
+            dummy = lag_mat_ss.copy(deep = True)
+            num_lag = len(lag_mat_ss.lag.values)
+            num_win = len(lag_mat_ss.time_win.values)
+            dummy.lag_coeffs.values = np.full(shape = (num_lag, num_win),
+                                              fill_value = np.nan)
+            dummy = dummy.assign_coords(first_st = stations[num_st-2],
+                                        second_st = stations[num_st-2])
+            lag_dum = xr.concat([lag_mat_ss, dummy], dim = 'second_st')
+            lag_mat = xr.concat([lag_mat, lag_dum], dim = 'first_st')
+
+    # finish the DataArrays
+    time_wins = lag_mat_ss.time_win.values
+    num_win = len(time_wins)
+    lags = lag_mat_ss.lag.values
+    num_lag = len(lags)
+    win_sts = lag_mat_ss.win_start.values
+    num_win_st = len(win_sts)
+    lag_blank = np.full(shape=(num_win, num_lag, num_st, num_st, num_win_st), fill_value = np.nan)
+    lag_bda = xr.Dataset(data_vars = {'lag_coeffs': (['time_win', 'lag', 'first_st', 'second_st', 'win_start'], lag_blank)},
+                         coords = {'time_win': time_wins,
+                                   'lag': lags,
+                                   'first_st': stations,
+                                   'second_st': stations,
+                                   'win_start': win_sts})
+    lag_mat = lag_mat.combine_first(lag_bda)
+
+    # reorder the stations coordinates because xr.concat messed them up
+    ds1 = lag_mat.loc[dict(first_st = stations[0])]
+    for i in range(1, num_st):
+        ds1 = xr.concat([ds1, lag_mat.loc[dict(first_st = stations[i])]], dim = 'first_st')
+    ds2 = ds1.loc[dict(second_st = stations[0])]
+    for i in range(1, num_st):
+        ds2 = xr.concat([ds2, ds1.loc[dict(second_st = stations[i])]], dim = 'second_st')
+    ds = ds2.transpose('time_win', 'lag', 'first_st', 'second_st', 'win_start')
+
+    return ds

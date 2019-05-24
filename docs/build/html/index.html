@@ -92,6 +92,7 @@ station in each pair. Default is 10.</p></li>
 <ul class="simple">
 <li><p>cca</p></li>
 <li><p>cca_coeffs</p></li>
+<li><p>lag_mat_pair</p></li>
 <li><p>lag_mat</p></li>
 </ul>
 <dl class="function">
@@ -144,8 +145,37 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 
 <dl class="function">
 <dt id="spaceweather.analysis.cca.lag_mat">
-<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">lag_mat</code><span class="sig-paren">(</span><em>ds</em>, <em>station1=None</em>, <em>station2=None</em>, <em>lag_range=10</em>, <em>win_len=128</em>, <em>plot=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.lag_mat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate a heatmap of correlations between two stations over time windows and lag.</p>
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">lag_mat</code><span class="sig-paren">(</span><em>ds</em>, <em>lag_range=10</em>, <em>win_len=128</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.lag_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a heatmap of correlations between every station pair over time windows and lag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – <p>Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
+<p>Note the time dimension must be at least win_len + 2*lag_range.</p>
+</p></li>
+<li><p><strong>lag_range</strong> (<em>int</em><em>, </em><em>optional</em>) – The range, in minutes, of positive and negative shifts for station2.
+Default is 10.</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the correlation coefficients.</dt><dd><p>The data_vars are: cor_coeffs.</p>
+<p>The coordinates are: time_win, lag, first_st, second_st, win_start.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.cca.lag_mat_pair">
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">lag_mat_pair</code><span class="sig-paren">(</span><em>ds</em>, <em>station1=None</em>, <em>station2=None</em>, <em>lag_range=10</em>, <em>win_len=128</em>, <em>plot=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.lag_mat_pair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and plot a heatmap of correlations between two stations over time windows and lag.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -168,7 +198,7 @@ Default is False.</p></li>
 <li><p><em>xarray.Dataset</em> –</p>
 <dl>
 <dt>Dataset containing the correlation coefficients.</dt><dd><p>The data_vars are: cor_coeffs.</p>
-<p>The coordinates are: time_win, lag.</p>
+<p>The coordinates are: time_win, lag, first_st, second_st, win_start.</p>
 </dd>
 </dl>
 </li>
@@ -379,7 +409,8 @@ station in each pair. Default is 10.</p></li>
 <h4>Contents<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><p>data_globe_gif</p></li>
-<li><p>anim_connections_globe</p></li>
+<li><p>connections_globe_gif</p></li>
+<li><p>lag_mat_gif_time</p></li>
 </ul>
 <dl class="function">
 <dt id="spaceweather.visualisation.animations.connections_globe_gif">
@@ -388,8 +419,7 @@ station in each pair. Default is 10.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>adj_mat_ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
-3-dimensional Dataset whose coordinates are first_st, second_st, win_start.</p></li>
+<li><p><strong>adj_mat_ds</strong> (<em>xarray.Dataset</em>) – 3-dimensional Dataset whose coordinates are first_st, second_st, win_start.</p></li>
 <li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
 ‘connections_gif’ folder to be made in the current working directory.</p></li>
 <li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘globe_conn’.</p></li>
@@ -416,8 +446,7 @@ nighttime and optional data colouration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
-3-dimensional Dataset whose coordinates are first_st, second_st, time.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – 3-dimensional Dataset whose coordinates are first_st, second_st, time.</p></li>
 <li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
 ‘data_gif’ folder to be made in the current working directory.</p></li>
 <li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘globe_data’.</p></li>
@@ -428,6 +457,29 @@ Defaults to average location of all stations.</p></li>
 <li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
 <li><p><strong>colour</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to colour the data vectors. Also accepts ‘color’ for
 Americans who can’t spell properly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>.png</em> – png image files used to make the gif animation, saved in filepath/images_for_giffing.</p></li>
+<li><p><em>.gif</em> – gif animation of the png image files, saved in filepath/gif.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.animations.lag_mat_gif_time">
+<code class="descclassname">spaceweather.visualisation.animations.</code><code class="descname">lag_mat_gif_time</code><span class="sig-paren">(</span><em>lag_ds</em>, <em>filepath='lag_mat_gif'</em>, <em>filename='lag_mat'</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.animations.lag_mat_gif_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Animates a correlogram over time for a station pair.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lag_ds</strong> (<em>xarray.Dataset</em>) – Dataset whose coordinates are time_win, lag, first_st, second_st, win_start.</p></li>
+<li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
+‘lag_mat_gif’ folder to be made in the current working directory.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘lag_mat’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -475,18 +527,35 @@ and is not intended for external use.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="spaceweather.visualisation.heatmaps.plot_lag_mat">
-<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_lag_mat</code><span class="sig-paren">(</span><em>lag_mat</em>, <em>time_win</em>, <em>lag</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_lag_mat" title="Permalink to this definition">¶</a></dt>
+<dt id="spaceweather.visualisation.heatmaps.plot_lag_mat_pair">
+<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_lag_mat_pair</code><span class="sig-paren">(</span><em>lag_mat_pair</em>, <em>time_win</em>, <em>lag</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_lag_mat_pair" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a heatmap of correlations between two stations over time windows and lag.</p>
-<p>This function is called from <a class="reference internal" href="#spaceweather.analysis.cca.lag_mat" title="spaceweather.analysis.cca.lag_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.cca.lag_mat()</span></code></a>,
+<p>This function is called from <a class="reference internal" href="#spaceweather.analysis.cca.lag_mat_pair" title="spaceweather.analysis.cca.lag_mat_pair"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.cca.lag_mat_pair()</span></code></a>,
 and is not intended for external use.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lag_mat</strong> (<em>numpy.ndarray</em>) – Numpy array of correlations to be plotted.</p></li>
+<li><p><strong>lag_mat_pair</strong> (<em>xarray.Dataset</em>) – The correlations to be plotted.</p></li>
 <li><p><strong>time_win</strong> (<em>range</em>) – A range of the indices of the time windows used in calculating the correlations.</p></li>
 <li><p><strong>lag</strong> (<em>range</em>) – A range of the lags used in calculating the correlations.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the correlogram; ie heatmap of correlations.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.heatmaps.plot_lag_mat_time">
+<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_lag_mat_time</code><span class="sig-paren">(</span><em>lag_mat</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_lag_mat_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a heatmap of correlations between each pair of stations over time windows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>lag_mat</strong> (<em>xarray.Dataset</em>) – The correlations to be plotted.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Plot of the correlogram; ie heatmap of correlations.</p>

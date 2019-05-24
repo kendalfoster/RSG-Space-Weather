@@ -114,11 +114,16 @@ cca_ex = sac.cca(ds = ds1)
 ##### cca_coeffs ---------------------------------------------------------------
 coeffs_ex = sac.cca_coeffs(ds = ds1)
 
-##### lag_mat ------------------------------------------------------------------
+##### lag_mat_pair -------------------------------------------------------------
 ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
-lag_mat = sac.lag_mat(ds = ds2)
-lag_mat2 = sac.lag_mat(ds2, station1 = 'EKP', station2 = 'BLC',
-                       lag_range = 10, win_len = 128, plot = False)
+lag_mat = sac.lag_mat_pair(ds = ds2)
+lag_mat2 = sac.lag_mat_pair(ds2, station1 = 'EKP', station2 = 'BLC',
+                            lag_range = 10, win_len = 128, plot = False)
+
+##### lag_mat ------------------------------------------------------------------
+ds2 = ds1[dict(time = slice(177), station = range(4))]
+lag_mat = sac.lag_mat(ds2)
+lag_mat2 = sac.lag_mat(ds= ds2, lag_range = 8, win_len = 120)
 ################################################################################
 
 
@@ -211,6 +216,12 @@ adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
 sva.connections_globe_gif(adj_mat_ds = adj_mat,
                           filepath = 'Scratch (Tinkerbell)/connections_gif',
                           filename = 'globe_connections')
+
+##### lag_mat_gif_time ---------------------------------------------------------
+lag_mat = sac.lag_mat(ds2)
+sva.lag_mat_gif_time(lag_ds = lag_mat,
+                     filepath = 'Scratch (Tinkerbell)/lag_mat_gif',
+                     filename = 'lag_mat')
 ################################################################################
 
 
@@ -223,12 +234,18 @@ fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], t
                        stations = ds1.station.values,
                        rns = range(len(ds1.station.values)))
 
-##### correlogram --------------------------------------------------------------
+##### plot_lag_mat_pair (correlogram) ------------------------------------------
 ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
-lag_mat = sac.lag_mat(ds2, station1 = 'TAL', station2 = 'BLC')
-fig = svh.plot_lag_mat(lag_mat = lag_mat,
-                       time_win = lag_mat.time_win.values,
-                       lag = lag_mat.lag.values)
+lag_mat_pair = sac.lag_mat_pair(ds2, station1 = 'TAL', station2 = 'BLC')
+fig = svh.plot_lag_mat_pair(lag_mat_pair = lag_mat_pair,
+                            time_win = lag_mat_pair.time_win.values,
+                            lag = lag_mat_pair.lag.values)
+
+##### plot_lag_mat_time --------------------------------------------------------
+ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
+lag_mat = sac.lag_mat(ds2)
+lm = lag_mat[dict(time_win = 4, lag = 4, win_start = 4)]
+lag_mat_fig = svh.plot_lag_mat_time(lm)
 ################################################################################
 
 
