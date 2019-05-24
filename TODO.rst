@@ -21,7 +21,7 @@ Do Now
 - |ss| fix cca function in cca.py |se|
 - |ss| fix window/correlation coeffs for correlogram |se|
 - |ss| normalize/threshold the corr coeffs |se|
-- animate correlation coeffs in matrix over time
+- |ss| animate correlation coeffs in matrix over time |se|
 - |ss| animate network on globe, with day n nite |se|
 - one chain, fixed longitude
 - find good-looking event for report
