@@ -33,7 +33,7 @@ import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.gen_data as sag
 import spaceweather.analysis.threshold as sat
 import spaceweather.visualisation.animations as sva
-import spaceweather.visualisation.globes as svg
+import spaceweather.visualisation.static as svs
 import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
@@ -159,40 +159,59 @@ adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
 ################################################################################
 
 
-####################### animations ###############################################
+####################### static #################################################
+ds1 = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv", MLAT = True)
+ds2 = ds1[dict(time = slice(150), station = range(4))]
 
-################################################################################
+##### csv_to_coords ------------------------------------------------------------
+station_info = svs.csv_to_coords()
 
+##### auto_ortho ---------------------------------------------------------------
+list_of_stations = ds1.station
+aut_orth = svs.auto_ortho(list_of_stations)
 
-####################### globes #################################################
-station_components = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv")
+##### plot_stations ------------------------------------------------------------
+list_of_stations = ds1.station
+aut_orth = svs.auto_ortho(list_of_stations)
+plot_of_stations = svs.plot_stations(list_of_stations = list_of_stations,
+                                     ortho_trans = aut_orth)
 
-t = station_components.time[1]
-list_of_stations = station_components.station
-
-
-svg.plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0))
+##### plot_data_globe ----------------------------------------------------------
+t = ds1.time[1]
+globe_data = svg.plot_data_globe(ds1, t, list_of_stations = None, ortho_trans = (0, 0))
 # plots N and E components of the vector readings for a single time step t
 # by default it plots data from all stations fed to it in station_readings unless
 # specified otherwise in list_of_stations.
 # ortho_trans specifies the angle from which we see the plot(earth) at.
 # if left at default, yz.auto_ortho(list_of_stations) centres the view on the centre of all stations in list_of_stations.
 
+##### plot_data_globe_colour ---------------------------------------------------
 
-sag.data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
+##### plot_connections_globe ---------------------------------------------------
+import numpy as np
+a_m = np.array([[np.nan,     1.,     1.,     1.],
+                [np.nan, np.nan,     0.,     1.],
+                [np.nan, np.nan, np.nan,     1.],
+                [np.nan, np.nan, np.nan, np.nan]])
+globe_conn = svs.plot_connections_globe(adj_matrix = a_m, ds = ds2)
+################################################################################
+
+
+####################### animations #############################################
+ds1 = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv", MLAT = True)
+ds2 = ds1[dict(time = slice(150), station = range(4))]
+
+##### data_globe_gif -----------------------------------------------------------
+sva.data_globe_gif(ds1, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
 #makes sandra.gif in the /gif folder
 
+##### data_globe_gif_colour ----------------------------------------------------
 
-#generating fake adjacency matrix
-N = 9
-# length = 50
-b = np.random.randint(-2000,2000,size=(N,N))
-b_symm = (b + b.T)/2
-fake_data = b_symm < 0
-
-svg.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
-#plots connections between stations.
-#for now it expects a 2d adjacency matrix as input but i will add code to make it do 3d(time on 3rd axis) as well
+##### anim_connections_globe ---------------------------------------------------
+adj_mat = sat.adj_mat(ds = ds1, win_len = 128, lag_range = 10)
+sva.anim_connections_globe(adj_mat_ds = adj_mat,
+                           filepath = 'Scratch (Tinkerbell)/connections_gif',
+                           filename = 'globe_connections')
 ################################################################################
 
 
@@ -200,6 +219,7 @@ svg.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_tra
 ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### plot_adj_mat -------------------------------------------------------------
+## currently not in use
 fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], thr_ds = ds1),
                        stations = ds1.station.values,
                        rns = range(len(ds1.station.values)))
