@@ -18,6 +18,7 @@ def plot_adj_mat(adj_mat, stations, rns):
     """
     Plot the adjacency matrix as a heatmap for a set of stations.
 
+    This function is currently not in use.
     This function is called from :func:`spaceweather.analysis.threshold.adj_mat`,
     and is not intended for external use.
 

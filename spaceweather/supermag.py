@@ -21,15 +21,13 @@ def supermag(csv_file=None, ds=None, win_len=128, lag_range=10, **kwargs):
     stations that are connected based on canonical correlation coefficients.
 
     Various kwargs may pertain to the following functions:\n
-    :func:`spaceweather.analysis.threshold.threshold`\n
-    :func:`spaceweather.analysis.threshold.thresh_kf`\n
-    :func:`spaceweather.analysis.threshold.thresh_dods`\n
-    :func:`spaceweather.analysis.threshold.adj_mat`\n
-    :func:`spaceweather.visualisation.heatmaps.plot_adj_mat`\n
-    :func:`spaceweather.analysis.cca.cca_coeffs`\n
     :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`\n
     :func:`spaceweather.analysis.data_funcs.detrend`\n
     :func:`spaceweather.analysis.data_funcs.window`\n
+    :func:`spaceweather.analysis.threshold.threshold`\n
+    :func:`spaceweather.analysis.threshold.max_corr_lag`\n
+    :func:`spaceweather.analysis.threshold.adj_mat`\n
+    :func:`spaceweather.rcca`\n
 
     Parameters
     ----------
