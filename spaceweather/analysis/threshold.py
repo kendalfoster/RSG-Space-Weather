@@ -144,8 +144,8 @@ def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     win_len : int, optional
         Length of window in minutes. Default is 128.
     lag_range: int, optional
-        The range, in minutes, of positive and negative shifts for station2.
-        Default is 10.
+        The range, in minutes, of positive and negative shifts for the second
+        station in each pair. Default is 10.
 
     Returns
     -------
@@ -183,7 +183,7 @@ def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
                 temp_ds = ds_win[dict(station = [i,j], win_start = k)]
                 temp_ds = temp_ds.rename(win_len = 'time')
                 temp_ds = temp_ds.transpose('time', 'station', 'component')
-                max_temp = max_corr_lag(ds = temp_ds, lag_range = lag_range)
+                max_temp = max_corr_lag(ds = temp_ds, lag_range = lag_range, **kwargs)
 
                 # append to master DataArray
                 if k == 0:
@@ -194,7 +194,7 @@ def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
 
             # set up thresholds
             thresh = threshold(ds = ds[dict(station = [i,j])],
-                               lags = np.unique(max_corr.lag))
+                               lags = np.unique(max_corr.lag), **kwargs)
 
             # apply threshold for each time window
             for k in range(num_win):
@@ -251,4 +251,3 @@ def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     res = da.to_dataset(name = 'adj_coeffs')
 
     return res
-

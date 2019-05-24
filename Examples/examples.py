@@ -51,9 +51,8 @@ import numpy as np
 ####################### Supermag ###############################################
 ################################################################################
 ds1 = sad.csv_to_Dataset(csv_file="Data/20190403-00-22-supermag.csv", MLAT=True)
-ds1 = ds1[dict(time = slice(147))]
-test = sm.supermag(ds = ds1, MLAT = True)
-test.adj_coeffs.values
+ds2 = ds1[dict(time = slice(177), station = range(4))]
+test = sm.supermag(ds = ds2)
 ################################################################################
 
 
