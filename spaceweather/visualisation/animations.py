@@ -14,7 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from PIL import Image
 ## Local Packages
-import spaceweather.visualisation.static as svs
+import spaceweather.visualisation.static as svg
 
 
 def data_globe_gif(ds, filepath='data_gif', filename='globe_data',
@@ -79,14 +79,14 @@ def data_globe_gif(ds, filepath='data_gif', filename='globe_data',
 
     # check ortho_trans
     if ortho_trans is None:
-        ortho_trans = svs.auto_ortho(list_of_stations)
+        ortho_trans = svg.auto_ortho(list_of_stations)
 
     # initialize the list of names of image files
     names = []
 
     # plot the data vectors for each time in the Dataset
     for i in range(num_times):
-        fig = svs.plot_data_globe(ds = ds,
+        fig = svg.plot_data_globe(ds = ds,
                                   list_of_stations = list_of_stations,
                                   list_of_components = list_of_components,
                                   t = i,
@@ -163,14 +163,14 @@ def connections_globe_gif(adj_mat_ds,
 
     # check ortho_trans
     if ortho_trans is None:
-        ortho_trans = svs.auto_ortho(list_of_stations)
+        ortho_trans = svg.auto_ortho(list_of_stations)
 
     # initialize the list of names of image files
     names = []
 
     # plot the connections for each win_start value in the adjacency matrix
     for i in range(num_win):
-        fig = svs.plot_connections_globe(adj_matrix = adj_mat_ds[dict(win_start = i)].adj_coeffs.values,
+        fig = svg.plot_connections_globe(adj_matrix = adj_mat_ds[dict(win_start = i)].adj_coeffs.values,
                                          list_of_stations = list_of_stations,
                                          time = list_of_win_start[i],
                                          ortho_trans = ortho_trans,

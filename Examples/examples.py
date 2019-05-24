@@ -33,7 +33,7 @@ import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.gen_data as sag
 import spaceweather.analysis.threshold as sat
 import spaceweather.visualisation.animations as sva
-import spaceweather.visualisation.static as svs
+import spaceweather.visualisation.static as svg
 import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
@@ -164,27 +164,27 @@ ds1 = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_da
 ds2 = ds1[dict(time = slice(150), station = range(4))]
 
 ##### csv_to_coords ------------------------------------------------------------
-station_info = svs.csv_to_coords()
+station_info = svg.csv_to_coords()
 
 ##### auto_ortho ---------------------------------------------------------------
 list_of_stations = ds1.station
-aut_orth = svs.auto_ortho(list_of_stations)
+aut_orth = svg.auto_ortho(list_of_stations)
 
 ##### plot_stations ------------------------------------------------------------
 list_of_stations = ds1.station
-aut_orth = svs.auto_ortho(list_of_stations)
-plot_of_stations = svs.plot_stations(list_of_stations = list_of_stations,
+aut_orth = svg.auto_ortho(list_of_stations)
+plot_of_stations = svg.plot_stations(list_of_stations = list_of_stations,
                                      ortho_trans = aut_orth)
 
 ##### plot_data_globe ----------------------------------------------------------
-data_globe = svs.plot_data_globe(ds1)
-data_globe2 = svs.plot_data_globe(ds = ds1, list_of_stations = ds1.station[2:6].values)
-data_globe2 = svs.plot_data_globe(ds = ds1, list_of_components = ['N', 'Z'])
-data_globe3 = svs.plot_data_globe(ds = ds1, t = 4)
-data_globe4 = svs.plot_data_globe(ds = ds1, t = ds1.time[4].values)
-data_globe5 = svs.plot_data_globe(ds = ds1, daynight=False)
-data_globe6 = svs.plot_data_globe(ds1, colour=True)
-data_globe7 = svs.plot_data_globe(ds1, color=True)
+data_globe = svg.plot_data_globe(ds1)
+data_globe2 = svg.plot_data_globe(ds = ds1, list_of_stations = ds1.station[2:6].values)
+data_globe2 = svg.plot_data_globe(ds = ds1, list_of_components = ['N', 'Z'])
+data_globe3 = svg.plot_data_globe(ds = ds1, t = 4)
+data_globe4 = svg.plot_data_globe(ds = ds1, t = ds1.time[4].values)
+data_globe5 = svg.plot_data_globe(ds = ds1, daynight=False)
+data_globe6 = svg.plot_data_globe(ds1, colour=True)
+data_globe7 = svg.plot_data_globe(ds1, color=True)
 
 ##### plot_connections_globe ---------------------------------------------------
 import numpy as np
@@ -192,7 +192,7 @@ a_m = np.array([[np.nan,     1.,     1.,     1.],
                 [np.nan, np.nan,     0.,     1.],
                 [np.nan, np.nan, np.nan,     1.],
                 [np.nan, np.nan, np.nan, np.nan]])
-globe_conn = svs.plot_connections_globe(adj_matrix = a_m, ds = ds2)
+globe_conn = svg.plot_connections_globe(adj_matrix = a_m, ds = ds2)
 ################################################################################
 
 
