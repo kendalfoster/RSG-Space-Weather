@@ -379,36 +379,73 @@ station in each pair. Default is 10.</p></li>
 <h4>Contents<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><p>data_globe_gif</p></li>
-<li><p>data_globe_gif_colour</p></li>
-</ul>
-</div>
-</div>
-<div class="section" id="module-spaceweather.visualisation.globes">
-<span id="globes"></span><h3>Globes<a class="headerlink" href="#module-spaceweather.visualisation.globes" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id6">
-<h4>Contents<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
-<ul class="simple">
-<li><p>csv_to_coords</p></li>
-<li><p>auto_ortho</p></li>
-<li><p>plot_stations</p></li>
-<li><p>plot_data_globe</p></li>
-<li><p>plot_data_globe_colour</p></li>
-<li><p>plot_connections_globe</p></li>
+<li><p>anim_connections_globe</p></li>
 </ul>
 <dl class="function">
-<dt id="spaceweather.visualisation.globes.plot_connections_globe">
-<code class="descclassname">spaceweather.visualisation.globes.</code><code class="descname">plot_connections_globe</code><span class="sig-paren">(</span><em>station_components</em>, <em>adj_matrix</em>, <em>ortho_trans=(0</em>, <em>0)</em>, <em>t=None</em>, <em>list_of_stations=None</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.globes.plot_connections_globe" title="Permalink to this definition">¶</a></dt>
-<dd><p>right now this assumes i want to plot all stations in the adj_matrix for a single time,
-will add more later
-also gives 2 plots for some reason</p>
+<dt id="spaceweather.visualisation.animations.connections_globe_gif">
+<code class="descclassname">spaceweather.visualisation.animations.</code><code class="descname">connections_globe_gif</code><span class="sig-paren">(</span><em>adj_mat_ds</em>, <em>filepath='connections_gif'</em>, <em>filename='globe_conn'</em>, <em>ortho_trans=None</em>, <em>daynight=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.animations.connections_globe_gif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Animates the network on a globe over time with an optional shadow for nighttime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adj_mat_ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
+3-dimensional Dataset whose coordinates are first_st, second_st, win_start.</p></li>
+<li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
+‘connections_gif’ folder to be made in the current working directory.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘globe_conn’.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>.png</em> – png image files used to make the gif animation, saved in filepath/images_for_giffing.</p></li>
+<li><p><em>.gif</em> – gif animation of the png image files, saved in filepath/gif.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.animations.data_globe_gif">
+<code class="descclassname">spaceweather.visualisation.animations.</code><code class="descname">data_globe_gif</code><span class="sig-paren">(</span><em>ds, filepath='data_gif', filename='globe_data', list_of_stations=None, list_of_components=['N', 'E'], ortho_trans=None, daynight=True, colour=False, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.animations.data_globe_gif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Animates the data vectors on a globe over time with an optional shadow for
+nighttime and optional data colouration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
+3-dimensional Dataset whose coordinates are first_st, second_st, time.</p></li>
+<li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
+‘data_gif’ folder to be made in the current working directory.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘globe_data’.</p></li>
+<li><p><strong>list_of_stations</strong> (<em>list</em><em>, </em><em>optional</em>) – List of stations in ds to be used on the plot.</p></li>
+<li><p><strong>list_of_components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in ds to be used on the plot. Must be of length 2.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
+<li><p><strong>colour</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to colour the data vectors. Also accepts ‘color’ for
+Americans who can’t spell properly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>.png</em> – png image files used to make the gif animation, saved in filepath/images_for_giffing.</p></li>
+<li><p><em>.gif</em> – gif animation of the png image files, saved in filepath/gif.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
 </div>
 <div class="section" id="module-spaceweather.visualisation.heatmaps">
 <span id="heatmaps"></span><h3>Heatmaps<a class="headerlink" href="#module-spaceweather.visualisation.heatmaps" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id7">
-<h4>Contents<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id6">
+<h4>Contents<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><p>plot_adj_mat</p></li>
 <li><p>plot_lag_mat</p></li>
@@ -464,8 +501,8 @@ and is not intended for external use.</p>
 </div>
 <div class="section" id="module-spaceweather.visualisation.lines">
 <span id="line-plots-of-data"></span><h3>Line Plots of Data<a class="headerlink" href="#module-spaceweather.visualisation.lines" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id8">
-<h4>Contents<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id7">
+<h4>Contents<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><p>plot_mag_data</p></li>
 </ul>
@@ -487,8 +524,8 @@ and is not intended for external use.</p>
 </div>
 <div class="section" id="module-spaceweather.visualisation.spectral_analysis">
 <span id="spectral-analysis"></span><h3>Spectral Analysis<a class="headerlink" href="#module-spaceweather.visualisation.spectral_analysis" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id9">
-<h4>Contents<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id8">
+<h4>Contents<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><p>power_spectrum</p></li>
 <li><p>spectrogram</p></li>
@@ -537,6 +574,136 @@ a new window every minute.</p></li>
 </dd>
 <dt class="field-even">Yields</dt>
 <dd class="field-even"><p><em>matplotlib.figure.Figure</em> – Plot of the spectrogram. This may be a NoneType?</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-spaceweather.visualisation.static">
+<span id="static-globes"></span><h3>Static Globes<a class="headerlink" href="#module-spaceweather.visualisation.static" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id9">
+<h4>Contents<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>csv_to_coords</p></li>
+<li><p>auto_ortho</p></li>
+<li><p>plot_stations</p></li>
+<li><p>plot_data_globe</p></li>
+<li><p>plot_connections_globe</p></li>
+</ul>
+<dl class="function">
+<dt id="spaceweather.visualisation.static.auto_ortho">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">auto_ortho</code><span class="sig-paren">(</span><em>list_of_stations</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.auto_ortho" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the average latitude and average longitude for each station.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>list_of_stations</strong> (<em>list</em>) – List of stations in ds to be used on the plot.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Orientation of the plotted globe; determines the angle at which we view the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.csv_to_coords">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">csv_to_coords</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.csv_to_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the latitude and longitude for each station in the SuperMAG database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>The data_vars are: latitude, longitude.</p>
+<p>The coordinates are: station.</p>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.plot_connections_globe">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">plot_connections_globe</code><span class="sig-paren">(</span><em>adj_matrix</em>, <em>ds=None</em>, <em>list_of_stations=None</em>, <em>time=None</em>, <em>ortho_trans=None</em>, <em>daynight=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.plot_connections_globe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the network on a globe for a single time with an optional shadow for nighttime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
+If ds is not included then list_of_stations and time must be included.</p></li>
+<li><p><strong>list_of_stations</strong> (<em>list</em><em>, </em><em>optional</em>) – List of stations in ds to be used on the plot.
+If list_of_stations is not included then ds must be included.</p></li>
+<li><p><strong>time</strong> (<em>numpy.datetime64</em><em>, </em><em>optional</em>) – The time and date for the adj_matrix.
+If time is not included then ds must be included, and time defaults to
+the first time in ds.</p></li>
+<li><p><strong>adj_matrix</strong> (<em>numpy.ndarray</em>) – The adjacency matrix for the connections between stations.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the network on the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.plot_data_globe">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">plot_data_globe</code><span class="sig-paren">(</span><em>ds, list_of_stations=None, list_of_components=['N', 'E'], t=0, ortho_trans=None, daynight=True, colour=False, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.plot_data_globe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the data as vectors for each station on a globe for a single time
+with an optional shadow for nighttime and optional data colouration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
+<li><p><strong>list_of_stations</strong> (<em>list</em><em>, </em><em>optional</em>) – List of stations in ds to be used on the plot.</p></li>
+<li><p><strong>list_of_components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in ds to be used on the plot. Must be of length 2.</p></li>
+<li><p><strong>t</strong> (<em>int</em><em> or </em><em>numpy.datetime64</em><em>, </em><em>optional</em>) – <p>Either</p>
+<ol class="arabic simple">
+<li><p>the index of the time in ds, or</p></li>
+<li><p>the long-format time time in ds</p></li>
+</ol>
+<p>to be used to plot the data. Defaults to the first time in ds.</p>
+</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
+<li><p><strong>colour</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to colour the data vectors. Also accepts ‘color’ for
+Americans who can’t spell properly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the network on the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.plot_stations">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">plot_stations</code><span class="sig-paren">(</span><em>list_of_stations</em>, <em>ortho_trans</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.plot_stations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the stations on a globe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>list_of_stations</strong> (<em>list</em>) – List of stations in ds to be used on the plot.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the network on the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
 </dd>
 </dl>
 </dd></dl>
