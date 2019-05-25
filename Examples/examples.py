@@ -38,6 +38,7 @@ import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
 import spaceweather.supermag as sm
+import xarray as xr
 import numpy as np
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
