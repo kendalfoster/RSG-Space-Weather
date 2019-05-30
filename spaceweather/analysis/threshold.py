@@ -12,8 +12,8 @@ import numpy as np
 import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.analysis.data_funcs as sad
+import spaceweather.analysis.cca as sac
 import spaceweather.visualisation.heatmaps as svh
-import spaceweather.rcca as rcca
 
 
 def threshold(ds, lags, **kwargs):
@@ -60,10 +60,9 @@ def threshold(ds, lags, **kwargs):
         both_ts = both_ts.dropna(dim = 'time', how = 'any')
         ts1 = both_ts[:, 0:num_comp]
         ts2_temp = both_ts[:, num_comp:2*num_comp]
-        # run cca, suppress rcca output
-        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-        ccac = temp_cca.train([ts1, ts2_temp])
-        thresh[k] = ccac.cancorrs[0]
+        # run cca
+        coeff = sac.cca(ts1.values, ts2.values, weights = False)
+        thresh[k] = coeff
 
     # construct Dataset from array
     res = xr.Dataset(data_vars = {'thresholds': (['lag'], thresh)},
@@ -116,10 +115,9 @@ def max_corr_lag(ds, lag_range, **kwargs):
         both_ts = both_ts.dropna(dim = 'time', how = 'any')
         ts1 = both_ts[:, 0:num_comp]
         ts2 = both_ts[:, num_comp:2*num_comp]
-        # run cca, suppress rcca output
-        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-        ccac = temp_cca.train([ts1, ts2])
-        cca_coeffs[k] = ccac.cancorrs[0]
+        # run cca
+        coe = sac.cca(ts1.values, ts2.values, weights = False)
+        cca_coeffs[k] = coe
 
     # pick maximum correlation
     max = np.max(cca_coeffs)
