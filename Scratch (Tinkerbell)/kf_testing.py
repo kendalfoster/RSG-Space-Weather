@@ -9,7 +9,6 @@ import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
 import spaceweather.supermag as sm
-import spaceweather.rcca as rcca
 import numpy as np
 import pandas as pd
 import xarray as xr

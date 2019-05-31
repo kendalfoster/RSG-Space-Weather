@@ -38,6 +38,7 @@ import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
 import spaceweather.supermag as sm
+import xarray as xr
 import numpy as np
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
@@ -109,21 +110,24 @@ ds2_win = sad.window(ds2)
 ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### cca ----------------------------------------------------------------------
-cca_ex = sac.cca(ds = ds1)
+X = ds1[dict(station = 0)].measurements.values
+Y = ds1[dict(station = 1)].measurements.values
+cca_ex = sac.cca(X, Y)
 
-##### cca_coeffs ---------------------------------------------------------------
-coeffs_ex = sac.cca_coeffs(ds = ds1)
+##### cca_angles ---------------------------------------------------------------
+ds2 = ds1[dict(time = slice(75), station = slice(4))]
+ccca_ang = sac.cca_angles(ds = ds2)
 
 ##### lag_mat_pair -------------------------------------------------------------
-ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
-lag_mat = sac.lag_mat_pair(ds = ds2)
-lag_mat2 = sac.lag_mat_pair(ds2, station1 = 'EKP', station2 = 'BLC',
+ds3 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
+lag_mat = sac.lag_mat_pair(ds = ds3)
+lag_mat2 = sac.lag_mat_pair(ds3, station1 = 'EKP', station2 = 'BLC',
                             lag_range = 10, win_len = 128, plot = False)
 
 ##### lag_mat ------------------------------------------------------------------
-ds2 = ds1[dict(time = slice(177), station = range(4))]
-lag_mat = sac.lag_mat(ds2)
-lag_mat2 = sac.lag_mat(ds= ds2, lag_range = 8, win_len = 120)
+ds4 = ds1[dict(time = slice(177), station = range(4))]
+lag_mat = sac.lag_mat(ds4)
+lag_mat2 = sac.lag_mat(ds= ds4, lag_range = 8, win_len = 120)
 ################################################################################
 
 

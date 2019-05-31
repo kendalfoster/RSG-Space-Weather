@@ -12,8 +12,8 @@ import numpy as np
 import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.analysis.data_funcs as sad
+import spaceweather.analysis.cca as sac
 import spaceweather.visualisation.heatmaps as svh
-import spaceweather.rcca as rcca
 
 
 def threshold(ds, lags, **kwargs):
@@ -60,10 +60,9 @@ def threshold(ds, lags, **kwargs):
         both_ts = both_ts.dropna(dim = 'time', how = 'any')
         ts1 = both_ts[:, 0:num_comp]
         ts2_temp = both_ts[:, num_comp:2*num_comp]
-        # run cca, suppress rcca output
-        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-        ccac = temp_cca.train([ts1, ts2_temp])
-        thresh[k] = ccac.cancorrs[0]
+        # run cca
+        coeff = sac.cca(ts1.values, ts2.values, weights = False)
+        thresh[k] = coeff
 
     # construct Dataset from array
     res = xr.Dataset(data_vars = {'thresholds': (['lag'], thresh)},
@@ -94,8 +93,7 @@ def max_corr_lag(ds, lag_range, **kwargs):
     # check if stations are provided
     stations = ds.station.values
     if len(stations) <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+        raise ValueError('only one station in Dataset')
 
     # get constants
     num_comp = len(ds.component.values)
@@ -116,10 +114,9 @@ def max_corr_lag(ds, lag_range, **kwargs):
         both_ts = both_ts.dropna(dim = 'time', how = 'any')
         ts1 = both_ts[:, 0:num_comp]
         ts2 = both_ts[:, num_comp:2*num_comp]
-        # run cca, suppress rcca output
-        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-        ccac = temp_cca.train([ts1, ts2])
-        cca_coeffs[k] = ccac.cancorrs[0]
+        # run cca
+        coe = sac.cca(ts1.values, ts2.values, weights = False)
+        cca_coeffs[k] = coe
 
     # pick maximum correlation
     max = np.max(cca_coeffs)
@@ -157,15 +154,13 @@ def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     # check if ds timeseries is long enough
     nt = len(ds.time.values)
     if nt < win_len + 2*lag_range:
-        print('Error: ds timeseries < win_len + 2*lag_range')
-        return 'Error: ds timeseries < win_len + 2*lag_range'
+        raise ValueError('ds timeseries < win_len + 2*lag_range')
 
     # check if stations are provided
     stations = ds.station.values
     num_st = len(stations)
     if num_st <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+        raise ValueError('only one station in Dataset')
 
     # window the data
     ds_win = sad.window(ds, win_len)
