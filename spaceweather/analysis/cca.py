@@ -69,7 +69,9 @@ def cca(X, Y, weights=True):
 def cca_angles(ds, **kwargs):
     """
     Calculate the first canonical correlation coefficients between stations and
-    their associated angles:\n
+    their associated angles.
+
+    The two types of angles are:\n
     1) one weight relative to the other,\n
     2) each weight relative to its input's data
 
@@ -83,29 +85,34 @@ def cca_angles(ds, **kwargs):
     xarray.Dataset
         Dataset containing the first canonical correlation coefficients.
             The data_vars are: cca_coeffs, ang_weight, ang_data.\n
-            The coordinates are: first_st, second_st.
+            The coordinates are: first_st, second_st, time, a_b.
     """
 
-    # detrend input Dataset, remove NAs
-    ds = sad.detrend(ds, **kwargs)
-
-    # universal constants
+    # check number of stations is at least 2
     stations = ds.station.values
     num_st = len(stations)
+    if num_st < 2:
+        raise ValueError('Please input a Dataset with at least 2 stations')
+
+    # detrend input Dataset, remove NAs
+    ds = sad.detrend(ds)#, **kwargs)
+
+    # constants
     components = ds.component.values
     num_comp = len(components)
     times = ds.time.values
     num_time = len(times)
+    a_b = ['a', 'b']
 
     # setup arrays
-    cca_coeffs = np.zeros(shape = (num_st, num_st), dtype = float)
-    ang_weight = np.zeros(shape = (num_st, num_st), dtype = float)
+    cca_coeffs = np.full(shape = (num_st, num_st), fill_value = np.nan)
+    ang_weight = np.full(shape = (num_st, num_st), fill_value = np.nan)
 
     # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):
-        first_st = ds.loc[dict(station = stations[i])].measurements
+        first_st = ds[dict(station = i)].measurements
         for j in range(i+1, num_st):
-            st2 = ds.loc[dict(station = stations[j])].measurements
+            st2 = ds[dict(station = j)].measurements
             # remove NaNs from data (will mess up cca)
             both_st = xr.concat([first_st, st2], dim = 'component')
             both_st = both_st.dropna(dim = 'time', how = 'any')
@@ -118,56 +125,73 @@ def cca_angles(ds, **kwargs):
             cca_coeffs[i,j] = cca_coeffs[j,i] = coeff
             # angles: one weight relative to the other
             wt_norm = np.sqrt(np.sum(a**2)) * np.sqrt(np.sum(b**2))
-            ang_weight[i,j] = np.rad2deg(np.arccos(np.clip(np.dot(a, b)/wt_norm, -1.0, 1.0)))
-            # # angles: one weight relative to its input's data
-            # ang_data_a_ss = np.zeros(num_tt)
-            # ang_data_b_ss = np.zeros(num_tt)
-            # for k in range(num_tt):
-            #     xdata = st_1[dict(time=k)].values
-            #     ydata = st_2[dict(time=k)].values
-            #     wt_nrm0 = np.sqrt(np.sum(a**2)) * np.sqrt(np.sum(xdata**2))
-            #     wt_nrm1 = np.sqrt(np.sum(b**2)) * np.sqrt(np.sum(ydata**2))
-            #     ang_data_a_ss[k] = np.rad2deg(np.arccos(np.clip(np.dot(a, xdata)/wt_nrm0, -1.0, 1.0)))
-            #     ang_data_b_ss[k] = np.rad2deg(np.arccos(np.clip(np.dot(b, ydata)/wt_nrm1, -1.0, 1.0)))
+            ang_weight[i,j] = ang_weight[j,i] = np.rad2deg(np.arccos(np.clip(np.dot(a, b)/wt_norm, -1.0, 1.0)))
+
+            # angles: one weight relative to its input's data ----------------------
+            ang_data_ss = xr.DataArray(data = np.zeros(shape = (num_tt,2)),
+                                         coords = [temp_times, a_b],
+                                         dims = ['time', 'a_b'])
+            ang_data_ss = ang_data_ss.assign_coords(second_st = stations[j])
+            for k in range(num_tt):
+                xdata = st1[dict(time=k)].values
+                ydata = st2[dict(time=k)].values
+                wt_nrm0 = np.sqrt(np.sum(a**2)) * np.sqrt(np.sum(xdata**2))
+                wt_nrm1 = np.sqrt(np.sum(b**2)) * np.sqrt(np.sum(ydata**2))
+                ang_data_ss[k,0] = np.rad2deg(np.arccos(np.clip(np.dot(a, xdata)/wt_nrm0, -1.0, 1.0)))
+                ang_data_ss[k,1] = np.rad2deg(np.arccos(np.clip(np.dot(b, ydata)/wt_nrm1, -1.0, 1.0)))
 
             # append ang_data to master Dataset: dimension = second_st
-            # if j == i+1:
-            #     ang_data_a_fs = ang_data_a_ss
-            #     ang_data_b_fs = ang_data_b_ss
-            # else:
-            #     ang_data_a_fs = xr.concat([ang_data_a_fs, ang_data_a_ss], dim = 'second_st')
-            #     ang_data_b_fs = xr.concat([ang_data_b_fs, ang_data_b_ss], dim = 'second_st')
+            if j == i+1:
+                ang_data_fs = ang_data_ss
+            else:
+                ang_data_fs = xr.concat([ang_data_fs, ang_data_ss], dim = 'second_st')
 
-        # # append to master Dataset: dimension = first_st
-        # if i == 0:
-        #     ang_data_a = ang_data_a_fs
-        # elif i < num_st-2:
-        #     ang_data = xr.concat([ang_data, ang_data_fs], dim = 'first_st')
-        # else: # if i = num_st-2
-        #     dummy = ang_data_fs.copy(deep = True)
-        #     num_lag = len(lag_mat_ss.lag.values)
-        #     num_win = len(lag_mat_ss.time_win.values)
-        #     dummy.lag_coeffs.values = np.full(shape = (num_lag, num_win),
-        #                                       fill_value = np.nan)
-        #     dummy = dummy.assign_coords(first_st = stations[num_st-2],
-        #                                 second_st = stations[num_st-2])
-        #     lag_dum = xr.concat([lag_mat_ss, dummy], dim = 'second_st')
-        #     lag_mat = xr.concat([lag_mat, lag_dum], dim = 'first_st')
+        # append to master Dataset: dimension = first_st
+        ang_data_fs = ang_data_fs.assign_coords(first_st = stations[i])
+        if i == 0:
+            ang_data = ang_data_fs
+        elif i < num_st-2:
+            ang_data = xr.concat([ang_data, ang_data_fs], dim = 'first_st')
+        else: # if i = num_st-2
+            dummy = ang_data_fs.copy(deep = True)
+            dummy.values = np.full(shape = (num_tt, 2), fill_value = np.nan)
+            dummy = dummy.assign_coords(first_st = stations[num_st-2],
+                                        second_st = stations[num_st-2])
+            ang_data_dum = xr.concat([dummy, ang_data_fs], dim = 'second_st')
+            ang_data = xr.concat([ang_data, ang_data_dum], dim = 'first_st')
 
-    # build Dataset from the cca_coeffs array
-    # ds = xr.Dataset(data_vars = {'cca_coeffs': (['first_st', 'second_st'], cca_coeffs),
-    #                              'ang_weight': (['first_st', 'second_st'], ang_weight),
-    #                              'ang_data': (['first_st', 'second_st', 'ab', 'time'], ang_data)},
-    #                 coords = {'first_st': stations,
-    #                           'second_st': stations,
-    #                           'ab': ['a', 'b'],
-    #                           'time': times})
+    # pad the DataArray with NaNs to get correct dimensions
+    ang_data_blank = np.full(shape = (num_st, num_st, num_time, 2), fill_value = np.nan)
+    ang_data_bda = xr.DataArray(data = ang_data_blank,
+                               coords = [stations, stations, times, a_b],
+                               dims = ['first_st', 'second_st', 'time', 'a_b'])
+    ang_data = ang_data.combine_first(ang_data_bda)
+
+    # reorder the stations coordinates because xarray alphabetized them
+    da1 = ang_data.loc[dict(first_st = stations[0])]
+    for i in range(1, num_st):
+        da1 = xr.concat([da1, ang_data.loc[dict(first_st = stations[i])]], dim = 'first_st')
+    da2 = da1.loc[dict(second_st = stations[0])]
+    for i in range(1, num_st):
+        da2 = xr.concat([da2, da1.loc[dict(second_st = stations[i])]], dim = 'second_st')
+    ang_data = da2.transpose('first_st', 'second_st', 'time', 'a_b')
+
+    # mirror results across the main diagonal
+    for i in range(num_st):
+        for j in range(i+1, num_st):
+            ang_data.values[j,i,:,:] = ang_data.values[i,j,:,:]
+    #-------------------------------------------------------------------------------
+
+    # build Dataset from the other DataArrays
     ds = xr.Dataset(data_vars = {'cca_coeffs': (['first_st', 'second_st'], cca_coeffs),
                                  'ang_weight': (['first_st', 'second_st'], ang_weight)},
                     coords = {'first_st': stations,
                               'second_st': stations})
 
-    return ds
+    # merge the two Datasets
+    res = xr.merge([ds, ang_data.rename('ang_data')])
+
+    return res
 
 
 def lag_mat_pair(ds, station1=None, station2=None, lag_range=10, win_len=128,
@@ -208,14 +232,12 @@ def lag_mat_pair(ds, station1=None, station2=None, lag_range=10, win_len=128,
     # check if ds timeseries is long enough
     nt = len(ds.time.values)
     if nt < win_len + 2*lag_range:
-        print('Error: ds timeseries < win_len + 2*lag_range')
-        return 'Error: ds timeseries < win_len + 2*lag_range'
+        raise ValueError('Error: ds timeseries < win_len + 2*lag_range')
 
     # check if stations are provided
     stations = ds.station.values
     if len(stations) <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+        raise ValueError('Error: only one station in Dataset')
     if station1 is None:
         print('No station1 provided; using station1 = %s' % (stations[0]))
         station1 = stations[0]
@@ -241,7 +263,7 @@ def lag_mat_pair(ds, station1=None, station2=None, lag_range=10, win_len=128,
     # Set up array
     time = range(lag_range+1, len(windowed.win_start)-lag_range+1)
     lag = range(-lag_range, lag_range+1)
-    corr = np.zeros(shape = (len(lag), len(time)))
+    corr = np.full(shape = (len(lag), len(time)), fill_value = np.nan)
 
     # Calculate correlations
     for j in range(len(time)):
@@ -298,8 +320,7 @@ def lag_mat(ds, lag_range=10, win_len=128, **kwargs):
 
     # check there are at least two stations
     if num_st <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+        raise ValueError('Error: only one station in Dataset')
 
     # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):

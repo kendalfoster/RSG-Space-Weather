@@ -13,8 +13,6 @@ import numpy as np
 import scipy.signal as signal
 import pandas as pd
 import xarray as xr # if gives error, just rerun
-# Local Packages
-import spaceweather.rcca as rcca
 
 ## Unused Packages, but potentially useful
 # import xscale.signal.fitting as xsf # useful functions for xarray data structures

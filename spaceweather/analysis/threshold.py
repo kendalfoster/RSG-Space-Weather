@@ -93,8 +93,7 @@ def max_corr_lag(ds, lag_range, **kwargs):
     # check if stations are provided
     stations = ds.station.values
     if len(stations) <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+        raise ValueError('only one station in Dataset')
 
     # get constants
     num_comp = len(ds.component.values)
@@ -155,15 +154,13 @@ def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     # check if ds timeseries is long enough
     nt = len(ds.time.values)
     if nt < win_len + 2*lag_range:
-        print('Error: ds timeseries < win_len + 2*lag_range')
-        return 'Error: ds timeseries < win_len + 2*lag_range'
+        raise ValueError('ds timeseries < win_len + 2*lag_range')
 
     # check if stations are provided
     stations = ds.station.values
     num_st = len(stations)
     if num_st <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+        raise ValueError('only one station in Dataset')
 
     # window the data
     ds_win = sad.window(ds, win_len)
