@@ -47,3 +47,32 @@ def order_params(data, normed = False):
         i += 1
 
     return params
+
+
+def pcf(data, dr = 0.3):
+    #HIGHLY INEFFICIENT - TAKES AGES TO RUN. PROCEED WITH CAUTION
+    # dr = 0.3
+    r_range = np.linspace(0, 2, 21)
+    # t = data.time[5]
+    N = len(data.station) #number of points
+    results = np.zeros((len(r_range), len(data.time))) #pair correlation function
+
+    for time_index in range(len(data.time)):
+        t = data.time[time_index]
+        for s in data.station:
+            data.measurements.loc[dict(station = s, time = t)] = vector_normalise(data.measurements.loc[dict(station = s, time = t)].data)
+
+        for r_index in range(len(r_range)):
+            r = r_range[r_index]
+            count = 0
+
+            for s1 in data.station:
+                for s2 in data.station:
+                    diff = data.measurements.loc[dict(station = s1, time = t)] - data.measurements.loc[dict(station = s2, time = t)]
+                    dist = np.sqrt(np.nansum(diff**2))
+                    if (max(0, r) < dist and dist < r+dr):
+                        count += 1
+
+            results[r_index, time_index] = (r*count)/(3*dr*N**2)
+
+    return results

@@ -43,6 +43,12 @@ data = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
 original = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
                             MLT = True, MLAT = True)
+data_ms = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
+
+
+data2 = sad.mag_csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv",
+                            MLT = True, MLAT = True)
 
 
 t = N330.time[1].data
@@ -58,39 +64,11 @@ n = len(N330.station)
 
 sum_N = 0
 
-for s in data.station:
-    if
 
 
 
 
 
-sva.data_globe_gif(original, time_end = 20)
-
-
-np.nansum(N330.measurements.loc[dict(component = "N", time = data.time[800])])
-
-
-
-
-
-sum_E = sum(N330.measurements.loc[dict(component = "E", time = t)])
-sum_Z = sum(N330.measurements.loc[dict(component = "Z", time = t)])
-
-normed_sum = np.sqrt(sum_N**2 + sum_E**2 + sum_Z**2)
-normed_sum
-
-# np.sqrt(sum(sum(N330.measurements.loc[dict(station = s, time = t)] for s in N330.station)**2))
-
-
-
-
-v_0 = sum(np.sqrt(sum(N330.measurements.loc[dict(station = s, component = c, time = t)]**2 for c in N330.component)) for s in N330.station)/n
-#average absolute velocity
-
-phi = (normed_sum/(n*v_0)).data.item()
-
-phi
 
 def order_param(data, normed = False):
     #there might be some difference if i normed each reading before doing the calculations, as some stations are more
@@ -129,9 +107,6 @@ for t in times:
     i += 1
 
 
-i
-times.data
-
 
 def order_param_plot(data):
     times = data.time
@@ -163,17 +138,14 @@ test = a-b
 np.sqrt(np.nansum(test**2))
 
 
-
-
-
 def pcf(data, dr = 0.3):
     # dr = 0.3
     r_range = np.linspace(0, 2, 21)
     # t = data.time[5]
     N = len(data.station) #number of points
-    results = np.zeros((len(r_range), len(data.time[0:500]))) #pair correlation function
+    results = np.zeros((len(r_range), len(data.time))) #pair correlation function
 
-    for time_index in range(len(data.time[0:500])):
+    for time_index in range(len(data.time)):
         t = data.time[time_index]
         for s in data.station:
             data.measurements.loc[dict(station = s, time = t)] = vector_normalise(data.measurements.loc[dict(station = s, time = t)].data)
@@ -193,9 +165,6 @@ def pcf(data, dr = 0.3):
 
     return results
 
-
-
-allpcf = pcf(original.loc[dict(time = original.time[:500])])
 
 
 plt.figure(figsize = (24.5, 8))
@@ -229,59 +198,109 @@ order = order_param(original.loc[dict(time = original.time[range(500)])])
 
 order
 
+data_ms = sad.mag_csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",
+                            MLT = True, MLAT = True)
+
+
+for s in data_ms.station:
+    for c in data_ms.component:
+        data_ms.measurements.loc[dict(station = s, component = c)] -= data_ms.measurements.loc[dict(station = s, component = c)].rolling(time = 200, center = True).mean()
+        # data_ms.measurements.loc[dict(station = s, component = c)] = data_ms.measurements.loc[dict(station = s, component = c)].dropna("time")
 
 
 
+def detrend(data, window_size = 200):
+    for s in data.station:
+        for c in data.component:
+            data.measurements.loc[dict(station = s, component = c)] -= data.measurements.loc[dict(station = s, component = c)].rolling(time = 200, center = True).mean()
 
-fig = plt.figure(figsize = (20, 30))
-nplots = len(original.station) + 2
+    return data
+
+data_ms
+data_ms.measurements.loc[dict(time = data_ms.time[range(100, 951)])]
+order_ms = order_param(data_ms.loc[dict(station = data_ms.station[range(6)])])
+order_ms[500]
+
+fig1 = plt.figure(figsize = (20, 30))
+nplots = len(data_ms.station)
 pcm = plt.subplot(nplots, 1, 1)
-osp = plt.subplot(nplots, 1, 2) #order sub plot
+# osp = plt.subplot(nplots, 1, 2) #order sub plot
 
-pcm.pcolormesh(first6pcf)
+# pcm.pcolormesh(first6pcf)
+pcm.plot(data_ms.measurements.loc[dict(station = data_ms.station[0])])
 # pcm.xlabel("time", fontsize = 20)
 # pcm.ylabel("r", fontsize = 20)
 # pcm.colorbar()
-osp.plot(order[:500])
+# osp.plot(order[:500])
 
-for i in range(nplots-2):
-    s = data.station[i]
-    ax = plt.subplot(nplots, 1, i+3, sharex = pcm)
-    ax.plot(original.measurements.loc[dict(time = original.time[range(500)], station = s)])
+for i in range(nplots-1):
+    s = data.station[i+1]
+    ax = plt.subplot(nplots, 1, i+1, sharex = pcm)
+    ax.plot(data_ms.measurements.loc[dict(station = s)])
     ax.title.set_text(s.data)
 
-fig.savefig("test.png")
+
+first6pcf_ms = pcf(data_ms.loc[dict(station = data_ms.station[range(6)], time = data_ms.time[range(100, 951)])])
+
+
+
+
+len(data2_ms.time)
+data2_ms = detrend(data2)
+svl.plot_mag_data(data2_ms)
+
+pcf2 = pcf(data2_ms)
+pcf2.shape
+order2 = order_param(data2_ms)
+
+fig3 = plt.figure(figsize = (20, 30))
+nplots = len(data2_ms.station) + 2
+pcm3 = plt.subplot(nplots, 1, 1)
+osp3 = plt.subplot(nplots, 1, 2) #order sub plot
+
+pcm3.pcolormesh(pcf2)
+# pcm.xlabel("time", fontsize = 20)
+# pcm.ylabel("r", fontsize = 20)
+# pcm.colorbar()
+osp3.plot(order2[100:619])
+
+for i in range(nplots-2):
+    s = data2_ms.station[i]
+    ax = plt.subplot(nplots, 1, i+3, sharex = pcm3)
+    ax.plot(data2_ms.measurements.loc[dict(station = s, time = data2_ms.time[range(100, 619)])])
+    ax.title.set_text(s.data)
+
+fig2.savefig("test_data2.png")
 
 
 
 
 
 
-tal = plt.subplot(312)
-blc = plt.subplot(313, sharex = tal)
+first6pcf_ms.shape
+
+fig2 = plt.figure(figsize = (20, 30))
+nplots = 6 + 2
+pcm2 = plt.subplot(nplots, 1, 1)
+osp2 = plt.subplot(nplots, 1, 2) #order sub plot
+
+pcm2.pcolormesh(first6pcf_ms)
+# pcm.xlabel("time", fontsize = 20)
+# pcm.ylabel("r", fontsize = 20)
+# pcm.colorbar()
+osp2.plot(order_ms[100:951])
+
+for i in range(nplots-2):
+    s = data_ms.station[i]
+    ax = plt.subplot(nplots, 1, i+3, sharex = pcm2)
+    ax.plot(data_ms.measurements.loc[dict(station = s, time = data_ms.time[range(100, 951)])])
+    ax.title.set_text(s.data)
+
+fig2.savefig("test_mean_subtracted.png")
 
 
-tal.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "TAL")])
-tal.title.set_text("TAL")
-blc.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "BLC")])
-blc.title.set_text("BLC")
 
 
-
-tal.get_shared_x_axes().join(tal, blc, pcm)
-tal.set_xticklabels([])
-
-plt.plot(original.measurements.loc[dict(time = original.time[range(500)], station = "BLC")])
-plt.xticks()
-
-
-
-data.station[:6]
-
-
-plt.figure(figsize = (20, 8))
-plt.plot(pcf)
-# plt.xticks(r_range)
 
 
 
