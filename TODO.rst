@@ -37,3 +37,4 @@ Coding/Visualisations
     - average geodesic connection distance
     - number of connection in a latitudinal band
 - find good-looking event for report
+  - compare to a "normal" day
