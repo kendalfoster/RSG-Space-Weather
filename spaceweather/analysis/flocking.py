@@ -1,24 +1,4 @@
-def order_param(data, t, normed = False):
-    #there might be some difference if i normed each reading before doing the calculations, as some stations are more
-    #sensitive than others
-    #need to look into dealing with missing readings - currently looks like
-    #if readings missing from one station then everything is fucked. should be quite simple.
-
-    n = len(data.station)
-
-    sum_N = sum(N330.measurements.loc[dict(component = "N", time = t)])
-    sum_E = sum(N330.measurements.loc[dict(component = "E", time = t)])
-    sum_Z = sum(N330.measurements.loc[dict(component = "Z", time = t)])
-    normed_sum = np.sqrt(sum_N**2 + sum_E**2 + sum_Z**2)
-    # np.sqrt(sum(sum(N330.measurements.loc[dict(station = s, time = t)] for s in N330.station)**2))
-
-    v_0 = sum(np.sqrt(sum(N330.measurements.loc[dict(station = s, component = c, time = t)]**2 for c in N330.component)) for s in N330.station)/n
-    #average absolute velocity
-
-    phi = (normed_sum/(n*v_0)).data.item()
-    #calculates actual order parameter
-
-    return phi
+import numpy as np
 
 def order_params(data, normed = False):
     #there might be some difference if i normed each reading before doing the calculations, as some stations are more
@@ -76,3 +56,24 @@ def pcf(data, dr = 0.3):
             results[r_index, time_index] = (r*count)/(3*dr*N**2)
 
     return results
+
+
+def stackedplot(data, pcf, order):
+    nplots = len(data.station)+ 2
+
+    fig = plt.figure(figsize = (20, 30))
+
+    pcm = plt.subplot(nplots, 1, 1)
+    osp = plt.subplot(nplots, 1, 2) #order sub plot
+
+    pcm.pcolormesh(pcf)
+    # pcm.set_xlabel("time", fontsize = 20)
+    # pcm.ylabel("r", fontsize = 20)
+    # pcm.colorbar()
+    osp.plot(order)
+
+    for i in range(nplots-2):
+        s = data_ms.station[i]
+        ax = plt.subplot(nplots, 1, i+3, sharex = pcm)
+        ax.plot(data_ms.measurements.loc[dict(station = s)])
+        ax.title.set_text(s.data)

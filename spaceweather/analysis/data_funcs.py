@@ -250,3 +250,12 @@ def window(ds, win_len=128):
 
     return ds_roll
 ################################################################################
+
+
+
+def meansubtract(data, window_size = 200):
+    for s in data.station:
+        for c in data.component:
+            data.measurements.loc[dict(station = s, component = c)] -= data.measurements.loc[dict(station = s, component = c)].rolling(time = 200, center = True).mean()
+
+    return data
