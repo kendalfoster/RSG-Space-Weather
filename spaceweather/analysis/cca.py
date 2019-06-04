@@ -15,7 +15,7 @@ import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.visualisation.heatmaps as svh
-
+import warnings
 
 
 
@@ -60,13 +60,19 @@ def cca(X, Y, weights=True):
     if rankX == 0:
         raise Exception('Rank(X) = 0! Bad Data!')
     elif rankX < p1:
-        raise Exception('X not full rank!')
+        warnings.warn("X not full rank. Cannot calculate weights, only returning coefficients (do not try to assign output to more than one object!)")
+        Qx = Qx[:,0:rankX]
+        Rx = Rx[0:rankX,0:rankX]
+        weights = False
 
     rankY = np.linalg.matrix_rank(Ry)
     if rankY == 0:
         raise Exception('Rank(X) = 0! Bad Data!')
     elif rankY < p2:
-        raise Exception('Y not full rank!')
+        warnings.warn("Y not full rank. Cannot calculate weights, only returning coefficients (do not try to assign output to more than one object!)")
+        Qy = Qy[:,0:rankY]
+        Ry = Ry[0:rankY,0:rankY]
+        weights = False
 
     # apply singular value decomposition
     svdInput = np.dot(Qx.T,Qy)
@@ -77,7 +83,10 @@ def cca(X, Y, weights=True):
     a = np.dot(np.linalg.inv(Rx), U[:,0])
     b = np.dot(np.linalg.inv(Ry), V[0,:])
 
-    return coeff, a, b
+    if weights:
+        return coeff, a, b
+    else:
+        return coeff
 
 
 def cca_angles(ds, **kwargs):
