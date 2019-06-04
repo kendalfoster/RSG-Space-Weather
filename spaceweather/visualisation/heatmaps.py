@@ -11,7 +11,6 @@ Contents
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import xarray as xr # if gives error, just rerun
 
 
 
@@ -74,6 +73,9 @@ def plot_lag_mat_pair(lag_mat_pair, time_win, lag):
     matplotlib.figure.Figure
         Plot of the correlogram; ie heatmap of correlations.
     """
+    # Produce heatmap
+    x = np.arange(time_win[0], time_win[-1]+1)-0.5
+    y = np.arange(lag[0], lag[-1]+1)-0.5
 
     # make title of heatmap
     title = np.asscalar(lag_mat_pair.first_st.values) + ' & ' + np.asscalar(lag_mat_pair.second_st.values)
@@ -129,5 +131,6 @@ def plot_lag_mat_time(lag_mat):
     plt.xticks(rns, stations, rotation=0)
     plt.ylabel('Station 2', fontsize=20)
     plt.yticks(rns, stations, rotation=0)
+
 
     return fig
