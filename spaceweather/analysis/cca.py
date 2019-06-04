@@ -43,6 +43,8 @@ def cca(X, Y, weights=True):
     numpy.ndarray
         Weight vector for Y
     """
+    n,p1 = X.shape
+    n,p2 = Y.shape
 
     # center X and Y
     meanX = X.mean(axis=0)
@@ -54,14 +56,27 @@ def cca(X, Y, weights=True):
     Qx, Rx = np.linalg.qr(X)
     Qy, Ry = np.linalg.qr(Y)
 
+    rankX = np.linalg.matrix_rank(Rx)
+    if rankX == 0:
+        raise Exception('Rank(X) = 0! Bad Data!')
+    elif rankX < p1:
+        raise Exception('X not full rank!')
+
+    rankY = np.linalg.matrix_rank(Ry)
+    if rankY == 0:
+        raise Exception('Rank(X) = 0! Bad Data!')
+    elif rankY < p2:
+        raise Exception('Y not full rank!')
+
     # apply singular value decomposition
     svdInput = np.dot(Qx.T,Qy)
     U, s, V = np.linalg.svd(svdInput)
 
-    # return coeff, a, b
     coeff = s[0]
+
     a = np.dot(np.linalg.inv(Rx), U[:,0])
-    b = np.dot(np.linalg.inv(Ry), V[0,:].T)
+    b = np.dot(np.linalg.inv(Ry), V[0,:])
+
 
     if weights:
         return coeff, a, b

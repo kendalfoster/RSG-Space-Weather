@@ -10,6 +10,7 @@ import spaceweather.analysis.gen_data as gen_data
 import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.threshold as sat
+
 import spaceweather.visualisation.heatmaps as svh
 
 def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=None):
@@ -94,6 +95,7 @@ ds = sad.csv_to_Dataset(csv_file = "Data/20190521-14-08-supermag.csv",MLT = True
 
 
 components=['N', 'E', 'Z']
+
 
 scratch = sac.lag_mat(ds, lag_range=10, station1 = 'NAL', station2 = 'LYR', win_len=128,plot=True)
 
@@ -543,14 +545,14 @@ np.corrcoef(u,v)
 
 x_blah = np.array([[100,2,3],[20,2,3],[3,10,1],[3,1,20],[1,1,1]])
 
+
 y_blah = np.array([[3,200,3],[2,100,3],[20,1,1],[2,1,20],[1,1,300]])
+
+
+
 
 cc_blah, a_blah, b_blah = sac.cca(x_blah,y_blah)
 
-
-cc_blah
-a_blah
-b_blah
 
 cc_blah
 a_blah
@@ -568,4 +570,3 @@ b_rdc
 cc_blah
 a_blah
 b_blah
-
