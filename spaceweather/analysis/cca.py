@@ -56,12 +56,12 @@ def cca(X, Y, weights=True):
 
     # apply singular value decomposition
     svdInput = np.dot(Qx.T,Qy)
-    U, s, Vt = np.linalg.svd(svdInput)
+    U, s, V = np.linalg.svd(svdInput)
 
     # return coeff, a, b
     coeff = s[0]
     a = np.dot(np.linalg.inv(Rx), U[:,0])
-    b = np.dot(np.linalg.inv(Ry.T), U[:,0])
+    b = np.dot(np.linalg.inv(Ry), V[0,:].T)
 
     return coeff, a, b
 
@@ -381,4 +381,3 @@ def lag_mat(ds, lag_range=10, win_len=128, **kwargs):
     ds = ds2.transpose('time_win', 'lag', 'first_st', 'second_st', 'win_start')
 
     return ds
-
