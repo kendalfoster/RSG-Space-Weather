@@ -3,7 +3,9 @@ Contents
 --------
 
 - plot_adj_mat
-- plot_lag_mat
+- plot_lag_mat_pair
+- plot_lag_mat_time
+- plot_corr_thresh
 """
 
 
@@ -11,6 +13,10 @@ Contents
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import cm
+import matplotlib.colors as plc
+from matplotlib.colors import ListedColormap
+
 
 
 
@@ -73,6 +79,7 @@ def plot_lag_mat_pair(lag_mat_pair, time_win, lag):
     matplotlib.figure.Figure
         Plot of the correlogram; ie heatmap of correlations.
     """
+
     # Produce heatmap
     x = np.arange(time_win[0], time_win[-1]+1)-0.5
     y = np.arange(lag[0], lag[-1]+1)-0.5
@@ -132,5 +139,56 @@ def plot_lag_mat_time(lag_mat):
     plt.ylabel('Station 2', fontsize=20)
     plt.yticks(rns, stations, rotation=0)
 
+
+    return fig
+
+
+def plot_corr_thresh(corr_lag_mat):
+    """
+    Plot a heatmap of the threshold subtracted from the correlations between
+    each station pair for one time.
+
+    Parameters
+    ----------
+    corr_lag_mat : xarray.Dataset
+        The values to be plotted; coordinates are 'first_st' and 'second_st'.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Heatmap of the values.
+    """
+
+    # constants
+    stations = corr_lag_mat.first_st.values
+    num_st = len(stations)
+    time = pd.to_datetime(corr_lag_mat.win_start.values)
+    timestamp = time.strftime('%Y.%m.%d %H:%M')
+
+    # adjust coordinates for plotting
+    corr_lag_mat = corr_lag_mat.assign_coords(first_st = range(num_st),
+                                              second_st = range(num_st))
+
+    # define new colormap
+    top = cm.get_cmap('Oranges_r', 128)
+    bottom = cm.get_cmap('Blues', 128)
+
+    newcolors = np.vstack((top(np.linspace(0, 1, 128)),
+                           bottom(np.linspace(0, 1, 128))))
+    newcmap = ListedColormap(newcolors, name='OrangeBlue')
+    norm = plc.Normalize(-1,1)
+
+    # must run all following code simultaneously
+    fig = plt.figure(figsize=(10,8))
+    g = corr_lag_mat.corr_thresh.plot.pcolormesh(yincrease=False,
+                                            cmap=newcmap,
+                                            norm=norm,
+                                            cbar_kwargs={'label': 'Correlation Coefficient - Threshold'})
+    plt.title('Correlation Heatmap at %s' %timestamp, fontsize = 30)
+    plt.xlabel('Station 1', fontsize=20)
+    plt.xticks(ticks=range(num_st), labels=stations, rotation=0)
+    plt.ylabel('Station 2', fontsize=20)
+    plt.yticks(ticks=range(num_st), labels=stations, rotation=0)
+    g.figure.axes[-1].yaxis.label.set_size(20)
 
     return fig
