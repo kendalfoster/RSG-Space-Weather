@@ -1,11 +1,19 @@
+"""
+Contents
+--------
+
+- power_spectrum
+- spectrogram
+"""
+
+
 ## Packages
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import xarray as xr # if gives error, just rerun
-# Local Packages
-import spaceweather.rcca as rcca
+
 
 def power_spectrum(ts=None, ds=None, station=None, component=None):
     """

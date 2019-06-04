@@ -13,18 +13,28 @@ To-Do List
 
 
 
-Do Now
+Report
 ------
+- introduction
+  - motivation (national risk thing, satellites)
+  - physics background
+  - other approaches that have been tried (Dods)
+- theory
+  - all the stuff
 
-- |ss| fix all function calls and names |se|
-- |ss| fix cca function in cca.py |se|
-- |ss| fix window/correlation coeffs for correlogram |se|
-- add documentation to functions
 
-Do in Near Future
------------------
-- animate correlation coeffs in matrix over time
-- |ss| normalize/threshold the corr coeffs |se|
-- get network parameters
-- |ss| animate network on globe, with day n nite |se|
+Coding/Visualisations
+---------------------
 - one chain, fixed longitude
+  - heatmap (over time) of cca coefficients - thresholds
+- flocking plots and numbers
+- get network parameters (for each minute)
+  - clustering coefficient
+  - average degree of each node
+  - average number of edges (normalised)
+  - coloring?
+  - other Dods suggestions...
+    - average geodesic connection distance
+    - number of connection in a latitudinal band
+- find good-looking event for report
+  - compare to a "normal" day

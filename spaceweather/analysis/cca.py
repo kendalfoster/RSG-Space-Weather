@@ -1,325 +1,79 @@
+"""
+Contents
+--------
+
+- cca
+- cca_angles
+- lag_mat_pair
+- lag_mat
+"""
+
+
 ## Packages
 import numpy as np
 import xarray as xr # if gives error, just rerun
 # Local Packages
-import spaceweather.rcca as rcca
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.visualisation.heatmaps as svh
 
 
 
-def cca(ds, detrend='linear'):
+
+def cca(X, Y, weights=True):
     """
-    Run canonical correlation analysis between stations.
+    Run canonical correlation analysis between two inputs.
+
+    Put more info in here about the method outlined in the paper.
 
     Parameters
     ----------
-    ds : xarray.Dataset
-        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.
-    detrend : str or bool, optional
-        Type of detrending to perform on ds prior to running canonical correlation
-        analysis. If False is input, detrending will not occur. Default is linear.
+    X : numpy.ndarray
+        Matrix with some dimensions, finish later
+    Y : numpy.ndarray
+        Matrix with some dimensions, finish later
+    weights : bool, optional
+        Whether or not to return weights. Default is True.
 
     Returns
     -------
-    xarray.Dataset
-        Dataset containing the canonical correlation analysis attributes.
-            The data_vars are: coeffs, weights, ang_rel, ang_abs, comps.\n
-            The coordinates are: first_st, second_st, component, index, ab, uv.
+    float
+        First canonical correlation coefficient between X and Y
+    numpy.ndarray
+        Weight vector for X
+    numpy.ndarray
+        Weight vector for Y
     """
 
-    #-------------------------------------------------------------------------------
-    #---------------------- Preliminaries ------------------------------------------
-    #-------------------------------------------------------------------------------
-    # check if more than one station in Dataset
-    stations = ds.station.values
-    num_st = len(stations)
-    if num_st <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+    # center X and Y
+    meanX = X.mean(axis=0)
+    meanY = Y.mean(axis=0)
+    X = X-meanX[np.newaxis,:]
+    Y = Y-meanY[np.newaxis,:]
 
-    # other constants
-    components = ds.component.values
-    num_ws = len(components)
-    num_cp = len(ds.time)
-    times = ds.time.values
-    ab = ['a', 'b']
-    uv = ['u', 'v']
+    # apply QR decomposition
+    Qx, Rx = np.linalg.qr(X)
+    Qy, Ry = np.linalg.qr(Y)
 
-    # detrend input Dataset
-    if detrend is not False:
-        if detrend is True:
-            detrend = 'linear'
-            ds = sad.detrend(ds, type = detrend)
+    # apply singular value decomposition
+    svdInput = np.dot(Qx.T,Qy)
+    U, s, Vt = np.linalg.svd(svdInput)
+
+    # return coeff, a, b
+    coeff = s[0]
+    a = np.dot(np.linalg.inv(Rx), U[:,0])
+    b = np.dot(np.linalg.inv(Ry.T), U[:,0])
+
+    return coeff, a, b
 
 
-    #---------------------------------------------------------------------------
-    #---------------------- Loop through each station pair ---------------------
-    #---------------------------------------------------------------------------
-    for i in range(num_st-1): # first station
-        ###----- initialize the DataArray -----###
-        st_1 = ds.measurements.loc[dict(station = stations[i])]
-        st_2 = ds.measurements.loc[dict(station = stations[i+1])]
-
-        # remove NaNs from data (nans will mess up cca)
-        both_st = xr.concat([st_1, st_2], dim = 'component')
-        both_st = both_st.dropna(dim = 'time', how = 'any')
-
-        # get constants
-        temp_times = both_st.time.values
-        ltt = len(temp_times)
-        st_1 = both_st[:, 0:num_ws]
-        st_2 = both_st[:, num_ws:2*num_ws]
-
-        # run cca, suppress rcca output
-        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-        ccac = temp_cca.train([st_1, st_2])
-
-        ###----- store cca attributes -----###
-        # coefficients
-        coeffs_arr = np.array([ccac.cancorrs[0].flatten()])
-        coeffs_fs = xr.DataArray(data = coeffs_arr)
-        coeffs_fs = coeffs_fs.assign_coords(first_st = i, second_st = i+1)
-        coeffs_fs = coeffs_fs.squeeze(dim = ['dim_0', 'dim_1'], drop = True)
-
-        # (cca) components
-        comps_arr = np.array([ccac.comps[0].flatten(), ccac.comps[1].flatten()])
-        comps_fs = xr.DataArray(data = comps_arr,
-                                coords = [uv, temp_times],
-                                dims = ['uv', 'time'])
-        comps_fs = comps_fs.assign_coords(first_st = i, second_st = i+1)
-
-        # weights
-        w0 = ccac.ws[0].flatten()
-        w1 = ccac.ws[1].flatten()
-        weights_arr = np.array([w0, w1])
-        weights_fs = xr.DataArray(data = weights_arr,
-                                  coords = [ab, components],
-                                  dims = ['ab', 'component'])
-        weights_fs = weights_fs.assign_coords(first_st = i, second_st = i+1)
-
-        # angles, weights relative to each other
-        wt_norm = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(w1**2))
-        ang_wts_arr = np.array([np.rad2deg(np.arccos(np.clip(np.dot(w0, w1)/wt_norm, -1.0, 1.0)))])
-        ang_wts_fs = xr.DataArray(data = ang_wts_arr)
-        ang_wts_fs = ang_wts_fs.assign_coords(first_st = i, second_st = i+1)
-        ang_wts_fs = ang_wts_fs.squeeze(dim = ['dim_0'], drop = True)
-
-        # angles, weights relative to measurements at each time
-        ang_mes_arr = np.zeros(shape = (2,ltt))
-        for k in range(ltt):
-            xdata = st_1[dict(time=k)].values
-            ydata = st_2[dict(time=k)].values
-            wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
-            wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
-            ang_mes_arr[0,k] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
-            ang_mes_arr[1,k] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
-        ang_mes_fs = xr.DataArray(data = ang_mes_arr,
-                                  coords = [ab, temp_times],
-                                  dims = ['ab', 'time'])
-        ang_mes_fs = ang_mes_fs.assign_coords(first_st = i, second_st = i+1)
-
-        if num_st >= 3: # check if there are at least three stations
-            ###----- loop through the other stations -----###
-            for j in range(i+2, num_st): # second station in the pair
-                st_2 = ds.measurements.loc[dict(station = stations[j])]
-
-                # remove NaNs from data (nans will mess up cca)
-                both_st = xr.concat([st_1, st_2], dim = 'component')
-                both_st = both_st.dropna(dim = 'time', how = 'any')
-
-                # get constants
-                temp_times = both_st.time.values
-                ltt = len(temp_times)
-                st_1 = both_st[:, 0:num_ws]
-                st_2 = both_st[:, num_ws:2*num_ws]
-
-                # run cca, suppress rcca output
-                temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-                ccac = temp_cca.train([st_1, st_2])
-
-                ###----- store cca attributes, merge into initialized DataArray -----###
-                # coefficients
-                cfs_arr = np.array([ccac.cancorrs[0].flatten()])
-                cfs = xr.DataArray(data = cfs_arr)
-                cfs = cfs.assign_coords(first_st = i, second_st = j)
-                cfs = cfs.squeeze(dim = ['dim_0', 'dim_1'], drop = True)
-                coeffs_fs = xr.concat([coeffs_fs, cfs], dim = 'second_st')
-
-                # (cca) components
-                cps_arr = np.array([ccac.comps[0].flatten(), ccac.comps[1].flatten()])
-                cps = xr.DataArray(data = cps_arr,
-                                   coords = [uv, temp_times],
-                                   dims = ['uv','time'])
-                cps = cps.assign_coords(first_st = i, second_st = j)
-                comps_fs = xr.concat([comps_fs, cps], dim = 'second_st')
-
-                # weights
-                w0 = ccac.ws[0].flatten()
-                w1 = ccac.ws[1].flatten()
-                wts_arr = np.array([w0, w1])
-                wts = xr.DataArray(data = wts_arr,
-                                   coords = [ab, components],
-                                   dims = ['ab', 'component'])
-                wts = wts.assign_coords(first_st = i, second_st = j)
-                weights_fs = xr.concat([weights_fs, wts], dim = 'second_st')
-
-                # angles, weights relative to each other
-                wt_norm = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(w1**2))
-                an_w_arr = np.array([np.rad2deg(np.arccos(np.clip(np.dot(w0, w1)/wt_norm, -1.0, 1.0)))])
-                an_w = xr.DataArray(data = an_w_arr)
-                an_w = an_w.assign_coords(first_st = i, second_st = j)
-                an_w = an_w.squeeze(dim = ['dim_0'], drop = True)
-                ang_wts_fs = xr.concat([ang_wts_fs, an_w], dim = 'second_st')
-
-                # angles, weights relative to measurements at each time
-                an_m_arr = np.zeros(shape = (2,ltt))
-                for k in range(ltt):
-                    xdata = st_1[dict(time=k)].values
-                    ydata = st_2[dict(time=k)].values
-                    wt_nrm0 = np.sqrt(np.sum(w0**2)) * np.sqrt(np.sum(xdata**2))
-                    wt_nrm1 = np.sqrt(np.sum(w1**2)) * np.sqrt(np.sum(ydata**2))
-                    an_m_arr[0,k] = np.rad2deg(np.arccos(np.clip(np.dot(w0, xdata)/wt_nrm0, -1.0, 1.0)))
-                    an_m_arr[1,k] = np.rad2deg(np.arccos(np.clip(np.dot(w1, ydata)/wt_nrm1, -1.0, 1.0)))
-                an_m = xr.DataArray(data = an_m_arr,
-                                    coords = [ab, temp_times],
-                                    dims = ['ab', 'time'])
-                an_m = an_m.assign_coords(first_st = i, second_st = j)
-                ang_mes_fs = xr.concat([ang_mes_fs, an_m], dim = 'second_st')
-
-
-        ###----- merge above DataArrays into master DataAray -----###
-        if i==0:
-            coeffs = coeffs_fs
-            comps = comps_fs
-            weights = weights_fs
-            ang_wts = ang_wts_fs
-            ang_mes = ang_mes_fs
-        elif i < num_st-2:
-            coeffs = xr.concat([coeffs, coeffs_fs], dim = 'first_st')
-            comps = xr.concat([comps, comps_fs], dim = 'first_st')
-            weights = xr.concat([weights, weights_fs], dim = 'first_st')
-            ang_wts = xr.concat([ang_wts, ang_wts_fs], dim = 'first_st')
-            ang_mes = xr.concat([ang_mes, ang_mes_fs], dim = 'first_st')
-        else: # i = num_st-2; ie the last loop
-            # coefficients
-            dummy = xr.DataArray(data = 0)
-            dummy = dummy.assign_coords(first_st = num_st-2, second_st = num_st-2)
-            coeffs_dum = xr.concat([coeffs_fs, dummy], dim = 'second_st')
-            coeffs = xr.concat([coeffs, coeffs_dum], dim = 'first_st')
-            coeffs = coeffs.transpose('first_st', 'second_st')
-
-            # (cca) components
-            dum = np.zeros(shape = (2, ltt))
-            dummy = xr.DataArray(data = dum,
-                                 coords = [uv, temp_times],
-                                 dims = ['uv','time'])
-            dummy = dummy.assign_coords(first_st = num_st-2, second_st = num_st-2)
-            comps_dum = xr.concat([comps_fs, dummy], dim = 'second_st')
-            comps = xr.concat([comps, comps_dum], dim = 'first_st')
-            comps = comps.transpose('first_st', 'second_st', 'uv', 'time')
-
-            # weights
-            dum = np.zeros(shape = (2, num_ws))
-            dummy = xr.DataArray(data = dum,
-                                 coords = [ab, components],
-                                 dims = ['ab','component'])
-            dummy = dummy.assign_coords(first_st = num_st-2, second_st = num_st-2)
-            weights_dum = xr.concat([weights_fs, dummy], dim = 'second_st')
-            weights = xr.concat([weights, weights_dum], dim = 'first_st')
-            weights = weights.transpose('first_st', 'second_st', 'ab', 'component')
-
-            # angles, weights relative to each other
-            dummy = xr.DataArray(data = 0)
-            dummy = dummy.assign_coords(first_st = num_st-2, second_st = num_st-2)
-            ang_wts_dum = xr.concat([ang_wts_fs, dummy], dim = 'second_st')
-            ang_wts = xr.concat([ang_wts, ang_wts_dum], dim = 'first_st')
-            ang_wts = ang_wts.transpose('first_st', 'second_st')
-
-            # angles, weights relative to measurements at each time
-            dum = np.zeros(shape = (2, ltt))
-            dummy = xr.DataArray(data = dum,
-                                 coords = [ab, temp_times],
-                                 dims = ['ab','time'])
-            dummy = dummy.assign_coords(first_st = num_st-2, second_st = num_st-2)
-            ang_mes_dum = xr.concat([ang_mes_fs, dummy], dim = 'second_st')
-            ang_mes = xr.concat([ang_mes, ang_mes_dum], dim = 'first_st')
-            ang_mes = ang_mes.transpose('first_st', 'second_st', 'ab', 'time')
-
-
-    #---------------------------------------------------------------------------
-    #---------------------- Finish the DataArrays ------------------------------
-    #---------------------------------------------------------------------------
-    ###----- adjust the coordinates -----###
-    ns = range(num_st)
-
-    # coefficients
-    coeffs_blank = np.zeros(shape=(num_st, num_st))
-    coeffs_bda = xr.DataArray(data = coeffs_blank,
-                              coords = [ns, ns],
-                              dims = ['first_st', 'second_st'])
-    coeffs = coeffs.combine_first(coeffs_bda)
-
-    # (cca) components
-    comps_blank = np.zeros(shape=(num_st, num_st, 2, num_cp))
-    comps_bda = xr.DataArray(data = comps_blank,
-                             coords = [ns, ns, uv, times],
-                             dims = ['first_st', 'second_st', 'uv', 'time'])
-    comps = comps.combine_first(comps_bda)
-
-    # weights
-    weights_blank = np.zeros(shape=(num_st, num_st, 2, num_ws))
-    weights_bda = xr.DataArray(data = weights_blank,
-                             coords = [ns, ns, ab, components],
-                             dims = ['first_st', 'second_st', 'ab', 'component'])
-    weights = weights.combine_first(weights_bda)
-
-    # angles, weights relative to each other
-    ang_wts_blank = np.zeros(shape=(num_st, num_st))
-    ang_wts_bda = xr.DataArray(data = ang_wts_blank,
-                              coords = [ns, ns],
-                              dims = ['first_st', 'second_st'])
-    ang_wts = ang_wts.combine_first(ang_wts_bda)
-
-    # angles, weights relative to measurements at each time
-    ang_mes_blank = np.zeros(shape=(num_st, num_st, 2, num_cp))
-    ang_mes_bda = xr.DataArray(data = ang_mes_blank,
-                               coords = [ns, ns, ab, times],
-                               dims = ['first_st', 'second_st', 'ab', 'time'])
-    ang_mes = ang_mes.combine_first(ang_mes_bda)
-
-    ###----- mirror results across the main diagonal -----###
-    for i in range(num_st):
-        for j in range(i+1, num_st):
-            coeffs.values[j,i] = coeffs.values[i,j]
-            comps.values[j,i,:,:] = comps.values[j,i,:,:]
-            weights.values[j,i,:,:] = weights.values[j,i,:,:]
-            ang_wts.values[j,i] = ang_wts.values[i,j]
-            ang_mes.values[j,i,:,:] = ang_mes.values[i,j,:,:]
-
-    ####----- label the station coordinates correctly -----###
-    coeffs = coeffs.assign_coords(first_st = stations, second_st = stations)
-    comps = comps.assign_coords(first_st = stations, second_st = stations)
-    weights = weights.assign_coords(first_st = stations, second_st = stations)
-    ang_wts = ang_wts.assign_coords(first_st = stations, second_st = stations)
-    ang_mes = ang_mes.assign_coords(first_st = stations, second_st = stations)
-
-
-    #-------------------------------------------------------------------------------
-    #---------------------- Package the DataArrays as a Dataset --------------------
-    #-------------------------------------------------------------------------------
-    res = xr.Dataset(data_vars = {'coeffs' : coeffs,
-                                  'comps'  : comps,
-                                  'weights': weights,
-                                  'ang_wts': ang_wts,
-                                  'ang_mes': ang_mes})
-
-    return res
-
-
-def cca_coeffs(ds, **kwargs):
+def cca_angles(ds, **kwargs):
     """
-    Calculate the first canonical correlation coefficients between stations.
+    Calculate the first canonical correlation coefficients between stations and
+    their associated angles.
+
+    The two types of angles are:\n
+    1) one weight relative to the other,\n
+    2) each weight relative to its input's data
 
     Parameters
     ----------
@@ -330,54 +84,120 @@ def cca_coeffs(ds, **kwargs):
     -------
     xarray.Dataset
         Dataset containing the first canonical correlation coefficients.
-            The data_vars are: cca_coeffs.\n
-            The coordinates are: first_st, second_st.
+            The data_vars are: cca_coeffs, ang_weight, ang_data.\n
+            The coordinates are: first_st, second_st, time, a_b.
     """
 
-    # detrend input Dataset, remove NAs
-    ds = sad.detrend(ds, **kwargs)
-    ds = ds.dropna(dim = 'time')
-
-    # universal constants
+    # check number of stations is at least 2
     stations = ds.station.values
     num_st = len(stations)
+    if num_st < 2:
+        raise ValueError('Please input a Dataset with at least 2 stations')
+
+    # detrend input Dataset, remove NAs
+    ds = sad.detrend(ds)#, **kwargs)
+
+    # constants
     components = ds.component.values
     num_comp = len(components)
+    times = ds.time.values
+    num_time = len(times)
+    a_b = ['a', 'b']
 
-    # setup (triangular) array for the correlation coefficients
-    cca_coeffs = np.zeros(shape = (num_st, num_st), dtype = float)
+    # setup arrays
+    cca_coeffs = np.full(shape = (num_st, num_st), fill_value = np.nan)
+    ang_weight = np.full(shape = (num_st, num_st), fill_value = np.nan)
 
     # shrinking nested for loops to get all the pairs of stations
     for i in range(0, num_st-1):
-        first_st = ds.measurements.loc[dict(station = stations[i])]
+        first_st = ds[dict(station = i)].measurements
         for j in range(i+1, num_st):
-            second_st = ds.measurements.loc[dict(station = stations[j])]
+            st2 = ds[dict(station = j)].measurements
             # remove NaNs from data (will mess up cca)
-            comb_st = xr.concat([first_st, second_st], dim = 'component')
-            comb_st = comb_st.dropna(dim = 'time', how = 'any')
-            first_st = comb_st[:, 0:num_comp]
-            second_st = comb_st[:, num_comp:2*num_comp]
-            # run cca, suppress rcca output
-            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-            ccac = temp_cca.train([first_st, second_st])
-            cca_coeffs[i,j] = ccac.cancorrs[0]
-            cca_coeffs[j,i] = ccac.cancorrs[0]
+            both_st = xr.concat([first_st, st2], dim = 'component')
+            both_st = both_st.dropna(dim = 'time', how = 'any')
+            temp_times = both_st.time.values
+            num_tt = len(temp_times)
+            st1 = both_st[:, 0:num_comp]
+            st2 = both_st[:, num_comp:2*num_comp]
+            ## run cca
+            coeff, a, b = cca(st1.values, st2.values, weights = True)
+            cca_coeffs[i,j] = cca_coeffs[j,i] = coeff
+            # angles: one weight relative to the other
+            wt_norm = np.sqrt(np.sum(a**2)) * np.sqrt(np.sum(b**2))
+            ang_weight[i,j] = ang_weight[j,i] = np.rad2deg(np.arccos(np.clip(np.dot(a, b)/wt_norm, -1.0, 1.0)))
 
-    # build DataArray from the cca_coeffs array
-    da = xr.DataArray(data = cca_coeffs,
-                      coords = [stations, stations],
-                      dims = ['first_st', 'second_st'])
+            # angles: one weight relative to its input's data ----------------------
+            ang_data_ss = xr.DataArray(data = np.zeros(shape = (num_tt,2)),
+                                         coords = [temp_times, a_b],
+                                         dims = ['time', 'a_b'])
+            ang_data_ss = ang_data_ss.assign_coords(second_st = stations[j])
+            for k in range(num_tt):
+                xdata = st1[dict(time=k)].values
+                ydata = st2[dict(time=k)].values
+                wt_nrm0 = np.sqrt(np.sum(a**2)) * np.sqrt(np.sum(xdata**2))
+                wt_nrm1 = np.sqrt(np.sum(b**2)) * np.sqrt(np.sum(ydata**2))
+                ang_data_ss[k,0] = np.rad2deg(np.arccos(np.clip(np.dot(a, xdata)/wt_nrm0, -1.0, 1.0)))
+                ang_data_ss[k,1] = np.rad2deg(np.arccos(np.clip(np.dot(b, ydata)/wt_nrm1, -1.0, 1.0)))
 
-    # convert the DataArray into a Dataset
-    res = da.to_dataset(name = 'cca_coeffs')
+            # append ang_data to master Dataset: dimension = second_st
+            if j == i+1:
+                ang_data_fs = ang_data_ss
+            else:
+                ang_data_fs = xr.concat([ang_data_fs, ang_data_ss], dim = 'second_st')
+
+        # append to master Dataset: dimension = first_st
+        ang_data_fs = ang_data_fs.assign_coords(first_st = stations[i])
+        if i == 0:
+            ang_data = ang_data_fs
+        elif i < num_st-2:
+            ang_data = xr.concat([ang_data, ang_data_fs], dim = 'first_st')
+        else: # if i = num_st-2
+            dummy = ang_data_fs.copy(deep = True)
+            dummy.values = np.full(shape = (num_tt, 2), fill_value = np.nan)
+            dummy = dummy.assign_coords(first_st = stations[num_st-2],
+                                        second_st = stations[num_st-2])
+            ang_data_dum = xr.concat([dummy, ang_data_fs], dim = 'second_st')
+            ang_data = xr.concat([ang_data, ang_data_dum], dim = 'first_st')
+
+    # pad the DataArray with NaNs to get correct dimensions
+    ang_data_blank = np.full(shape = (num_st, num_st, num_time, 2), fill_value = np.nan)
+    ang_data_bda = xr.DataArray(data = ang_data_blank,
+                               coords = [stations, stations, times, a_b],
+                               dims = ['first_st', 'second_st', 'time', 'a_b'])
+    ang_data = ang_data.combine_first(ang_data_bda)
+
+    # reorder the stations coordinates because xarray alphabetized them
+    da1 = ang_data.loc[dict(first_st = stations[0])]
+    for i in range(1, num_st):
+        da1 = xr.concat([da1, ang_data.loc[dict(first_st = stations[i])]], dim = 'first_st')
+    da2 = da1.loc[dict(second_st = stations[0])]
+    for i in range(1, num_st):
+        da2 = xr.concat([da2, da1.loc[dict(second_st = stations[i])]], dim = 'second_st')
+    ang_data = da2.transpose('first_st', 'second_st', 'time', 'a_b')
+
+    # mirror results across the main diagonal
+    for i in range(num_st):
+        for j in range(i+1, num_st):
+            ang_data.values[j,i,:,:] = ang_data.values[i,j,:,:]
+    #-------------------------------------------------------------------------------
+
+    # build Dataset from the other DataArrays
+    ds = xr.Dataset(data_vars = {'cca_coeffs': (['first_st', 'second_st'], cca_coeffs),
+                                 'ang_weight': (['first_st', 'second_st'], ang_weight)},
+                    coords = {'first_st': stations,
+                              'second_st': stations})
+
+    # merge the two Datasets
+    res = xr.merge([ds, ang_data.rename('ang_data')])
 
     return res
 
 
-def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
-            plot=False, **kwargs):
+def lag_mat_pair(ds, station1=None, station2=None, lag_range=10, win_len=128,
+                 plot=False, **kwargs):
     """
-    Calculate a heatmap of correlations between two stations over time windows and lag.
+    Calculate and plot a heatmap of correlations between two stations over time windows and lag.
 
     Parameters
     ----------
@@ -404,7 +224,7 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
     xarray.Dataset
         Dataset containing the correlation coefficients.
             The data_vars are: cor_coeffs.\n
-            The coordinates are: time_win, lag.
+            The coordinates are: time_win, lag, first_st, second_st, win_start.
     matplotlib.figure.Figure
         Plot of the correlogram; ie heatmap of correlations.
     """
@@ -412,14 +232,12 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
     # check if ds timeseries is long enough
     nt = len(ds.time.values)
     if nt < win_len + 2*lag_range:
-        print('Error: ds timeseries < win_len + 2*lag_range')
-        return 'Error: ds timeseries < win_len + 2*lag_range'
+        raise ValueError('Error: ds timeseries < win_len + 2*lag_range')
 
     # check if stations are provided
     stations = ds.station.values
     if len(stations) <= 1:
-        print('Error: only one station in Dataset')
-        return 'Error: only one station in Dataset'
+        raise ValueError('Error: only one station in Dataset')
     if station1 is None:
         print('No station1 provided; using station1 = %s' % (stations[0]))
         station1 = stations[0]
@@ -434,8 +252,9 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
         station2 = stations[1]
 
     # Select the stations and window the data
-    ds = ds.loc[dict(station = [station1,station2])]
-    windowed = sad.window(ds,win_len)
+    ds = ds.loc[dict(station = [station1, station2])]
+    windowed = sad.window(ds, win_len)
+
     ts1 = windowed.loc[dict(station = station1)].measurements
     ts2 = windowed.loc[dict(station = station2)].measurements
     ts1 = ts1.transpose('win_len', 'component', 'win_start')
@@ -444,25 +263,122 @@ def lag_mat(ds, station1=None, station2=None, lag_range=10, win_len=128,
     # Set up array
     time = range(lag_range+1, len(windowed.win_start)-lag_range+1)
     lag = range(-lag_range, lag_range+1)
-    corr = np.zeros(shape = (len(lag), len(time)))
+    corr = np.full(shape = (len(lag), len(time)), fill_value = np.nan)
 
     # Calculate correlations
     for j in range(len(time)):
         for i in range(len(lag)):
             ts1_temp = ts1[dict(win_start = time[j]-1)]
             ts2_temp = ts2[dict(win_start = time[j]+lag[i]-1)]
-            # run cca, suppress rcca output
-            temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
-            ccac = temp_cca.train([ts1_temp, ts2_temp])
-            corr[i,j] = ccac.cancorrs[0]
+            # run cca
+            coeff = cca(ts1_temp.values, ts2_temp.values, weights = False)
+            corr[i,j] = coeff
 
     lag_mat = xr.Dataset(data_vars = {'lag_coeffs': (['lag', 'time_win'], corr)},
                          coords = {'lag': lag,
                                    'time_win': time})
 
-    # plot adjacency matrix
+    # add first_st and second_st as coordinates
+    lag_mat = lag_mat.assign_coords(first_st = station1,
+                                    second_st = station2,
+                                    win_start = windowed.win_start.values[time])
+
+    # plot correlogram heatmap
     if plot:
-        fig = svh.plot_lag_mat(lag_mat = lag_mat, time_win = time, lag = lag)
+
+        fig = svh.plot_lag_mat_pair(lag_mat = lag_mat, time_win = time, lag = lag)
         return lag_mat, fig
     else:
         return lag_mat
+
+
+def lag_mat(ds, lag_range=10, win_len=128, **kwargs):
+    """
+    Calculate a heatmap of correlations between every station pair over time windows and lag.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
+        Note the time dimension must be at least win_len + 2*lag_range.
+    lag_range: int, optional
+        The range, in minutes, of positive and negative shifts for station2.
+        Default is 10.
+    win_len : int, optional
+        Length of window in minutes. Default is 128.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the correlation coefficients.
+            The data_vars are: cor_coeffs.\n
+            The coordinates are: time_win, lag, first_st, second_st, win_start.
+    """
+
+    # get constants
+    stations = ds.station.values
+    num_st = len(stations)
+
+    # check there are at least two stations
+    if num_st <= 1:
+        raise ValueError('Error: only one station in Dataset')
+
+    # shrinking nested for loops to get all the pairs of stations
+    for i in range(0, num_st-1):
+        for j in range(i+1, num_st):
+            lm = lag_mat_pair(ds = ds,
+                              station1 = stations[i],
+                              station2 = stations[j],
+                              lag_range = lag_range,
+                              win_len = win_len,
+                              **kwargs)
+
+            # append to master Dataset: dimension = second_st
+            if j == i+1:
+                lag_mat_ss = lm
+            else:
+                lag_mat_ss = xr.concat([lag_mat_ss, lm], dim = 'second_st')
+
+        # append to master Dataset: dimension = first_st
+        if i == 0:
+            lag_mat = lag_mat_ss
+        elif i < num_st-2:
+            lag_mat = xr.concat([lag_mat, lag_mat_ss], dim = 'first_st')
+        else: # if i = num_st-2
+            dummy = lag_mat_ss.copy(deep = True)
+            num_lag = len(lag_mat_ss.lag.values)
+            num_win = len(lag_mat_ss.time_win.values)
+            dummy.lag_coeffs.values = np.full(shape = (num_lag, num_win),
+                                              fill_value = np.nan)
+            dummy = dummy.assign_coords(first_st = stations[num_st-2],
+                                        second_st = stations[num_st-2])
+            lag_dum = xr.concat([lag_mat_ss, dummy], dim = 'second_st')
+            lag_mat = xr.concat([lag_mat, lag_dum], dim = 'first_st')
+
+    # finish the DataArrays
+    time_wins = lag_mat_ss.time_win.values
+    num_win = len(time_wins)
+    lags = lag_mat_ss.lag.values
+    num_lag = len(lags)
+    win_sts = lag_mat_ss.win_start.values
+    num_win_st = len(win_sts)
+    lag_blank = np.full(shape=(num_win, num_lag, num_st, num_st, num_win_st), fill_value = np.nan)
+    lag_bda = xr.Dataset(data_vars = {'lag_coeffs': (['time_win', 'lag', 'first_st', 'second_st', 'win_start'], lag_blank)},
+                         coords = {'time_win': time_wins,
+                                   'lag': lags,
+                                   'first_st': stations,
+                                   'second_st': stations,
+                                   'win_start': win_sts})
+    lag_mat = lag_mat.combine_first(lag_bda)
+
+    # reorder the stations coordinates because xr.concat messed them up
+    ds1 = lag_mat.loc[dict(first_st = stations[0])]
+    for i in range(1, num_st):
+        ds1 = xr.concat([ds1, lag_mat.loc[dict(first_st = stations[i])]], dim = 'first_st')
+    ds2 = ds1.loc[dict(second_st = stations[0])]
+    for i in range(1, num_st):
+        ds2 = xr.concat([ds2, ds1.loc[dict(second_st = stations[i])]], dim = 'second_st')
+    ds = ds2.transpose('time_win', 'lag', 'first_st', 'second_st', 'win_start')
+
+    return ds
+

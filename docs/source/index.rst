@@ -53,11 +53,6 @@ Animations
 .. automodule:: spaceweather.visualisation.animations
  :members:
 
-Globes
-------
-.. automodule:: spaceweather.visualisation.globes
- :members:
-
 Heatmaps
 --------
 .. automodule:: spaceweather.visualisation.heatmaps
@@ -71,6 +66,11 @@ Line Plots of Data
 Spectral Analysis
 -----------------
 .. automodule:: spaceweather.visualisation.spectral_analysis
+ :members:
+
+Static Globes
+-------------
+.. automodule:: spaceweather.visualisation.static
  :members:
 
 

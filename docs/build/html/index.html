@@ -38,29 +38,32 @@
 <h2>Supermag<a class="headerlink" href="#supermag" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-spaceweather.supermag">
 <span id="network-creation"></span><h3>Network Creation<a class="headerlink" href="#module-spaceweather.supermag" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="contents">
+<h4>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>supermag</p></li>
+</ul>
 <dl class="function">
 <dt id="spaceweather.supermag.supermag">
-<code class="descclassname">spaceweather.supermag.</code><code class="descname">supermag</code><span class="sig-paren">(</span><em>csv_file=None</em>, <em>ds=None</em>, <em>thr_meth='Dods'</em>, <em>win_len=128</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.supermag.supermag" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">spaceweather.supermag.</code><code class="descname">supermag</code><span class="sig-paren">(</span><em>csv_file=None</em>, <em>ds=None</em>, <em>win_len=128</em>, <em>lag_range=10</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.supermag.supermag" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes data from the SuperMAG website, windows it, and creates a network of
 stations that are connected based on canonical correlation coefficients.</p>
 <p>Various kwargs may pertain to the following functions:</p>
-<p><a class="reference internal" href="#spaceweather.analysis.threshold.threshold" title="spaceweather.analysis.threshold.threshold"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.threshold()</span></code></a></p>
-<p><a class="reference internal" href="#spaceweather.analysis.threshold.thresh_kf" title="spaceweather.analysis.threshold.thresh_kf"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.thresh_kf()</span></code></a></p>
-<p><a class="reference internal" href="#spaceweather.analysis.threshold.thresh_dods" title="spaceweather.analysis.threshold.thresh_dods"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.thresh_dods()</span></code></a></p>
-<p><a class="reference internal" href="#spaceweather.analysis.threshold.adj_mat" title="spaceweather.analysis.threshold.adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.adj_mat()</span></code></a></p>
-<p><a class="reference internal" href="#spaceweather.visualisation.heatmaps.plot_adj_mat" title="spaceweather.visualisation.heatmaps.plot_adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.visualisation.heatmaps.plot_adj_mat()</span></code></a></p>
-<p><a class="reference internal" href="#spaceweather.analysis.cca.cca_coeffs" title="spaceweather.analysis.cca.cca_coeffs"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.cca.cca_coeffs()</span></code></a></p>
 <p><a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a></p>
 <p><a class="reference internal" href="#spaceweather.analysis.data_funcs.detrend" title="spaceweather.analysis.data_funcs.detrend"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.detrend()</span></code></a></p>
 <p><a class="reference internal" href="#spaceweather.analysis.data_funcs.window" title="spaceweather.analysis.data_funcs.window"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.window()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.threshold.threshold" title="spaceweather.analysis.threshold.threshold"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.threshold()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.threshold.max_corr_lag" title="spaceweather.analysis.threshold.max_corr_lag"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.max_corr_lag()</span></code></a></p>
+<p><a class="reference internal" href="#spaceweather.analysis.threshold.adj_mat" title="spaceweather.analysis.threshold.adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.adj_mat()</span></code></a></p>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.rcca()</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>csv_file</strong> (<em>csv file</em>) – CSV file downloaded from the SuperMAG website.</p></li>
 <li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
-<li><p><strong>thr_meth</strong> (<em>str</em><em>, </em><em>optional</em>) – The method used to calculate the threshold. Options are ‘Dods’ and ‘kf’.
-Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
 <li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+<li><p><strong>lag_range</strong> (<em>int</em><em>, </em><em>optional</em>) – The range, in minutes, of positive and negative shifts for the second
+station in each pair. Default is 10.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -79,10 +82,19 @@ Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
 
 </div>
 </div>
+</div>
 <div class="section" id="analysis">
 <h2>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-spaceweather.analysis.cca">
 <span id="canonical-correlation-analysis"></span><h3>Canonical Correlation Analysis<a class="headerlink" href="#module-spaceweather.analysis.cca" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h4>Contents<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>cca</p></li>
+<li><p>cca_coeffs</p></li>
+<li><p>lag_mat_pair</p></li>
+<li><p>lag_mat</p></li>
+</ul>
 <dl class="function">
 <dt id="spaceweather.analysis.cca.cca">
 <code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">cca</code><span class="sig-paren">(</span><em>ds</em>, <em>detrend='linear'</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.cca" title="Permalink to this definition">¶</a></dt>
@@ -131,9 +143,83 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 </dl>
 </dd></dl>
 
+<dl class="function">
+<dt id="spaceweather.analysis.cca.lag_mat">
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">lag_mat</code><span class="sig-paren">(</span><em>ds</em>, <em>lag_range=10</em>, <em>win_len=128</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.lag_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a heatmap of correlations between every station pair over time windows and lag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – <p>Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
+<p>Note the time dimension must be at least win_len + 2*lag_range.</p>
+</p></li>
+<li><p><strong>lag_range</strong> (<em>int</em><em>, </em><em>optional</em>) – The range, in minutes, of positive and negative shifts for station2.
+Default is 10.</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl>
+<dt>Dataset containing the correlation coefficients.</dt><dd><p>The data_vars are: cor_coeffs.</p>
+<p>The coordinates are: time_win, lag, first_st, second_st, win_start.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.analysis.cca.lag_mat_pair">
+<code class="descclassname">spaceweather.analysis.cca.</code><code class="descname">lag_mat_pair</code><span class="sig-paren">(</span><em>ds</em>, <em>station1=None</em>, <em>station2=None</em>, <em>lag_range=10</em>, <em>win_len=128</em>, <em>plot=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.cca.lag_mat_pair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and plot a heatmap of correlations between two stations over time windows and lag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – <p>Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
+<p>Note the time dimension must be at least win_len + 2*lag_range.</p>
+</p></li>
+<li><p><strong>station1</strong> (<em>str</em><em>, </em><em>optional</em>) – Station for which the time window is fixed.
+If no station is provided, this will default to the first station in ds.</p></li>
+<li><p><strong>station2</strong> (<em>str</em><em>, </em><em>optional</em>) – Station for which the time window will be shifted according to lag_range.
+If no station is provided, this will default to the second station in ds.</p></li>
+<li><p><strong>lag_range</strong> (<em>int</em><em>, </em><em>optional</em>) – The range, in minutes, of positive and negative shifts for station2.
+Default is 10.</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to plot and return the correlation matrix as a heatmap.
+Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul>
+<li><p><em>xarray.Dataset</em> –</p>
+<dl>
+<dt>Dataset containing the correlation coefficients.</dt><dd><p>The data_vars are: cor_coeffs.</p>
+<p>The coordinates are: time_win, lag, first_st, second_st, win_start.</p>
+</dd>
+</dl>
+</li>
+<li><p><em>matplotlib.figure.Figure</em> – Plot of the correlogram; ie heatmap of correlations.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="module-spaceweather.analysis.data_funcs">
 <span id="data-functions"></span><h3>Data Functions<a class="headerlink" href="#module-spaceweather.analysis.data_funcs" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h4>Contents<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>csv_to_Dataset</p></li>
+<li><p>detrend</p></li>
+<li><p>window</p></li>
+</ul>
 <dl class="function">
 <dt id="spaceweather.analysis.data_funcs.csv_to_Dataset">
 <code class="descclassname">spaceweather.analysis.data_funcs.</code><code class="descname">csv_to_Dataset</code><span class="sig-paren">(</span><em>csv_file, components=['N', 'E', 'Z'], MLT=False, MLAT=False, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="Permalink to this definition">¶</a></dt>
@@ -212,47 +298,45 @@ analysis. If False is input, detrending will not occur. Default is linear.</p></
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="module-spaceweather.analysis.gen_data">
 <span id="generating-model-data"></span><h3>Generating Model Data<a class="headerlink" href="#module-spaceweather.analysis.gen_data" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h4>Contents<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>generate_one_day_one_component_time_series</p></li>
+<li><p>generate_one_day_time_series</p></li>
+</ul>
+</div>
 </div>
 <div class="section" id="module-spaceweather.analysis.threshold">
 <span id="thresholding"></span><h3>Thresholding<a class="headerlink" href="#module-spaceweather.analysis.threshold" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h4>Contents<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>threshold</p></li>
+<li><p>max_corr_lag</p></li>
+<li><p>adj_mat</p></li>
+</ul>
 <dl class="function">
 <dt id="spaceweather.analysis.threshold.adj_mat">
-<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">adj_mat</code><span class="sig-paren">(</span><em>ds</em>, <em>thr_xrds=None</em>, <em>thr_array=None</em>, <em>thr_ds=None</em>, <em>thr_meth='Dods'</em>, <em>plot=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.adj_mat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the adjacency matrix for a set of stations.</p>
-<p>This function calculates the pairwise correlations between the stations in ds.
-Then it determines adjacency by comparing those correlations with either</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>the thresholds provided in thr_xrds,</p></li>
-<li><p>the thresholds provided in thr_array, or</p></li>
-<li><p>the thresholds calculated from thr_ds.</p></li>
-</ol>
-</div></blockquote>
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">adj_mat</code><span class="sig-paren">(</span><em>ds</em>, <em>win_len=128</em>, <em>lag_range=10</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.adj_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the adjacency matrix for a set of stations using lag.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
-This window of a Dataset is used to calculate the pairwise correlations,
-for comparison with the pairwise thresholds.</p></li>
-<li><p><strong>thr_xrds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – xarray.Dataset containing the threshold values for ds.
-If not included, either thr_array or thr_ds must be included.</p></li>
-<li><p><strong>thr_array</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Numpy array containing the threshold values for ds.
-If not included, either thr_xrds or thr_ds must be included.</p></li>
-<li><p><strong>thr_ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <code class="xref py py-func docutils literal notranslate"><span class="pre">supermag.mag_csv_to_Dataset()</span></code>.
-This is used to calculate the pairwise thresholds and must contain the
-same stations as ds. Often this is a longer time series, of which ds is
-a window. If not included, either thr_xrds or thr_array must be included.</p></li>
-<li><p><strong>thr_meth</strong> (<em>str</em><em>, </em><em>optional</em>) – The method used to calculate the threshold. Options are ‘Dods’ and ‘kf’.
-Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
-<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to plot the adjacency matrix as a heatmap. Default is False.</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – <p>Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
+<p>ds is assumed to only have two stations.</p>
+</p></li>
+<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
+<li><p><strong>lag_range</strong> (<em>int</em><em>, </em><em>optional</em>) – The range, in minutes, of positive and negative shifts for the second
+station in each pair. Default is 10.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl>
 <dt>Dataset containing the adjacency coefficients.</dt><dd><p>The data_vars are: adj_coeffs.</p>
-<p>The coordinates are: first_st, second_st.</p>
+<p>The coordinates are: first_st, second_st, win_start.</p>
 </dd>
 </dl>
 </p>
@@ -264,72 +348,46 @@ Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
 </dd></dl>
 
 <dl class="function">
-<dt id="spaceweather.analysis.threshold.thresh_dods">
-<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">thresh_dods</code><span class="sig-paren">(</span><em>ds</em>, <em>n0=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.thresh_dods" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the threshold for each station pair using the method in the
-Dods et al (2015) paper.</p>
+<dt id="spaceweather.analysis.threshold.max_corr_lag">
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">max_corr_lag</code><span class="sig-paren">(</span><em>ds</em>, <em>lag_range</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.max_corr_lag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the maximum correlaion between the two stations over time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
-<li><p><strong>n0</strong> (<em>float</em><em>, </em><em>optional</em>) – The desired expected normalized degree of each station.
-Default is 1/[number of stations - 1].</p></li>
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – <p>Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
+<p>ds is assumed to only have two stations.</p>
+</p></li>
+<li><p><strong>lag_range</strong> (<em>int</em>) – The range, in minutes, of positive and negative shifts for station2.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><dl>
-<dt>Dataset containing the thresholds for each station pair.</dt><dd><p>The data_vars are: thresholds.</p>
-<p>The coordinates are: first_st, second_st.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>DataArray containing the correlation coefficient.</dt><dd><p>The coordinate is: lag.</p>
 </dd>
 </dl>
 </p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>xarray.Dataset</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="spaceweather.analysis.threshold.thresh_kf">
-<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">thresh_kf</code><span class="sig-paren">(</span><em>ds</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.thresh_kf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the threshold for each station pair, my method.</p>
-<p>This function simply uses the first canonical correlation coefficients
-across the entire time series for each station pair.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><dl>
-<dt>Dataset containing the thresholds for each station pair.</dt><dd><p>The data_vars are: thresholds.</p>
-<p>The coordinates are: first_st, second_st.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>xarray.Dataset</p>
+<dd class="field-odd"><p>xarray.DataArray</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="spaceweather.analysis.threshold.threshold">
-<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">threshold</code><span class="sig-paren">(</span><em>ds</em>, <em>thr_meth='Dods'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.threshold" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the pairwise thresholds for each station pair, using the provided method.</p>
+<code class="descclassname">spaceweather.analysis.threshold.</code><code class="descname">threshold</code><span class="sig-paren">(</span><em>ds</em>, <em>lags</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.analysis.threshold.threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the pairwise thresholds for one station pair, using lag.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
-<li><p><strong>thr_meth</strong> (<em>str</em><em>, </em><em>optional</em>) – The method used to calculate the threshold. Options are ‘Dods’ and ‘kf’.
-Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
+<li><p><strong>lags</strong> (<em>np.ndarray</em>) – Numpy array of lags at which maximum correlation is achieved.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl>
-<dt>Dataset containing the thresholds for each station pair.</dt><dd><p>The data_vars are: thresholds.</p>
-<p>The coordinates are: first_st, second_st.</p>
+<dt>Dataset containing the thresholds for the station pair and the lag.</dt><dd><p>The data_vars are: thresholds.</p>
+<p>The coordinates are: lag.</p>
 </dd>
 </dl>
 </p>
@@ -342,51 +400,38 @@ Default is ‘Dods’. Note you may have to add kwargs for the method.</p></li>
 
 </div>
 </div>
+</div>
 <div class="section" id="visualisation">
 <h2>Visualisation<a class="headerlink" href="#visualisation" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-spaceweather.visualisation.animations">
 <span id="animations"></span><h3>Animations<a class="headerlink" href="#module-spaceweather.visualisation.animations" title="Permalink to this headline">¶</a></h3>
-</div>
-<div class="section" id="module-spaceweather.visualisation.globes">
-<span id="globes"></span><h3>Globes<a class="headerlink" href="#module-spaceweather.visualisation.globes" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id5">
+<h4>Contents<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>data_globe_gif</p></li>
+<li><p>connections_globe_gif</p></li>
+<li><p>lag_mat_gif_time</p></li>
+</ul>
 <dl class="function">
-<dt id="spaceweather.visualisation.globes.plot_connections_globe">
-<code class="descclassname">spaceweather.visualisation.globes.</code><code class="descname">plot_connections_globe</code><span class="sig-paren">(</span><em>station_components</em>, <em>adj_matrix</em>, <em>ortho_trans=(0</em>, <em>0)</em>, <em>t=None</em>, <em>list_of_stations=None</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.globes.plot_connections_globe" title="Permalink to this definition">¶</a></dt>
-<dd><p>right now this assumes i want to plot all stations in the adj_matrix for a single time,
-will add more later
-also gives 2 plots for some reason</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-spaceweather.visualisation.heatmaps">
-<span id="heatmaps"></span><h3>Heatmaps<a class="headerlink" href="#module-spaceweather.visualisation.heatmaps" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="spaceweather.visualisation.heatmaps.correlogram">
-<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">correlogram</code><span class="sig-paren">(</span><em>ds</em>, <em>station1=None</em>, <em>station2=None</em>, <em>lag_range=10</em>, <em>win_len=128</em>, <em>ret=True</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.correlogram" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate and plot a heatmap of correlations between two stations over time windows and lag.</p>
+<dt id="spaceweather.visualisation.animations.connections_globe_gif">
+<code class="descclassname">spaceweather.visualisation.animations.</code><code class="descname">connections_globe_gif</code><span class="sig-paren">(</span><em>adj_mat_ds</em>, <em>filepath='connections_gif'</em>, <em>filename='globe_conn'</em>, <em>ortho_trans=None</em>, <em>daynight=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.animations.connections_globe_gif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Animates the network on a globe over time with an optional shadow for nighttime.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – <p>Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p>
-<p>Note the time dimension must be at least win_len + 2*lag_range.</p>
-</p></li>
-<li><p><strong>station1</strong> (<em>str</em><em>, </em><em>optional</em>) – Station for which the time window is fixed.
-If no station is provided, this will default to the first station in ds.</p></li>
-<li><p><strong>station2</strong> (<em>str</em><em>, </em><em>optional</em>) – Station for which the time window will be shifted according to lag_range.
-If no station is provided, this will default to the second station in ds.</p></li>
-<li><p><strong>lag_range</strong> (<em>int</em><em>, </em><em>optional</em>) – The range, in minutes, of positive and negative shifts for station2.
-Default is 10.</p></li>
-<li><p><strong>win_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of window in minutes. Default is 128.</p></li>
-<li><p><strong>ret</strong> (<em>bool</em><em>, </em><em>optional</em>) – Boolean value of whether or not to return related objects.
-The objects are time, lag, correlations, and figure. Default is True.</p></li>
+<li><p><strong>adj_mat_ds</strong> (<em>xarray.Dataset</em>) – 3-dimensional Dataset whose coordinates are first_st, second_st, win_start.</p></li>
+<li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
+‘connections_gif’ folder to be made in the current working directory.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘globe_conn’.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>range</em> – Range of times used in the correlogram.</p></li>
-<li><p><em>range</em> – Range of lags used in the correlogram.</p></li>
-<li><p><em>numpy.ndarray</em> – Numpy array of correlations.</p></li>
-<li><p><em>matplotlib.figure.Figure</em> – Plot of the correlogram; ie heatmap of correlations.</p></li>
+<li><p><em>.png</em> – png image files used to make the gif animation, saved in filepath/images_for_giffing.</p></li>
+<li><p><em>.gif</em> – gif animation of the png image files, saved in filepath/gif.</p></li>
 </ul>
 </p>
 </dd>
@@ -394,10 +439,75 @@ The objects are time, lag, correlations, and figure. Default is True.</p></li>
 </dd></dl>
 
 <dl class="function">
+<dt id="spaceweather.visualisation.animations.data_globe_gif">
+<code class="descclassname">spaceweather.visualisation.animations.</code><code class="descname">data_globe_gif</code><span class="sig-paren">(</span><em>ds, filepath='data_gif', filename='globe_data', list_of_stations=None, list_of_components=['N', 'E'], ortho_trans=None, daynight=True, colour=False, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.animations.data_globe_gif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Animates the data vectors on a globe over time with an optional shadow for
+nighttime and optional data colouration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – 3-dimensional Dataset whose coordinates are first_st, second_st, time.</p></li>
+<li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
+‘data_gif’ folder to be made in the current working directory.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘globe_data’.</p></li>
+<li><p><strong>list_of_stations</strong> (<em>list</em><em>, </em><em>optional</em>) – List of stations in ds to be used on the plot.</p></li>
+<li><p><strong>list_of_components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in ds to be used on the plot. Must be of length 2.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
+<li><p><strong>colour</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to colour the data vectors. Also accepts ‘color’ for
+Americans who can’t spell properly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>.png</em> – png image files used to make the gif animation, saved in filepath/images_for_giffing.</p></li>
+<li><p><em>.gif</em> – gif animation of the png image files, saved in filepath/gif.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.animations.lag_mat_gif_time">
+<code class="descclassname">spaceweather.visualisation.animations.</code><code class="descname">lag_mat_gif_time</code><span class="sig-paren">(</span><em>lag_ds</em>, <em>filepath='lag_mat_gif'</em>, <em>filename='lag_mat'</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.animations.lag_mat_gif_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Animates a correlogram over time for a station pair.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lag_ds</strong> (<em>xarray.Dataset</em>) – Dataset whose coordinates are time_win, lag, first_st, second_st, win_start.</p></li>
+<li><p><strong>filepath</strong> (<em>str</em><em>, </em><em>optional</em>) – File path for storing the image files and gif. Default is
+‘lag_mat_gif’ folder to be made in the current working directory.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – File name for the gif, without file extension. Default is ‘lag_mat’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>.png</em> – png image files used to make the gif animation, saved in filepath/images_for_giffing.</p></li>
+<li><p><em>.gif</em> – gif animation of the png image files, saved in filepath/gif.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-spaceweather.visualisation.heatmaps">
+<span id="heatmaps"></span><h3>Heatmaps<a class="headerlink" href="#module-spaceweather.visualisation.heatmaps" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id6">
+<h4>Contents<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>plot_adj_mat</p></li>
+<li><p>plot_lag_mat</p></li>
+</ul>
+<dl class="function">
 <dt id="spaceweather.visualisation.heatmaps.plot_adj_mat">
 <code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_adj_mat</code><span class="sig-paren">(</span><em>adj_mat</em>, <em>stations</em>, <em>rns</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_adj_mat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the adjacency matrix as a heatmap for a set of stations.</p>
-<p>This function is called from <a class="reference internal" href="#spaceweather.analysis.threshold.adj_mat" title="spaceweather.analysis.threshold.adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.adj_mat()</span></code></a>,
+<p>This function is currently not in use.
+This function is called from <a class="reference internal" href="#spaceweather.analysis.threshold.adj_mat" title="spaceweather.analysis.threshold.adj_mat"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.threshold.adj_mat()</span></code></a>,
 and is not intended for external use.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -416,9 +526,55 @@ and is not intended for external use.</p>
 </dl>
 </dd></dl>
 
+<dl class="function">
+<dt id="spaceweather.visualisation.heatmaps.plot_lag_mat_pair">
+<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_lag_mat_pair</code><span class="sig-paren">(</span><em>lag_mat_pair</em>, <em>time_win</em>, <em>lag</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_lag_mat_pair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a heatmap of correlations between two stations over time windows and lag.</p>
+<p>This function is called from <a class="reference internal" href="#spaceweather.analysis.cca.lag_mat_pair" title="spaceweather.analysis.cca.lag_mat_pair"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.cca.lag_mat_pair()</span></code></a>,
+and is not intended for external use.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lag_mat_pair</strong> (<em>xarray.Dataset</em>) – The correlations to be plotted.</p></li>
+<li><p><strong>time_win</strong> (<em>range</em>) – A range of the indices of the time windows used in calculating the correlations.</p></li>
+<li><p><strong>lag</strong> (<em>range</em>) – A range of the lags used in calculating the correlations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the correlogram; ie heatmap of correlations.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.heatmaps.plot_lag_mat_time">
+<code class="descclassname">spaceweather.visualisation.heatmaps.</code><code class="descname">plot_lag_mat_time</code><span class="sig-paren">(</span><em>lag_mat</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.heatmaps.plot_lag_mat_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a heatmap of correlations between each pair of stations over time windows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>lag_mat</strong> (<em>xarray.Dataset</em>) – The correlations to be plotted.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the correlogram; ie heatmap of correlations.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="module-spaceweather.visualisation.lines">
 <span id="line-plots-of-data"></span><h3>Line Plots of Data<a class="headerlink" href="#module-spaceweather.visualisation.lines" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h4>Contents<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>plot_mag_data</p></li>
+</ul>
 <dl class="function">
 <dt id="spaceweather.visualisation.lines.plot_mag_data">
 <code class="descclassname">spaceweather.visualisation.lines.</code><code class="descname">plot_mag_data</code><span class="sig-paren">(</span><em>ds</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.lines.plot_mag_data" title="Permalink to this definition">¶</a></dt>
@@ -434,8 +590,15 @@ and is not intended for external use.</p>
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="module-spaceweather.visualisation.spectral_analysis">
 <span id="spectral-analysis"></span><h3>Spectral Analysis<a class="headerlink" href="#module-spaceweather.visualisation.spectral_analysis" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id8">
+<h4>Contents<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>power_spectrum</p></li>
+<li><p>spectrogram</p></li>
+</ul>
 <dl class="function">
 <dt id="spaceweather.visualisation.spectral_analysis.power_spectrum">
 <code class="descclassname">spaceweather.visualisation.spectral_analysis.</code><code class="descname">power_spectrum</code><span class="sig-paren">(</span><em>ts=None</em>, <em>ds=None</em>, <em>station=None</em>, <em>component=None</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.spectral_analysis.power_spectrum" title="Permalink to this definition">¶</a></dt>
@@ -484,6 +647,137 @@ a new window every minute.</p></li>
 </dl>
 </dd></dl>
 
+</div>
+</div>
+<div class="section" id="module-spaceweather.visualisation.static">
+<span id="static-globes"></span><h3>Static Globes<a class="headerlink" href="#module-spaceweather.visualisation.static" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id9">
+<h4>Contents<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>csv_to_coords</p></li>
+<li><p>auto_ortho</p></li>
+<li><p>plot_stations</p></li>
+<li><p>plot_data_globe</p></li>
+<li><p>plot_connections_globe</p></li>
+</ul>
+<dl class="function">
+<dt id="spaceweather.visualisation.static.auto_ortho">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">auto_ortho</code><span class="sig-paren">(</span><em>list_of_stations</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.auto_ortho" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the average latitude and average longitude for each station.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>list_of_stations</strong> (<em>list</em>) – List of stations in ds to be used on the plot.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Orientation of the plotted globe; determines the angle at which we view the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.csv_to_coords">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">csv_to_coords</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.csv_to_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the latitude and longitude for each station in the SuperMAG database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>The data_vars are: latitude, longitude.</p>
+<p>The coordinates are: station.</p>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.plot_connections_globe">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">plot_connections_globe</code><span class="sig-paren">(</span><em>adj_matrix</em>, <em>ds=None</em>, <em>list_of_stations=None</em>, <em>time=None</em>, <em>ortho_trans=None</em>, <em>daynight=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.plot_connections_globe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the network on a globe for a single time with an optional shadow for nighttime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em><em>, </em><em>optional</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.
+If ds is not included then list_of_stations and time must be included.</p></li>
+<li><p><strong>list_of_stations</strong> (<em>list</em><em>, </em><em>optional</em>) – List of stations in ds to be used on the plot.
+If list_of_stations is not included then ds must be included.</p></li>
+<li><p><strong>time</strong> (<em>numpy.datetime64</em><em>, </em><em>optional</em>) – The time and date for the adj_matrix.
+If time is not included then ds must be included, and time defaults to
+the first time in ds.</p></li>
+<li><p><strong>adj_matrix</strong> (<em>numpy.ndarray</em>) – The adjacency matrix for the connections between stations.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the network on the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.plot_data_globe">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">plot_data_globe</code><span class="sig-paren">(</span><em>ds, list_of_stations=None, list_of_components=['N', 'E'], t=0, ortho_trans=None, daynight=True, colour=False, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.plot_data_globe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the data as vectors for each station on a globe for a single time
+with an optional shadow for nighttime and optional data colouration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – Data as converted by <a class="reference internal" href="#spaceweather.analysis.data_funcs.csv_to_Dataset" title="spaceweather.analysis.data_funcs.csv_to_Dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">spaceweather.analysis.data_funcs.csv_to_Dataset()</span></code></a>.</p></li>
+<li><p><strong>list_of_stations</strong> (<em>list</em><em>, </em><em>optional</em>) – List of stations in ds to be used on the plot.</p></li>
+<li><p><strong>list_of_components</strong> (<em>list</em><em>, </em><em>optional</em>) – List of components in ds to be used on the plot. Must be of length 2.</p></li>
+<li><p><strong>t</strong> (<em>int</em><em> or </em><em>numpy.datetime64</em><em>, </em><em>optional</em>) – <p>Either</p>
+<ol class="arabic simple">
+<li><p>the index of the time in ds, or</p></li>
+<li><p>the long-format time time in ds</p></li>
+</ol>
+<p>to be used to plot the data. Defaults to the first time in ds.</p>
+</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+<li><p><strong>daynight</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to include a shadow for nighttime. Default is True.</p></li>
+<li><p><strong>colour</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to colour the data vectors. Also accepts ‘color’ for
+Americans who can’t spell properly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the network on the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spaceweather.visualisation.static.plot_stations">
+<code class="descclassname">spaceweather.visualisation.static.</code><code class="descname">plot_stations</code><span class="sig-paren">(</span><em>list_of_stations</em>, <em>ortho_trans</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#spaceweather.visualisation.static.plot_stations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the stations on a globe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>list_of_stations</strong> (<em>list</em>) – List of stations in ds to be used on the plot.</p></li>
+<li><p><strong>ortho_trans</strong> (<em>tuple</em>) – Orientation of the plotted globe; determines at what angle we view the globe.
+Defaults to average location of all stations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Plot of the network on the globe.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 <div class="section" id="indices-and-tables">
 <h4>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
