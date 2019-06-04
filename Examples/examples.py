@@ -1,3 +1,29 @@
+"""
+========
+Contents
+========
+
+Supermag
+--------
+supermag
+
+Analysis
+--------
+- cca
+- data_funcs
+- gen_data
+- threshold
+
+Visualisation
+-------------
+- animations
+- globes
+- heatmaps
+- lines
+- spectral_analysis
+"""
+
+
 # need to be in RSG-Space-Weather folder
 pwd()
 
@@ -7,11 +33,12 @@ import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.gen_data as sag
 import spaceweather.analysis.threshold as sat
 import spaceweather.visualisation.animations as sva
-import spaceweather.visualisation.globes as svg
+import spaceweather.visualisation.static as svg
 import spaceweather.visualisation.heatmaps as svh
 import spaceweather.visualisation.lines as svl
 import spaceweather.visualisation.spectral_analysis as svs
 import spaceweather.supermag as sm
+import xarray as xr
 import numpy as np
 # may need to install OpenSSL for cartopy to function properly
 # I needed it on Windows, even though OpenSSL was already installed
@@ -25,9 +52,8 @@ import numpy as np
 ####################### Supermag ###############################################
 ################################################################################
 ds1 = sad.csv_to_Dataset(csv_file="Data/20190403-00-22-supermag.csv", MLAT=True)
-ds1 = ds1[dict(time = slice(147))]
-test = sm.supermag(ds = ds1, MLAT = True)
-test.adj_coeffs.values
+ds2 = ds1[dict(time = slice(177), station = range(4))]
+test = sm.supermag(ds = ds2)
 ################################################################################
 
 
@@ -81,13 +107,27 @@ ds2_win = sad.window(ds2)
 
 
 ####################### cca ####################################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### cca ----------------------------------------------------------------------
-cca_ex = sac.cca(ds = ds1)
+X = ds1[dict(station = 0)].measurements.values
+Y = ds1[dict(station = 1)].measurements.values
+cca_ex = sac.cca(X, Y)
 
-##### cca_coeffs ---------------------------------------------------------------
-coeffs_ex = sac.cca_coeffs(ds = ds1)
+##### cca_angles ---------------------------------------------------------------
+ds2 = ds1[dict(time = slice(75), station = slice(4))]
+ccca_ang = sac.cca_angles(ds = ds2)
+
+##### lag_mat_pair -------------------------------------------------------------
+ds3 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
+lag_mat = sac.lag_mat_pair(ds = ds3)
+lag_mat2 = sac.lag_mat_pair(ds3, station1 = 'EKP', station2 = 'BLC',
+                            lag_range = 10, win_len = 128, plot = False)
+
+##### lag_mat ------------------------------------------------------------------
+ds4 = ds1[dict(time = slice(177), station = range(4))]
+lag_mat = sac.lag_mat(ds4)
+lag_mat2 = sac.lag_mat(ds= ds4, lag_range = 8, win_len = 120)
 ################################################################################
 
 
@@ -104,24 +144,19 @@ scratch_ds.measurements[480:510,:,:].plot.line(x='time', hue='component', col='s
 
 
 ####################### threshold ##############################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
-
-##### thresh_kf ----------------------------------------------------------------
-thr_kf = sat.thresh_kf(ds = ds1)
-
-##### thresh_dods --------------------------------------------------------------
-thr_dods = sat.thresh_dods(ds = ds1)
-thr_dods_25 = sat.thresh_dods(ds = ds1, n0 = 0.25)
+ds1 = sad.csv_to_Dataset(csv_file="Data/20190403-00-22-supermag.csv", MLAT=True)
+ds2 = ds1[dict(time = slice(177), station = range(4))]
 
 ##### threshold ----------------------------------------------------------------
-thresh_kf = sat.threshold(ds = ds1, thr_meth = 'kf')
-thresh_dods = sat.threshold(ds = ds1, thr_meth = 'Dods')
-thresh_dods_25 = sat.threshold(ds = ds1, thr_meth = 'Dods', n0 = 0.25)
+lags = np.array([-2,0,1,3])
+
+thresh = sat.threshold(ds = ds2, lags = lags)
+
+##### max_corr_lag -------------------------------------------------------------
+max_corr = sat.max_corr_lag(ds = ds2, lag_range = 10)
 
 ##### adj_mat ------------------------------------------------------------------
-thr_ds = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv")
-ds2 = thr_ds.loc[dict(time = slice('2001-03-05T12:00', '2001-03-05T14:00'))]
-adj_mat = sat.adj_mat(ds=ds2, thr_ds=thr_ds, thr_meth='Dods', plot=False)
+adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
 ################################################################################
 
 
@@ -133,61 +168,93 @@ adj_mat = sat.adj_mat(ds=ds2, thr_ds=thr_ds, thr_meth='Dods', plot=False)
 ################################################################################
 
 
-####################### animations ###############################################
+####################### static #################################################
+ds1 = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv", MLAT = True)
+ds2 = ds1[dict(time = slice(150), station = range(4))]
 
+##### csv_to_coords ------------------------------------------------------------
+station_info = svg.csv_to_coords()
+
+##### auto_ortho ---------------------------------------------------------------
+list_of_stations = ds1.station
+aut_orth = svg.auto_ortho(list_of_stations)
+
+##### plot_stations ------------------------------------------------------------
+list_of_stations = ds1.station
+aut_orth = svg.auto_ortho(list_of_stations)
+plot_of_stations = svg.plot_stations(list_of_stations = list_of_stations,
+                                     ortho_trans = aut_orth)
+
+##### plot_data_globe ----------------------------------------------------------
+data_globe = svg.plot_data_globe(ds1)
+data_globe2 = svg.plot_data_globe(ds = ds1, list_of_stations = ds1.station[2:6].values)
+data_globe2 = svg.plot_data_globe(ds = ds1, list_of_components = ['N', 'Z'])
+data_globe3 = svg.plot_data_globe(ds = ds1, t = 4)
+data_globe4 = svg.plot_data_globe(ds = ds1, t = ds1.time[4].values)
+data_globe5 = svg.plot_data_globe(ds = ds1, daynight=False)
+data_globe6 = svg.plot_data_globe(ds1, colour=True)
+data_globe7 = svg.plot_data_globe(ds1, color=True)
+
+##### plot_connections_globe ---------------------------------------------------
+import numpy as np
+a_m = np.array([[np.nan,     1.,     1.,     1.],
+                [np.nan, np.nan,     0.,     1.],
+                [np.nan, np.nan, np.nan,     1.],
+                [np.nan, np.nan, np.nan, np.nan]])
+globe_conn = svg.plot_connections_globe(adj_matrix = a_m, ds = ds2)
 ################################################################################
 
 
-####################### globes #################################################
-station_components = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv")
+####################### animations #############################################
+ds1 = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv", MLAT = True)
+ds2 = ds1[dict(time = slice(150), station = range(4))]
 
-t = station_components.time[1]
-list_of_stations = station_components.station
+##### data_globe_gif -----------------------------------------------------------
+sva.data_globe_gif(ds = ds2,
+                   filepath = 'Scratch (Tinkerbell)/data_gif',
+                   filename = 'globe_data',
+                   colour = True)
 
+##### connections_globe_gif ----------------------------------------------------
+adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
+sva.connections_globe_gif(adj_mat_ds = adj_mat,
+                          filepath = 'Scratch (Tinkerbell)/connections_gif',
+                          filename = 'globe_connections')
 
-svg.plot_data_globe(station_components, t, list_of_stations = None, ortho_trans = (0, 0))
-# plots N and E components of the vector readings for a single time step t
-# by default it plots data from all stations fed to it in station_readings unless
-# specified otherwise in list_of_stations.
-# ortho_trans specifies the angle from which we see the plot(earth) at.
-# if left at default, yz.auto_ortho(list_of_stations) centres the view on the centre of all stations in list_of_stations.
-
-
-sag.data_globe_gif(station_components, time_start = 0, time_end = 10, ortho_trans = (0, 0), file_name = "sandra")
-#makes sandra.gif in the /gif folder
-
-
-#generating fake adjacency matrix
-N = 9
-# length = 50
-b = np.random.randint(-2000,2000,size=(N,N))
-b_symm = (b + b.T)/2
-fake_data = b_symm < 0
-
-svg.plot_connections_globe(station_components, adj_matrix = fake_data, ortho_trans = (0, 0), t = None, list_of_stations = None)
-#plots connections between stations.
-#for now it expects a 2d adjacency matrix as input but i will add code to make it do 3d(time on 3rd axis) as well
+##### lag_mat_gif_time ---------------------------------------------------------
+lag_mat = sac.lag_mat(ds2)
+sva.lag_mat_gif_time(lag_ds = lag_mat,
+                     filepath = 'Scratch (Tinkerbell)/lag_mat_gif',
+                     filename = 'lag_mat')
 ################################################################################
 
 
 ####################### heatmaps ###############################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### plot_adj_mat -------------------------------------------------------------
+## currently not in use
 fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], thr_ds = ds1),
                        stations = ds1.station.values,
                        rns = range(len(ds1.station.values)))
 
-##### correlogram --------------------------------------------------------------
+##### plot_lag_mat_pair (correlogram) ------------------------------------------
 ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
-time, lag, corr, fig = svh.correlogram(ds2)
-time, lag, corr, fig = svh.correlogram(ds2, station1 = 'EKP', station2 = 'DLR')
-time, lag, corr, fig = svh.correlogram(ds2, lag_range = 3, win_len = 64)
+lag_mat_pair = sac.lag_mat_pair(ds2, station1 = 'TAL', station2 = 'BLC')
+fig = svh.plot_lag_mat_pair(lag_mat_pair = lag_mat_pair,
+                            time_win = lag_mat_pair.time_win.values,
+                            lag = lag_mat_pair.lag.values)
+
+##### plot_lag_mat_time --------------------------------------------------------
+ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
+lag_mat = sac.lag_mat(ds2)
+lm = lag_mat[dict(time_win = 4, lag = 4, win_start = 4)]
+lag_mat_fig = svh.plot_lag_mat_time(lm)
 ################################################################################
 
 
 ####################### lines ##################################################
-ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv")
+ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv", MLAT = True)
 
 ##### plot_mag_data ------------------------------------------------------------
 svl.plot_mag_data(ds=ds1)

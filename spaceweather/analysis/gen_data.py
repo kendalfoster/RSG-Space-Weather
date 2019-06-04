@@ -1,3 +1,12 @@
+"""
+Contents
+--------
+
+- generate_one_day_one_component_time_series
+- generate_one_day_time_series
+"""
+
+
 import numpy as np
 from numpy import hstack
 import scipy as sp
