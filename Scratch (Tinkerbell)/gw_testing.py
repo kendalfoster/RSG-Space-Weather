@@ -12,9 +12,6 @@ import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.threshold as sat
 import spaceweather.rcca as rcca
 
-import spaceweather.visualisation.heatmaps as svh
-
-
 def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=None):
      #check if readings are provided
      if readings is None:
@@ -94,37 +91,229 @@ def phase_finder(ds, station1, station2, start):
 ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",MLT = True, MLAT = True)
 ds2 = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv",MLT = True, MLAT = True)
 
-my_ds = sad.csv_to_Dataset(csv_file = "Data/20190521-14-08-supermag.csv",MLT = True, MLAT = True)
-
+ds = sad.csv_to_Dataset(csv_file = "Data/20190521-14-08-supermag.csv",MLT = True, MLAT = True)
 
 components=['N', 'E', 'Z']
-# ds = data_funcs.mag_detrend(ds1)
-
-scratch = sac.cca(ds1)
-
-# scratch.loc[dict(first_st = 'TAL')]
 
 
-# write a function that takes two time series and generates a graph showing how the angles between a and b vary over time
-def angles(ts1, ts2):
-    # ts1 and ts2 are Datasets
-
-    scratch = sac.cca(ds1)
-    return
-
-scratch_threshold = sat.threshold(ds1)
-
-sat.adj_mat(ds1,plot=True,thr_xrds=scratch_threshold)
+scratch = sac.lag_mat(ds, lag_range=10, station1 = 'NAL', station2 = 'LYR', win_len=128,plot=True)
 
 
+scratch_lag_coeffs = np.array(scratch[0].lag_coeffs)
+scratch_lag_coeffs[0][340]
 
 
-svh.correlogram(my_ds,lag_range=10, win_len=128,ret=True, station1='NAL', station2='NRD')
+for i in range(21):
+    for j in range(573):
+        if scratch_lag_coeffs[i][j] < -0.2:
+            print('%d, %d, %d' % (i,j,scratch_lag_coeefs[i][j]))
 
 
-svh.correlogram(my_ds,lag_range=10, win_len=128,ret=True, station1='NAL', station2='BJN')
+lag_range=10
+station1 = 'NAL'
+station2 = 'LYR'
+win_len=128
+plot=True
 
-svh.correlogram(my_ds,lag_range=10, win_len=128,ret=True, station1='NAL', station2='SOR')
+nt = len(ds.time.values)
+if nt < win_len + 2*lag_range:
+    print('Error: ds timeseries < win_len + 2*lag_range')
+    # return 'Error: ds timeseries < win_len + 2*lag_range'
 
-svh.correlogram(my_ds,lag_range=10, win_len=128,ret=True)
+# check if stations are provided
+stations = ds.station.values
+if len(stations) <= 1:
+    print('Error: only one station in Dataset')
+    # return 'Error: only one station in Dataset'
+if station1 is None:
+    print('No station1 provided; using station1 = %s' % (stations[0]))
+    station1 = stations[0]
+    if station2 is None:
+        print('No station2 provided; using station2 = %s' % (stations[1]))
+        station2 = stations[1]
+elif station2 is None and not station1 == stations[0]:
+    print('No station2 provided; using station2 = %s' % (stations[0]))
+    station2 = stations[0]
+elif station2 is None and station1 == stations[0]:
+    print('No station2 provided; using station2 = %s' % (stations[1]))
+    station2 = stations[1]
 
+# Select the stations and window the data
+ds = ds.loc[dict(station = [station1,station2])]
+windowed = sad.window(ds,win_len)
+ts1 = windowed.loc[dict(station = station1)].measurements
+ts2 = windowed.loc[dict(station = station2)].measurements
+ts1 = ts1.transpose('win_len', 'component', 'win_start')
+ts2 = ts2.transpose('win_len', 'component', 'win_start')
+
+# Set up array
+time = range(lag_range+1, len(windowed.win_start)-lag_range+1)
+
+lag = range(-lag_range, lag_range+1)
+corr = np.zeros(shape = (len(lag), len(time)))
+
+# Calculate correlations
+for j in range(len(time)):
+    for i in range(len(lag)):
+        ts1_temp = ts1[dict(win_start = time[j]-1)]
+        ts2_temp = ts2[dict(win_start = time[j]+lag[i]-1)]
+        # run cca, suppress rcca output
+        temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+        ccac = temp_cca.train([ts1_temp, ts2_temp])
+        corr[i,j] = ccac.cancorrs[0]
+
+i=0
+j=340
+scratch_ts1_temp = ts1[dict(win_start = time[j]-1)]
+scratch_ts2_temp = ts2[dict(win_start = time[j]+lag[i]-1)]
+temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+scratch__ccac = temp_cca.train([scratch_ts1_temp, scratch_ts2_temp])
+scratch__ccac.cancorrs[0]
+scratch__ccac.ws
+
+np.savetxt("old_cca_component_1.csv", scratch__ccac.comps[0], delimiter=",")
+np.savetxt("old_cca_component_2.csv", scratch__ccac.comps[1], delimiter=",")
+
+
+lag_mat = xr.Dataset(data_vars = {'lag_coeffs': (['lag', 'time_win'], corr)},
+                     coords = {'lag': lag,
+                               'time_win': time})
+
+# plot adjacency matrix
+if plot:
+    fig = svh.plot_lag_mat(lag_mat = lag_mat, time_win = time, lag = lag)
+    # return lag_mat, fig
+# else:
+    # return lag_mat
+
+lag_mat.lag_coeffs[0][340]
+
+ds
+
+len(ds.loc[dict(station = 'NAL')].measurements)
+
+scratch_x = ds.loc[dict(station = 'NAL')].measurements[350:478]
+
+scratch_y = ds.loc[dict(station = 'LYR')].measurements[340:468]
+
+
+
+scratch_temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+scratch_ccac = temp_cca.train([scratch_x, scratch_y])
+scratch_ccac.cancorrs[0]
+
+from sklearn.cross_decomposition import CCA as new_cca
+
+
+scratch_x_array = np.array(scratch_x)
+scratch_y_array = np.array(scratch_y)
+
+scratch_cca = new_cca(n_components=1)
+scratch_cca.fit(scratch_x_array, scratch_y_array)
+scratch_result_x_c, scratch_result_y_c = scratch_cca.transform(scratch_x_array, scratch_y_array)
+scratch_result_x_c
+
+scratch_result = scratch_cca.fit_transform(scratch_x_array, scratch_y_array)
+np.shape(scratch_result)
+scratch_result
+scratch_result_2 = [[scratch_result[0][i][0], scratch_result[1][i][0]] for i in range(128)]
+scratch_result_2
+
+np.savetxt("new_cca_components.csv", scratch_result_2, delimiter=",")
+
+
+x_matrix = np.array(scratch_x[:3])
+x_matrix
+
+y_matrix = np.array(scratch_y[:3])
+y_matrix
+
+np.savetxt("old_cca_a.csv",np.linalg.solve(x_matrix,scratch__ccac.comps[0][:3]), delimiter=",")
+np.savetxt("old_cca_b.csv",np.linalg.solve(y_matrix,scratch__ccac.comps[1][:3]), delimiter=",")
+
+
+x_matrix
+
+b_x = [scratch_result_2[i][0] for i in range(3)]
+b_y = [scratch_result_2[i][1] for i in range(3)]
+
+np.savetxt("new_cca_a.csv",np.linalg.solve(x_matrix,b_x), delimiter=",")
+np.savetxt("new_cca_b.csv",np.linalg.solve(y_matrix,b_y), delimiter=",")
+
+np.corrcoef(scratch_result_x_c.T, scratch_result_y_c.T)[0,1]
+
+
+
+
+
+
+ds = sad.csv_to_Dataset(csv_file = "Data/20190521-14-08-supermag.csv",MLT = True, MLAT = True)
+
+scratch_x = ds.loc[dict(station = 'NAL')].measurements[350:478]
+
+scratch_y = ds.loc[dict(station = 'LYR')].measurements[340:468]
+
+
+# old cca
+scratch_temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 2, verbose = False)
+scratch_ccac = scratch_temp_cca.train([scratch_x, scratch_y])
+scratch_ccac.cancorrs[0]
+
+# new cca
+from sklearn.cross_decomposition import CCA as new_cca
+
+scratch_x_array = np.array(scratch_x)
+scratch_y_array = np.array(scratch_y)
+
+scratch_cca = new_cca(n_components=1)
+scratch_cca.fit(scratch_x_array, scratch_y_array)
+scratch_result_x_c, scratch_result_y_c = scratch_cca.transform(scratch_x_array, scratch_y_array)
+
+np.shape(scratch_result_x_c)
+
+np.corrcoef(scratch_result_x_c.T, scratch_result_y_c.T)[0,1]
+
+coeffs, scratch_u, scratch_v = rdc.cca(scratch_x_array,scratch_y_array)
+
+np.savetxt("scratch_u.csv",scratch_u, delimiter=",")
+np.savetxt("scratch_v.csv",scratch_v, delimiter=",")
+
+scratch_u
+scratch_v
+coeffs
+
+
+test_arr_1 = [[4,7,9],[2,5,2],[3,3,7],[4,8,3],[1,1,1],[1,2,1],[4,2,1]]
+test_arr_1
+test_arr_2 = [[2,3,1],[3,8,3],[1,5,0],[0,1,1],[1,1,1],[2,1,9],[0,2,2]]
+test_arr_2
+
+test_x_array = np.array(test_arr_1)
+test_y_array = np.array(test_arr_2)
+
+scratch_temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+test_ccac =scratch_temp_cca.train([test_x_array, test_y_array])
+test_ccac.cancorrs[0]
+
+test_new_cca = new_cca(n_components=1)
+test_new_cca.fit(test_x_array, test_y_array)
+test_result_x_c, test_result_y_c = test_new_cca.transform(test_x_array, test_y_array)
+
+np.corrcoef(test_result_x_c.T, test_result_y_c.T)[0,1]
+
+
+import depmeas_master.python.rdc as rdc
+
+rdc.cca(test_x_array,test_y_array)
+
+
+
+
+test_result_x_c
+test_result_y_c
+
+scratch_A = test_arr_1[:3]
+scratch_b = test_result_x_c[:3]
+scratch_x = np.linalg.solve(scratch_A, scratch_b)
+
+np.dot(np.array(test_arr_1),np.array(scratch_x))

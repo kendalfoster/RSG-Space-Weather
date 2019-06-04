@@ -288,6 +288,7 @@ def lag_mat_pair(ds, station1=None, station2=None, lag_range=10, win_len=128,
 
     # plot correlogram heatmap
     if plot:
+
         fig = svh.plot_lag_mat_pair(lag_mat = lag_mat, time_win = time, lag = lag)
         return lag_mat, fig
     else:
@@ -383,3 +384,4 @@ def lag_mat(ds, lag_range=10, win_len=128, **kwargs):
     ds = ds2.transpose('time_win', 'lag', 'first_st', 'second_st', 'win_start')
 
     return ds
+
