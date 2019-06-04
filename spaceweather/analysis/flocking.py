@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def order_params(data, normed = False):
     #there might be some difference if i normed each reading before doing the calculations, as some stations are more

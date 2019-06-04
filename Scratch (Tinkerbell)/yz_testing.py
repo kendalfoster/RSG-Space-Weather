@@ -25,6 +25,7 @@ incorporate MLAT, MLT as outlined by IGRF? make sure same version as kendal and 
 # import spaceweather.analysis.supermag as sm
 import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
+import spaceweather.analysis.flocking as saf
 # import spaceweather.vi
 from spaceweather.visualisation import globes as svg
 import spaceweather.visualisation.animations as sva
@@ -180,7 +181,7 @@ def vector_normalise(v):
 
 def test(data, dr = 0.3):
     normeddata = data.copy(deep = True)
-    r_range = np.linspace(0, 2, 21)
+    r_range = np.linspace(0.1, 2, 21)
     N = len(data.station) #number of stations
     results = np.zeros((len(r_range), len(data.time))) #pair correlation function
 
@@ -209,14 +210,19 @@ def test(data, dr = 0.3):
                 for j in range(i+1, N):
                     count += (x1[i, j] == x2[i, j])
 
-            results[r_index, time_index] = (r*count)/(3*dr*N**2)
+            results[r_index, time_index] = (count)/(3*dr*(N*r)**2)
 
     return results
+
+
+
 
 data_ms = meansubtract(data)
 
 trent = test(data_ms)
 ogtrent = test(data)
+trent_unnormed = test_unnormed(data_ms)
+trent_order = saf.order_params(data_ms)
 
 svl.plot_mag_data(data_ms)
 
@@ -224,3 +230,186 @@ plt.figure(figsize = (20, 8))
 plt.pcolormesh(trent)
 plt.figure(figsize = (20, 8))
 plt.pcolormesh(ogtrent)
+
+trent_unnormed = test_unnormed(data_ms, np.linspace(0, 100, 21))
+plt.figure(figsize = (20, 8))
+plt.pcolormesh(trent_unnormed)
+
+
+stackedplot(data_ms, trent, trent_order)
+
+
+
+
+
+
+
+N110_ms = meansubtract(N110)
+
+pcf_N110 = test(N110_ms)
+plt.figure(figsize = (30, 8))
+plt.pcolormesh(pcf_N110)
+
+order_N110 = saf.order_params(N110_ms)
+
+stackedplot(N110_ms, pcf_N110, order_N110, "N110")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test_unnormed(data, r_range = np.linspace(0, 200, 21)):
+    normeddata = data.copy(deep = True)
+    # r_range = np.linspace(0, 200, 21)
+    dr = r_range[2] - r_range[1]
+    N = len(data.station) #number of stations
+    results = np.zeros((len(r_range), len(data.time))) #pair correlation function
+
+    for time_index in range(len(data.time)):
+        t = data.time[time_index]
+        dists = np.zeros((N, N))
+
+        # for s in data.station:
+            # normeddata.measurements.loc[dict(station = s, time = t)] = vector_normalise(data.measurements.loc[dict(station = s, time = t)].data)
+
+        for i in range(N):
+            s1 = data.station[i]
+            for j in range(i+1, N):
+                s2 = data.station[j]
+
+                diff = normeddata.measurements.loc[dict(station = s1, time = t)] - normeddata.measurements.loc[dict(station = s2, time = t)]
+                dists[i, j] = np.sqrt(np.nansum(diff**2))
+
+        for r_index in range(len(r_range)):
+            r = r_range[r_index]
+            count = 0
+            x1 = 1* (r < dists) #ones where distances greater than lower bound
+            x2 = 1*  (dists < r+dr) #ones where distances less than upper bound
+
+            for i in range(N): #basically counts places where they are both ones
+                for j in range(i+1, N):
+                    count += (x1[i, j] == x2[i, j])
+
+            results[r_index, time_index] = (r*count)/(3*dr*N**2)
+
+    return results
+
+
+
+
+
+
+
+def stackedplot(data, pcf, order):
+    nplots = len(data.station)+ 2
+
+    fig = plt.figure(figsize = (40, 60))
+
+    pcm = plt.subplot(nplots, 1, 1)
+    osp = plt.subplot(nplots, 1, 2) #order sub plot
+
+    pcm.pcolormesh(pcf)
+    # pcm.set_xlabel("time", fontsize = 20)
+    pcm.set_ylabel("r, dr = " + "%s" %0.3, fontsize = 20)
+    # pcm.colorbar()
+    osp.plot(order)
+
+    for i in range(nplots-2):
+        s = data.station[i]
+        ax = plt.subplot(nplots, 1, i+3, sharex = pcm)
+        ax.plot(data.measurements.loc[dict(station = s)])
+        ax.title.set_text(s.data)
+
+    filename = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fig.savefig("%s.png" %filename)
+
+
+
+
+
+
+def everything(data, r_range = np.linspace(0, 2, 21), dr = 0.3, normalised = 1):
+    #first calculates pcf
+    normeddata = data.copy(deep = True)
+    if dr == 0:
+        dr = r_range[2] - r_range[1]
+    N = len(data.station) #number of stations
+    pcf = np.zeros((len(r_range), len(data.time))) #pair correlation function
+
+    for time_index in range(len(data.time)):
+        t = data.time[time_index]
+        dists = np.zeros((N, N))
+
+        if normalised:
+            for s in data.station:
+                normeddata.measurements.loc[dict(station = s, time = t)] = vector_normalise(data.measurements.loc[dict(station = s, time = t)].data)
+
+        for i in range(N):
+            s1 = data.station[i]
+            for j in range(i+1, N):
+                s2 = data.station[j]
+
+                diff = normeddata.measurements.loc[dict(station = s1, time = t)] - normeddata.measurements.loc[dict(station = s2, time = t)]
+                dists[i, j] = np.sqrt(np.nansum(diff**2))
+
+        for r_index in range(len(r_range)):
+            r = r_range[r_index]
+            count = 0
+            x1 = 1* (r < dists) #ones where distances greater than lower bound
+            x2 = 1*  (dists < r+dr) #ones where distances less than upper bound
+
+            for i in range(N): #basically counts places where they are both ones
+                for j in range(i+1, N):
+                    count += (x1[i, j] == x2[i, j])
+
+            pcf[r_index, time_index] = (r*count)/(3*dr*N**2)
+
+    #get order parameters
+    order = saf.order_params(data)
+
+
+    #plotting bit
+    nplots = len(data.station)+ 2
+
+    fig = plt.figure(figsize = (40, 60))
+
+    pcm = plt.subplot(nplots, 1, 1)
+    osp = plt.subplot(nplots, 1, 2) #order sub plot
+
+    pcm.pcolormesh(pcf)
+    # pcm.set_xlabel("time", fontsize = 20)
+    pcm.ylabel("r, dr = " + "%s" %dr, fontsize = 20)
+    # pcm.colorbar()
+    osp.plot(order)
+
+    for i in range(nplots-2):
+        s = data.station[i]
+        ax = plt.subplot(nplots, 1, i+3, sharex = pcm)
+        ax.plot(data.measurements.loc[dict(station = s)])
+        ax.title.set_text(s.data)
+
+    filename = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fig.savefig("%s.png" %filename)
