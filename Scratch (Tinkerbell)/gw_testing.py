@@ -11,7 +11,6 @@ import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.threshold as sat
 import spaceweather.rcca as rcca
-import spaceweather.visualisation.heatmaps as svh
 
 def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=None):
      #check if readings are provided
@@ -91,9 +90,11 @@ def phase_finder(ds, station1, station2, start):
 
 ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",MLT = True, MLAT = True)
 ds2 = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv",MLT = True, MLAT = True)
+
 ds = sad.csv_to_Dataset(csv_file = "Data/20190521-14-08-supermag.csv",MLT = True, MLAT = True)
 
 components=['N', 'E', 'Z']
+
 
 scratch = sac.lag_mat(ds, lag_range=10, station1 = 'NAL', station2 = 'LYR', win_len=128,plot=True)
 
@@ -304,6 +305,7 @@ np.corrcoef(test_result_x_c.T, test_result_y_c.T)[0,1]
 import depmeas_master.python.rdc as rdc
 
 rdc.cca(test_x_array,test_y_array)
+
 
 
 
