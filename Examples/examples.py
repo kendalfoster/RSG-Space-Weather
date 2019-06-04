@@ -157,6 +157,9 @@ max_corr = sat.max_corr_lag(ds = ds2, lag_range = 10)
 
 ##### adj_mat ------------------------------------------------------------------
 adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
+
+##### corr_lag_mat -------------------------------------------------------------
+corr_lag_mat = sat.corr_lag_mat(ds = ds2)
 ################################################################################
 
 
@@ -202,6 +205,10 @@ a_m = np.array([[np.nan,     1.,     1.,     1.],
                 [np.nan, np.nan, np.nan,     1.],
                 [np.nan, np.nan, np.nan, np.nan]])
 globe_conn = svg.plot_connections_globe(adj_matrix = a_m, ds = ds2)
+
+##### plot_lag_network ---------------------------------------------------------
+adj_mat = sat.adj_mat(ds2)
+lag_net = svg.plot_lag_network(adj_mat[dict(win_start=3)])
 ################################################################################
 
 
@@ -226,6 +233,18 @@ lag_mat = sac.lag_mat(ds2)
 sva.lag_mat_gif_time(lag_ds = lag_mat,
                      filepath = 'Scratch (Tinkerbell)/lag_mat_gif',
                      filename = 'lag_mat')
+
+##### lag_network_gif ----------------------------------------------------------
+adj_mat = sat.adj_mat(ds2)
+sva.lag_network_gif(adj_matrix_ds = adj_mat,
+                    filepath = 'Scratch (Tinkerbell)/lag_network_gif',
+                    filename = 'lag_network')
+
+##### corr_thresh_gif ----------------------------------------------------------
+corr_lag_mat = sat.corr_lag_mat(ds2)
+sva.corr_thresh_gif(corr_thresh_ds = corr_lag_mat,
+                    filepath = 'Scratch (Tinkerbell)/corr_thresh_gif',
+                    filename = 'corr_thresh')
 ################################################################################
 
 
@@ -250,6 +269,11 @@ ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
 lag_mat = sac.lag_mat(ds2)
 lm = lag_mat[dict(time_win = 4, lag = 4, win_start = 4)]
 lag_mat_fig = svh.plot_lag_mat_time(lm)
+
+##### plot_corr_thresh ---------------------------------------------------------
+ds2 = ds1[dict(time = slice(177), station = range(4))]
+corr_lag_mat = sat.corr_lag_mat(ds2)
+corr_thresh = svh.plot_corr_thresh(corr_lag_mat[dict(win_start=3)])
 ################################################################################
 
 

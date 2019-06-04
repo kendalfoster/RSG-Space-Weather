@@ -93,7 +93,9 @@ ds1 = sad.csv_to_Dataset(csv_file = "Data/20190403-00-22-supermag.csv",MLT = Tru
 ds2 = sad.csv_to_Dataset(csv_file = "Data/20010305-16-38-supermag.csv",MLT = True, MLAT = True)
 ds = sad.csv_to_Dataset(csv_file = "Data/20190521-14-08-supermag.csv",MLT = True, MLAT = True)
 
+
 components=['N', 'E', 'Z']
+
 
 scratch = sac.lag_mat(ds, lag_range=10, station1 = 'NAL', station2 = 'LYR', win_len=128,plot=True)
 
@@ -529,6 +531,7 @@ ts_2 = np.array(scratch_window.loc[dict(station = 'YYY')])
 cc, a, b = sac.cca(ts_1,ts_2)
 np.savetxt("ts_1_no_gauss_24_offset.csv", ts_1, delimiter=",")
 np.savetxt("ts_2_no_gauss_24_offset.csv", ts_2, delimiter=",")
+
 
 a
 

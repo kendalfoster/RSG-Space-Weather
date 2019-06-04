@@ -60,19 +60,23 @@ def cca(X, Y, weights=True):
     if rankX == 0:
         raise Exception('Rank(X) = 0! Bad Data!')
     elif rankX < p1:
+
         warnings.warn("X not full rank. Cannot calculate weights, only returning coefficients (do not try to assign output to more than one object!)")
         Qx = Qx[:,0:rankX]
         Rx = Rx[0:rankX,0:rankX]
         weights = False
 
+
     rankY = np.linalg.matrix_rank(Ry)
     if rankY == 0:
         raise Exception('Rank(X) = 0! Bad Data!')
     elif rankY < p2:
+
         warnings.warn("Y not full rank. Cannot calculate weights, only returning coefficients (do not try to assign output to more than one object!)")
         Qy = Qy[:,0:rankY]
         Ry = Ry[0:rankY,0:rankY]
         weights = False
+
 
     # apply singular value decomposition
     svdInput = np.dot(Qx.T,Qy)
