@@ -61,7 +61,7 @@ def threshold(ds, lags, **kwargs):
         ts1 = both_ts[:, 0:num_comp]
         ts2_temp = both_ts[:, num_comp:2*num_comp]
         # run cca
-        coeff = sac.cca(ts1.values, ts2.values, weights = False)
+        coeff = sac.cca(ts1.values, ts2_temp.values, weights = False)
         thresh[k] = coeff
 
     # construct Dataset from array
@@ -120,7 +120,7 @@ def max_corr_lag(ds, lag_range, **kwargs):
 
     # pick maximum correlation
     max = np.max(cca_coeffs)
-    lag = np.argmax(cca_coeffs)
+    lag = np.argmax(cca_coeffs) - lag_range
 
     # convert to DataArray
     res = xr.DataArray(data = max)

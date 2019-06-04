@@ -228,8 +228,7 @@ def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
         if len(filename) > 4:
             filename = filename[:-4] # remove file extension
         else:
-            print('Error: please input filename without file extension')
-            return 'Error: please input filename without file extension'
+            raise ValueError('Error: please input filename without file extension')
 
     # get constants
     time_wins = lag_ds.time_win.values
@@ -242,6 +241,71 @@ def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
     for i in range(num_win):
         lm = lag_ds[dict(time_win = i, lag = 0, win_start = i)]
         fig = svh.plot_lag_mat_time(lag_mat = lm)
+        im_name = im_filepath + '/%s.png' %i
+        fig.savefig(im_name) # save image file
+        names.append(im_name) # add name of image file to list
+
+    # append plots to each other
+    images = []
+    for n in names:
+        images.append(Image.open(n))
+
+    # make gif file and save it in filepath
+    images[0].save(filepath + '/%s.gif' %filename,
+                   save_all = True,
+                   append_images = images[1:],
+                   duration = 50, loop = 0)
+
+
+def lag_network_gif(adj_matrix_ds, filepath='lag_network_gif',
+                    filename='lag_network', **kwargs):
+    '''
+    Animate the directed network provided by the adjacency matrix and lag over time.
+
+    Parameters
+    ----------
+    adj_matrix_ds : xarray.Dataset
+        Adjacency matrix for the network; output from :func:`spaceweather.analysis.threshold.adj_mat`.
+    filepath : str, optional
+        File path for storing the image files and gif. Default is
+        'lag_network_gif' folder to be made in the current working directory.
+    filename : str, optional
+        File name for the gif, without file extension. Default is 'lag_network'.
+
+    Returns
+    -------
+    .png
+        png image files used to make the gif animation, saved in filepath/images_for_giffing.
+    .gif
+        gif animation of the png image files, saved in filepath/gif.
+    '''
+
+    # check filepaths
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+
+    im_filepath = filepath + '/images_for_giffing'
+    if not os.path.exists(im_filepath):
+        os.makedirs(im_filepath)
+
+    # check filename
+    if '.' in filename:
+        if len(filename) > 4:
+            filename = filename[:-4] # remove file extension
+        else:
+            raise ValueError('Error: please input filename without file extension')
+
+    # get constants
+    w_sts = adj_matrix_ds.win_start.values
+    num_win = len(w_sts)
+
+    # initialize the list of names of image files
+    names = []
+
+    # plot the connections for each win_start value in the adjacency matrix
+    for i in range(num_win):
+        am = adj_matrix_ds[dict(win_start = i)]
+        fig = svg.plot_lag_network(adj_matrix = am)
         im_name = im_filepath + '/%s.png' %i
         fig.savefig(im_name) # save image file
         names.append(im_name) # add name of image file to list

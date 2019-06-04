@@ -202,6 +202,10 @@ a_m = np.array([[np.nan,     1.,     1.,     1.],
                 [np.nan, np.nan, np.nan,     1.],
                 [np.nan, np.nan, np.nan, np.nan]])
 globe_conn = svg.plot_connections_globe(adj_matrix = a_m, ds = ds2)
+
+##### plot_lag_network ---------------------------------------------------------
+adj_mat = sat.adj_mat(ds2)
+lag_net = svg.plot_lag_network(adj_mat[dict(win_start=3)])
 ################################################################################
 
 
@@ -226,6 +230,12 @@ lag_mat = sac.lag_mat(ds2)
 sva.lag_mat_gif_time(lag_ds = lag_mat,
                      filepath = 'Scratch (Tinkerbell)/lag_mat_gif',
                      filename = 'lag_mat')
+
+##### lag_network_gif ----------------------------------------------------------
+adj_mat = sat.adj_mat(ds2)
+sva.lag_network_gif(adj_matrix_ds = adj_mat,
+                    filepath = 'Scratch (Tinkerbell)/lag_network_gif',
+                    filename = 'lag_network')
 ################################################################################
 
 

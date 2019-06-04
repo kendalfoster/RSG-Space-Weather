@@ -63,7 +63,10 @@ def cca(X, Y, weights=True):
     a = np.dot(np.linalg.inv(Rx), U[:,0])
     b = np.dot(np.linalg.inv(Ry.T), U[:,0])
 
-    return coeff, a, b
+    if weights:
+        return coeff, a, b
+    else:
+        return coeff
 
 
 def cca_angles(ds, **kwargs):
