@@ -5,6 +5,8 @@ Contents
 - data_globe_gif
 - connections_globe_gif
 - lag_mat_gif_time
+- lag_network_gif
+- corr_thresh_gif
 """
 
 
@@ -193,7 +195,7 @@ def connections_globe_gif(adj_mat_ds,
 
 
 def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
-                     filename='lag_mat'):
+                     filename='lag_mat', **kwargs):
     '''
     Animates a correlogram over time for a station pair.
 
@@ -240,7 +242,7 @@ def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
     # plot the connections for each win_start value in the adjacency matrix
     for i in range(num_win):
         lm = lag_ds[dict(time_win = i, lag = 0, win_start = i)]
-        fig = svh.plot_lag_mat_time(lag_mat = lm)
+        fig = svh.plot_lag_mat_time(lag_mat = lm, **kwargs)
         im_name = im_filepath + '/%s.png' %i
         fig.savefig(im_name) # save image file
         names.append(im_name) # add name of image file to list
@@ -305,7 +307,73 @@ def lag_network_gif(adj_matrix_ds, filepath='lag_network_gif',
     # plot the connections for each win_start value in the adjacency matrix
     for i in range(num_win):
         am = adj_matrix_ds[dict(win_start = i)]
-        fig = svg.plot_lag_network(adj_matrix = am)
+        fig = svg.plot_lag_network(adj_matrix = am, **kwargs)
+        im_name = im_filepath + '/%s.png' %i
+        fig.savefig(im_name) # save image file
+        names.append(im_name) # add name of image file to list
+
+    # append plots to each other
+    images = []
+    for n in names:
+        images.append(Image.open(n))
+
+    # make gif file and save it in filepath
+    images[0].save(filepath + '/%s.gif' %filename,
+                   save_all = True,
+                   append_images = images[1:],
+                   duration = 50, loop = 0)
+
+
+def corr_thresh_gif(corr_thresh_ds, filepath='corr_thresh_gif',
+                    filename='corr_thresh', **kwargs):
+    '''
+    Animates a correlation-threshold heatmap over time.
+
+    Parameters
+    ----------
+    corr_thresh_ds : xarray.Dataset
+        Dataset whose coordinates are win_start, first_st, second_st;
+        and whose data variables are corr_thresh.
+    filepath : str, optional
+        File path for storing the image files and gif. Default is
+        'corr_thresh_gif' folder to be made in the current working directory.
+    filename : str, optional
+        File name for the gif, without file extension. Default is 'corr_thresh'.
+
+    Returns
+    -------
+    .png
+        png image files used to make the gif animation, saved in filepath/images_for_giffing.
+    .gif
+        gif animation of the png image files, saved in filepath/gif.
+    '''
+
+    # check filepaths
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+
+    im_filepath = filepath + '/images_for_giffing'
+    if not os.path.exists(im_filepath):
+        os.makedirs(im_filepath)
+
+    # check filename
+    if '.' in filename:
+        if len(filename) > 4:
+            filename = filename[:-4] # remove file extension
+        else:
+            raise ValueError('Error: please input filename without file extension')
+
+    # get constants
+    w_sts = corr_thresh_ds.win_start.values
+    num_win = len(w_sts)
+
+    # initialize the list of names of image files
+    names = []
+
+    # plot the connections for each win_start value in the adjacency matrix
+    for i in range(num_win):
+        clm = corr_thresh_ds[dict(win_start = i)]
+        fig = svh.plot_corr_thresh(corr_lag_mat = clm, **kwargs)
         im_name = im_filepath + '/%s.png' %i
         fig.savefig(im_name) # save image file
         names.append(im_name) # add name of image file to list

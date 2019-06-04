@@ -5,6 +5,7 @@ Contents
 - threshold
 - max_corr_lag
 - adj_mat
+- corr_lag_mat
 """
 
 ## Packages
@@ -128,6 +129,7 @@ def max_corr_lag(ds, lag_range, **kwargs):
 
     return res
 
+
 def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
     """
     Calculate the adjacency matrix for a set of stations using lag.
@@ -243,5 +245,120 @@ def adj_mat(ds, win_len=128, lag_range=10, **kwargs):
 
     # convert DataArray to Dataset
     res = da.to_dataset(name = 'adj_coeffs')
+
+    return res
+
+
+def corr_lag_mat(ds, win_len=128, lag_range=10, **kwargs):
+    """
+    Calculate the correlation-threshold difference matrix for a set of stations using lag.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Data as converted by :func:`spaceweather.analysis.data_funcs.csv_to_Dataset`.\n
+        ds is assumed to only have two stations.
+    win_len : int, optional
+        Length of window in minutes. Default is 128.
+    lag_range: int, optional
+        The range, in minutes, of positive and negative shifts for the second
+        station in each pair. Default is 10.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing the adjacency coefficients.
+            The data_vars are: adj_coeffs.\n
+            The coordinates are: first_st, second_st, win_start.
+    """
+
+    # check if ds timeseries is long enough
+    nt = len(ds.time.values)
+    if nt < win_len + 2*lag_range:
+        raise ValueError('ds timeseries < win_len + 2*lag_range')
+
+    # check if stations are provided
+    stations = ds.station.values
+    num_st = len(stations)
+    if num_st <= 1:
+        raise ValueError('only one station in Dataset')
+
+    # window the data
+    ds_win = sad.window(ds, win_len)
+
+    # constants
+    win_start = ds_win.win_start
+    num_win = len(win_start)
+
+    # shrinking nested for loops to get all the pairs of stations
+    for i in range(0, num_st-1):
+        for j in range(i+1, num_st):
+            for k in range(num_win):
+                # calculate maximum correlation and associated lag
+                temp_ds = ds_win[dict(station = [i,j], win_start = k)]
+                temp_ds = temp_ds.rename(win_len = 'time')
+                temp_ds = temp_ds.transpose('time', 'station', 'component')
+                max_temp = max_corr_lag(ds = temp_ds, lag_range = lag_range, **kwargs)
+
+                # append to master DataArray
+                if k == 0:
+                    max_corr = max_temp
+                else:
+                    max_corr = xr.concat([max_corr, max_temp], dim = 'win_start')
+            max_corr = max_corr.assign_coords(win_start = win_start)
+
+            # set up thresholds
+            thresh = threshold(ds = ds[dict(station = [i,j])],
+                               lags = np.unique(max_corr.lag), **kwargs)
+
+            # apply threshold for each time window
+            for k in range(num_win):
+                max_corr.values[k] = max_corr.values[k] - thresh.loc[dict(lag = max_corr[k].lag.values)].thresholds.values
+
+            # append to master Dataset: dimension = second_st
+            if j == i+1:
+                adj_mat_ss = max_corr
+            else:
+                adj_mat_ss = xr.concat([adj_mat_ss, max_corr], dim = 'second_st')
+
+        # adjust second_st coordinates
+        if i == num_st-2 and j == num_st-1:
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[num_st-1],
+                                                  first_st = stations[i])
+        else:
+            adj_mat_ss = adj_mat_ss.assign_coords(second_st = stations[i+1: num_st],
+                                                  first_st = stations[i])
+
+        # append to master Dataset: dimension = first_st
+        if i == 0:
+            adj_mat = adj_mat_ss
+        elif i < num_st-2:
+            adj_mat = xr.concat([adj_mat, adj_mat_ss], dim = 'first_st')
+        else: # if i = num_st-2
+            dummy = adj_mat_ss.copy(deep = True)
+            dummy.values = np.full(shape = (num_win), fill_value = np.nan)
+            dummy = dummy.assign_coords(second_st = stations[num_st-2])
+            adj_dum = xr.concat([adj_mat_ss, dummy], dim = 'second_st')
+            adj_mat = xr.concat([adj_mat, adj_dum], dim = 'first_st')
+
+    # finish the DataArrays
+    adj_blank = np.full(shape=(num_st, num_st, num_win), fill_value = np.nan)
+    adj_bda = xr.DataArray(data = adj_blank,
+                           coords = [stations, stations, win_start],
+                           dims = ['first_st', 'second_st',  'win_start'])
+    adj_mat = adj_mat.combine_first(adj_bda)
+
+    # reorder the stations coordinates because xr.concat messed them up
+    da1 = adj_mat.loc[dict(first_st = stations[0])]
+    for i in range(1, num_st):
+        da1 = xr.concat([da1, adj_mat.loc[dict(first_st = stations[i])]], dim = 'first_st')
+    da2 = da1.loc[dict(second_st = stations[0])]
+    for i in range(1, num_st):
+        da2 = xr.concat([da2, da1.loc[dict(second_st = stations[i])]], dim = 'second_st')
+    da = da2.transpose('first_st', 'second_st', 'win_start')
+
+
+    # convert DataArray to Dataset
+    res = da.to_dataset(name = 'corr_thresh')
 
     return res
