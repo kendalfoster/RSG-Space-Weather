@@ -532,6 +532,7 @@ cc, a, b = sac.cca(ts_1,ts_2)
 np.savetxt("ts_1_no_gauss_24_offset.csv", ts_1, delimiter=",")
 np.savetxt("ts_2_no_gauss_24_offset.csv", ts_2, delimiter=",")
 
+
 a
 
 u = [ts_1[i][0]*a[0] + ts_1[i][1]*a[1] + ts_1[i][2]*a[2] for i in range(len(ts_1))]
@@ -545,14 +546,13 @@ np.corrcoef(u,v)
 
 x_blah = np.array([[100,2,3],[20,2,3],[3,10,1],[3,1,20],[1,1,1]])
 
-
 y_blah = np.array([[3,200,3],[2,100,3],[20,1,1],[2,1,20],[1,1,300]])
-
-
-
 
 cc_blah, a_blah, b_blah = sac.cca(x_blah,y_blah)
 
+cc_blah
+a_blah
+b_blah
 
 cc_blah
 a_blah
