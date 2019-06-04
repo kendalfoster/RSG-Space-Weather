@@ -10,7 +10,7 @@ import spaceweather.analysis.gen_data as gen_data
 import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.threshold as sat
-import spaceweather.rcca as rcca
+
 import spaceweather.visualisation.heatmaps as svh
 
 def inter_phase_dir_corr(ds,station1,station2,wind_start1,wind_start2,readings=None):
@@ -201,8 +201,14 @@ scratch_temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = Fa
 scratch_ccac = temp_cca.train([scratch_x, scratch_y])
 scratch_ccac.cancorrs[0]
 
-from sklearn.cross_decomposition import CCA as new_cca
+rdc.cca(scratch_x_array,scratch_y_array)
 
+rdc.rdc(scratch_x_array,scratch_y_array)
+
+
+
+
+from sklearn.cross_decomposition import CCA as new_cca
 
 scratch_x_array = np.array(scratch_x)
 scratch_y_array = np.array(scratch_y)
@@ -315,3 +321,249 @@ scratch_b = test_result_x_c[:3]
 scratch_x = np.linalg.solve(scratch_A, scratch_b)
 
 np.dot(np.array(test_arr_1),np.array(scratch_x))
+
+
+
+
+X = test_x_array
+Y = test_y_array
+X
+Y
+n,p1 = X.shape
+n,p1
+n,p2 = Y.shape
+n,p2
+
+# center X and Y
+meanX = X.mean(axis=0)
+meanY = Y.mean(axis=0)
+
+
+# X = X-meanX[np.newaxis,:]
+# Y = Y-meanY[np.newaxis,:]
+
+
+
+Qx,Rx = np.linalg.qr(X)
+Qy,Ry = np.linalg.qr(Y)
+
+
+
+rankX = np.linalg.matrix_rank(Rx)
+rankX
+
+if rankX == 0:
+    raise Exception('Rank(X) = 0! Bad Data!')
+elif rankX < p1:
+    #warnings.warn("X not full rank!")
+    Qx = Qx[:,0:rankX]
+    Rx = Rx[0:rankX,0:rankX]
+
+rankY = np.linalg.matrix_rank(Ry)
+if rankY == 0:
+    raise Exception('Rank(X) = 0! Bad Data!')
+elif rankY < p2:
+    #warnings.warn("Y not full rank!")
+    Qy = Qy[:,0:rankY]
+    Ry = Ry[0:rankY,0:rankY]
+
+d = min(rankX,rankY)
+svdInput = np.dot(Qx.T,Qy)
+svdInput
+
+
+U,r,V = np.linalg.svd(svdInput)
+r = np.clip(r,0,1)
+# A = np.linalg.lstsq(Rx, U[:,0:d], rcond=None) * np.sqrt(n-1)
+# B = np.linalg.lstsq(Ry, V[:,0:d], rcond=None) * np.sqrt(n-1)
+# print(A)
+# print(B)
+# TODO: resize A to match inputs
+
+# return (A,B,r)
+return r, U, V
+
+
+
+import csv
+
+sales1_arr = []
+sales2_arr = []
+with open("Data/sales1.csv", newline='') as csvfile:
+    sales1_csv = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for row in sales1_csv:
+        sales1_arr.append(row)
+
+with open("Data/sales2.csv", newline='') as csvfile:
+    sales2_csv = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for row in sales2_csv:
+        sales2_arr.append(row)
+
+
+
+sales1_arr = [[float(sales1_arr[i][j]) for j in range(len(sales1_arr[0]))] for i in range(len(sales1_arr)) ]
+sales2_arr = [[float(sales2_arr[i][j]) for j in range(len(sales2_arr[0]))] for i in range(len(sales2_arr)) ]
+
+
+sales1_arr_array = np.array(sales1_arr)
+sales2_arr_array = np.array(sales2_arr)
+
+
+
+sales_temp_cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 1, verbose = False)
+sales_ccac = sales_temp_cca.train([sales1_arr_array, sales2_arr_array])
+sales_ccac.cancorrs[0]
+
+sales_new_cca = new_cca(n_components=1)
+sales_new_cca.fit(sales1_arr_array, sales2_arr_array)
+sales_result_x_c, test_result_y_c = sales_new_cca.transform(sales1_arr_array, sales2_arr_array)
+np.corrcoef(sales_result_x_c.T, test_result_y_c.T)[0,1]
+
+
+
+
+
+import depmeas_master.python.rdc as rdc
+coeffs, _, _, a, b = rdc.cca(sales1_arr_array, sales2_arr_array)
+coeffs
+a
+
+b
+sales_cc,sales_a,sales_b = sac.cca(sales1_arr_array,sales2_arr_array)
+sales_cc
+sales_a
+sales_b
+
+
+
+
+# Playing with the equation from https://www.cs.cmu.edu/~tom/10701_sp11/slides/CCA_tutorial.pdf
+
+test_arr_x = [[4,7,9],[2,5,2],[3,3,7],[4,8,3],[1,1,1],[1,2,1],[4,2,1]]
+test_arr_y = [[2,3,1],[3,8,3],[1,5,0],[0,1,1],[1,1,1],[2,1,9],[0,2,2]]
+
+test_x_array = np.array(test_arr_x)
+test_y_array = np.array(test_arr_y)
+
+# np.savetxt("my_array_x.csv", test_x_array, delimiter=",")
+# np.savetxt("my_array_y.csv", test_y_array, delimiter=",")
+
+mean_N_readings_x = np.mean(test_x_array[:,0])
+mean_E_readings_x = np.mean(test_x_array[:,1])
+mean_Z_readings_x = np.mean(test_x_array[:,2])
+
+mean_N_readings_y = np.mean(test_y_array[:,0])
+mean_E_readings_y = np.mean(test_y_array[:,1])
+mean_Z_readings_y = np.mean(test_y_array[:,2])
+
+new_test_x_array = np.array([[test_x_array[i,0]-mean_N_readings_x, test_x_array[i,1]-mean_E_readings_x, test_x_array[i,2]-mean_Z_readings_x] for i in range(len(test_x_array))])
+new_test_y_array = np.array([[test_y_array[i,0]-mean_N_readings_y, test_y_array[i,1]-mean_E_readings_y, test_y_array[i,2]-mean_Z_readings_y] for i in range(len(test_y_array))])
+
+new_test_x_array
+new_test_y_array
+
+
+
+Cxx = np.cov(new_test_x_array.T)
+Cyy = np.cov(new_test_y_array.T)
+Cxy = np.array([[np.cov(new_test_x_array[:,i], new_test_y_array[:,j])[0,1] for j in range(3)] for i in range(3)])
+Cyx = np.array([[Cxy[i][j] for i in range(3)] for j in range(3)])
+
+new_test_x_array
+
+
+new_test_x_array[:,0].T
+
+
+list(new_test_x_array[:,1].T)
+
+np.cov(list(new_test_x_array[:,0]),list(new_test_x_array[:,1]))
+
+Cxx
+
+
+scratch_prod_vector = [new_test_x_array[:,0][i] * new_test_x_array[:,0][i] for i in range(len(new_test_x_array[:,0]))]
+scratch_prod_vector
+
+np.sum(scratch_prod_vector)
+covariance_x0x1 = (1/(len(new_test_x_array[:,0])-1)) * np.sum(scratch_prod_vector)
+
+covariance_x0x1
+
+
+list(new_test_x_array[:,0])
+
+Cyy
+
+
+
+np.cov(new_test_x_array[:,0], new_test_y_array[:,0])
+
+
+C = np.dot(np.dot(np.dot(np.linalg.inv(Cxx), Cxy), np.linalg.inv(Cyy)), Cyx)
+C_alt = np.linalg.inv(Cyy) * Cyx * np.linalg.inv(Cxx) * Cxy
+
+evalues, evectors = np.linalg.eig(C)
+
+evalues
+
+evalues
+
+
+evectors
+
+evectors
+
+# scratch = gen_data.generate_one_day_time_series('2001-04-03', '08:00:00', 128, 4, phase_shift = [0, np.random.rand(), np.random.rand()], station = ['XXX','YYY'])
+
+scratch = gen_data.generate_one_day_time_series('2001-04-03', '05:00:00', 128, 4, lag = 24, station = ['XXX','YYY'])
+
+scratch.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1, figsize=(20,20))
+
+scratch_window = scratch.measurements[324:428]
+
+ts_1 = np.array(scratch_window.loc[dict(station = 'XXX')])
+
+ts_2 = np.array(scratch_window.loc[dict(station = 'YYY')])
+
+cc, a, b = sac.cca(ts_1,ts_2)
+np.savetxt("ts_1_no_gauss_24_offset.csv", ts_1, delimiter=",")
+np.savetxt("ts_2_no_gauss_24_offset.csv", ts_2, delimiter=",")
+
+a
+
+u = [ts_1[i][0]*a[0] + ts_1[i][1]*a[1] + ts_1[i][2]*a[2] for i in range(len(ts_1))]
+v = [ts_2[i][0]*b[0] + ts_2[i][1]*b[1] + ts_2[i][2]*b[2] for i in range(len(ts_1))]
+
+ts_1[2]
+
+np.corrcoef(u,v)
+
+
+
+x_blah = np.array([[100,2,3],[20,2,3],[3,10,1],[3,1,20],[1,1,1]])
+
+y_blah = np.array([[3,200,3],[2,100,3],[20,1,1],[2,1,20],[1,1,300]])
+
+cc_blah, a_blah, b_blah = sac.cca(x_blah,y_blah)
+
+cc_blah
+a_blah
+b_blah
+
+cc_blah
+a_blah
+b_blah
+
+cc_blah
+a_blah
+b_blah
+
+cc_rdc,  _, _,a_rdc, b_rdc = rdc.cca(x_blah,y_blah)
+cc_rdc
+a_rdc
+b_rdc
+
+cc_blah
+a_blah
+b_blah
