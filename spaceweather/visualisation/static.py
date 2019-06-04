@@ -7,11 +7,13 @@ Contents
 - plot_stations
 - plot_data_globe
 - plot_connections_globe
+- plot_lag_network
 """
 
 
 ## Packages
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as plc
 import pandas as pd
@@ -19,6 +21,14 @@ import xarray as xr # if gives error, just rerun
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.feature.nightshade import Nightshade
+import os
+import conda
+conda_file_dir = conda.__file__
+conda_dir = conda_file_dir.split('lib')[0]
+proj_lib = os.path.join(os.path.join(conda_dir, 'Library'), 'share')
+os.environ["PROJ_LIB"] = proj_lib
+from mpl_toolkits.basemap import Basemap
+
 
 
 ## Notes
@@ -81,7 +91,7 @@ def auto_ortho(list_of_stations):
     return np.array((av_long, av_lat))
 
 
-def plot_stations(list_of_stations, ortho_trans, **kwargs):
+def plot_stations(list_of_stations, ortho_trans, sta_col='black', **kwargs):
     '''
     Plot the stations on a globe.
 
@@ -92,6 +102,8 @@ def plot_stations(list_of_stations, ortho_trans, **kwargs):
     ortho_trans : tuple
         Orientation of the plotted globe; determines at what angle we view the globe.
         Defaults to average location of all stations.
+    sta_col : str, optional
+        Color for the plotted stations. Default is black.
 
     Returns
     -------
@@ -99,12 +111,15 @@ def plot_stations(list_of_stations, ortho_trans, **kwargs):
         Plot of the network on the globe.
     '''
 
-    # check if kwargs contains station_coords
+    # check kwargs
     s_c = kwargs.get('station_coords', None)
     if s_c is not None:
         station_coords = s_c
     else:
         station_coords = csv_to_coords()
+    c_l = kwargs.get('sta_col', None)
+    if c_l is not None:
+        sta_col = c_l
 
     # initialize plot of globe with features
     fig = plt.figure(figsize = (20, 20))
@@ -125,7 +140,7 @@ def plot_stations(list_of_stations, ortho_trans, **kwargs):
         lats[i] = station_coords.latitude.loc[dict(station = list_of_stations[i])]
 
     # add stations to plot
-    ax.scatter(longs, lats, transform = ccrs.Geodetic())
+    ax.scatter(longs, lats, transform = ccrs.Geodetic(), c = sta_col)
 
     return fig
 
@@ -265,11 +280,9 @@ def plot_connections_globe(adj_matrix, ds=None, list_of_stations=None, time=None
     # check inputs
     if ds is None:
         if list_of_stations is None:
-            print('Error: need to input either\n 1) ds\n 2) list_of_stations and time')
-            return 'Error: need to input either\n 1) ds\n 2) list_of_stations and time'
+            raise ValueError('Error: need to input either\n 1) ds\n 2) list_of_stations and time')
         if time is None:
-            print('Error: need to input either\n 1) ds\n 2) list_of_stations and time')
-            return 'Error: need to input either\n 1) ds\n 2) list_of_stations and time'
+            raise ValueError('Error: need to input either\n 1) ds\n 2) list_of_stations and time')
     else:
         list_of_stations = ds.station
         time = pd.to_datetime(ds.time.values[0])
@@ -307,5 +320,105 @@ def plot_connections_globe(adj_matrix, ds=None, list_of_stations=None, time=None
     # add timestamp as plot title
     mytime = time.strftime('%Y.%m.%d %H:%M')
     plt.title("%s" %mytime, fontsize = 30)
+
+    return fig
+
+
+def plot_lag_network(adj_matrix, lag_range=10, ortho_trans=None,
+                     sta_color='black', daynight=True):
+    '''
+    Plot the directed network provided by the adjacency matrix and lag.
+
+    Parameters
+    ----------
+    adj_matrix : xarray.Dataset
+        Adjacency matrix for the network; output from :func:`spaceweather.analysis.threshold.adj_mat`.
+    lag_range: int, optional
+        The range, in minutes, of positive and negative shifts for the second station in each pair.
+    ortho_trans : tuple, optional
+        Orientation of the plotted globe; determines at what angle we view the globe.
+        Defaults to average location of all stations.
+    sta_color : str, optional
+        Color for the plotted stations. Default is black.
+    daynight : bool, optional
+        Whether or not to include a shadow for nighttime. Default is True.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Plot of directed network with lag values as colors.
+    '''
+
+    # constants
+    time = pd.to_datetime(adj_matrix.win_start.values)
+    list_of_sta = adj_matrix.first_st
+    num_sta = len(list_of_sta)
+    sta_coords = csv_to_coords()
+    if ortho_trans is None:
+        ortho_trans = auto_ortho(list_of_sta)
+
+    # initialize plot
+    fig = plt.figure(figsize=(20, 20))
+    map = Basemap(projection='ortho', lat_0=ortho_trans[1], lon_0=ortho_trans[0])
+    map.drawmapboundary(fill_color='lightsteelblue')
+    map.fillcontinents(color='beige', lake_color='lightsteelblue', zorder=0)
+    map.drawcoastlines(color='darkslategrey', zorder=1)
+    map.drawcountries(color='darkslategrey', zorder=1)
+    map.drawmeridians(np.arange(0,360,30), color='darkgrey', zorder=0)
+    map.drawparallels(np.arange(-90,90,30), color='darkgrey', zorder=0)
+
+    # get lon/lat data for each station
+    lons = np.zeros(num_sta)
+    lats = np.zeros(num_sta)
+    for i in range(num_sta):
+        lons[i] = sta_coords.longitude.loc[dict(station = list_of_sta[i])]
+        lats[i] = sta_coords.latitude.loc[dict(station = list_of_sta[i])]
+
+    # draw stations on map
+    lons, lats = map(lons, lats)
+    map.scatter(lons, lats, color=sta_color)
+
+    # if connected, get the lag between each station pair
+    x = []
+    y = []
+    u = []
+    v = []
+    lags = []
+    for i in range(num_sta-1):
+        for j in range(i+1, num_sta):
+            a_m = adj_matrix[dict(first_st = i, second_st = j)]
+            if a_m.adj_coeffs.values == 1:
+                lg = a_m.lag.values
+                if lg < 0:
+                    # append to scatter lists
+                    x.append(lons[j])
+                    y.append(lats[j])
+                    u.append(lons[i]-lons[j])
+                    v.append(lats[i]-lats[j])
+                    lags.append(-lg)
+                else:
+                    # append to scatter lists
+                    x.append(lons[i])
+                    y.append(lats[i])
+                    u.append(lons[j]-lons[i])
+                    v.append(lats[j]-lats[i])
+                    lags.append(lg)
+
+    # plot the lag arrows on map
+    norm = plc.Normalize(0, lag_range)
+    cmap = matplotlib.cm.viridis
+    sm = matplotlib.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    map.quiver(x, y, u, v, lags, cmap=cmap, norm=norm, angles='xy', scale_units='xy', scale=1, width=0.002)
+    cbar = map.colorbar(sm)
+    cbar.set_label('Lag, minutes')
+
+    # add nighttime shadow
+    if daynight:
+        map.nightshade(time, alpha=0.2)
+
+    # add timestamp as plot title
+    mytime = time.strftime('%Y.%m.%d %H:%M')
+    plt.title('Lag Network at ''%s' %mytime, fontsize = 30)
 
     return fig
