@@ -43,6 +43,8 @@ def cca(X, Y, weights=True):
     numpy.ndarray
         Weight vector for Y
     """
+    n,p1 = X.shape
+    n,p2 = Y.shape
 
     # center X and Y
     meanX = X.mean(axis=0)
@@ -54,15 +56,43 @@ def cca(X, Y, weights=True):
     Qx, Rx = np.linalg.qr(X)
     Qy, Ry = np.linalg.qr(Y)
 
+    rankX = np.linalg.matrix_rank(Rx)
+    if rankX == 0:
+        raise Exception('Rank(X) = 0! Bad Data!')
+    elif rankX < p1:
+        raise Exception('X not full rank!')
+        #warnings.warn("X not full rank!")
+        # Qx = Qx[:,0:rankX]
+        # Rx = Rx[0:rankX,0:rankX]
+
+    rankY = np.linalg.matrix_rank(Ry)
+    if rankY == 0:
+        raise Exception('Rank(X) = 0! Bad Data!')
+    elif rankY < p2:
+        raise Exception('Y not full rank!')
+        #warnings.warn("Y not full rank!")
+        # Qy = Qy[:,0:rankY]
+        # Ry = Ry[0:rankY,0:rankY]
+
     # apply singular value decomposition
     svdInput = np.dot(Qx.T,Qy)
     U, s, V = np.linalg.svd(svdInput)
 
-    # return coeff, a, b
     coeff = s[0]
-    a = np.dot(np.linalg.inv(Rx), U[:,0])
-    b = np.dot(np.linalg.inv(Ry), V[0,:].T)
 
+    a = np.dot(np.linalg.inv(Rx), U[:,0])
+    b = np.dot(np.linalg.inv(Ry), V[0,:])
+
+    # if len(a) < p1:
+    #     new_a = np.zeros(p1)
+    #     for ind, val in enumerate(a):
+    #         new_a[ind] = val
+    #         a = new_a
+    # if len(b) < p1:
+    #     new_b = np.zeros(p1)
+    #     for ind, val in enumerate(b):
+    #         new_b[ind] = val
+    #         b = new_b
     return coeff, a, b
 
 
