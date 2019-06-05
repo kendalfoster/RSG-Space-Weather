@@ -44,8 +44,10 @@ event_net_params = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-net-p
 
 ##### Plot Lag Networks --------------------------------------------------------
 quiet_day_lag_net = svg.plot_lag_network(quiet_day_am[dict(win_start=0)])
+sva.lag_network_gif(quiet_day_am, filepath='Report/Images/lag_network_gif/quiet_day', filename='quiet_day_lag_network')
 
 event_lag_net = svg.plot_lag_network(event_am[dict(win_start=0)])
+sva.lag_network_gif(event_am, filepath='Report/Images/lag_network_gif/event', filename='event_lag_network')
 
 
 ##### CCA Angles ---------------------------------------------------------------

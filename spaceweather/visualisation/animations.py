@@ -7,6 +7,7 @@ Contents
 - lag_mat_gif_time
 - lag_network_gif
 - corr_thresh_gif
+- cca_ang_gif
 """
 
 
@@ -374,6 +375,74 @@ def corr_thresh_gif(corr_thresh_ds, filepath='corr_thresh_gif',
     for i in range(num_win):
         clm = corr_thresh_ds[dict(win_start = i)]
         fig = svh.plot_corr_thresh(corr_lag_mat = clm, **kwargs)
+        im_name = im_filepath + '/%s.png' %i
+        fig.savefig(im_name) # save image file
+        names.append(im_name) # add name of image file to list
+
+    # append plots to each other
+    images = []
+    for n in names:
+        images.append(Image.open(n))
+
+    # make gif file and save it in filepath
+    images[0].save(filepath + '/%s.gif' %filename,
+                   save_all = True,
+                   append_images = images[1:],
+                   duration = 50, loop = 0)
+
+
+def cca_ang_gif(cca_ang_ds, a_b, filepath='cca_ang_gif',
+                filename='cca_ang', **kwargs):
+    '''
+    Animates a CCA angle heatmap over time.
+
+    Parameters
+    ----------
+    cca_ang_ds : xarray.Dataset
+        Dataset whose coordinates are time, first_st, second_st, a_b;
+        and whose data variables are corr_thresh.
+    a_b : {'a', 'b'}
+        Plot angles for weight 'a' or weight 'b'.
+    filepath : str, optional
+        File path for storing the image files and gif. Default is
+        'corr_thresh_gif' folder to be made in the current working directory.
+    filename : str, optional
+        File name for the gif, without file extension. Default is 'corr_thresh'.
+
+    Returns
+    -------
+    .png
+        png image files used to make the gif animation, saved in filepath/images_for_giffing.
+    .gif
+        gif animation of the png image files, saved in filepath/gif.
+    '''
+
+    # check filepaths
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+
+    im_filepath = filepath + '/images_for_giffing'
+    if not os.path.exists(im_filepath):
+        os.makedirs(im_filepath)
+
+    # check filename
+    if '.' in filename:
+        if len(filename) > 4:
+            filename = filename[:-4] # remove file extension
+        else:
+            raise ValueError('Error: please input filename without file extension')
+
+    # get constants
+    times = cca_ang_ds.time.values
+    num_times = len(times)
+
+    # initialize the list of names of image files
+    names = []
+
+    # plot the connections for each win_start value in the adjacency matrix
+    for i in range(num_times):
+        cam = cca_ang_ds[dict(time = i)]
+        fig = svh.plot_cca_ang(cca_ang = cam, a_b = a_b, **kwargs)
         im_name = im_filepath + '/%s.png' %i
         fig.savefig(im_name) # save image file
         names.append(im_name) # add name of image file to list

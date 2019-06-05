@@ -268,6 +268,11 @@ corr_lag_mat = sat.corr_lag_mat(ds2)
 sva.corr_thresh_gif(corr_thresh_ds = corr_lag_mat,
                     filepath = 'Scratch (Tinkerbell)/corr_thresh_gif',
                     filename = 'corr_thresh')
+##### cca_ang_gif --------------------------------------------------------------
+cca_ang_ds = sac.cca_angles(ds2)
+sva.cca_ang_gif(cca_ang_ds, a_b = 'a',
+                filepath = 'Scratch (Tinkerbell)/cca_ang_gif',
+                filename = 'cca_ang')
 ################################################################################
 
 
@@ -297,6 +302,12 @@ lag_mat_fig = svh.plot_lag_mat_time(lm)
 ds2 = ds1[dict(time = slice(177), station = range(4))]
 corr_lag_mat = sat.corr_lag_mat(ds2)
 corr_thresh = svh.plot_corr_thresh(corr_lag_mat[dict(win_start=3)])
+
+##### plot_cca_ang -------------------------------------------------------------
+ds2 = ds1[dict(time = slice(177), station = range(4))]
+cca_ang_ds = sac.cca_angles(ds2)
+cca_ang_ds = cca_ang_ds[dict(time = 0)]
+cca_ang_hm = plot_cca_ang(cca_ang_ds, a_b = 'a')
 ################################################################################
 
 

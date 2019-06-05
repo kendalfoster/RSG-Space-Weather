@@ -6,6 +6,7 @@ Contents
 - plot_lag_mat_pair
 - plot_lag_mat_time
 - plot_corr_thresh
+- plot_cca_ang
 """
 
 
@@ -139,7 +140,6 @@ def plot_lag_mat_time(lag_mat):
     plt.ylabel('Station 2', fontsize=20)
     plt.yticks(rns, stations, rotation=0)
 
-
     return fig
 
 
@@ -190,5 +190,51 @@ def plot_corr_thresh(corr_lag_mat):
     plt.ylabel('Station 2', fontsize=20)
     plt.yticks(ticks=range(num_st), labels=stations, rotation=0)
     g.figure.axes[-1].yaxis.label.set_size(20)
+
+    return fig
+
+
+def plot_cca_ang(cca_ang, a_b):
+    """
+    Plot a heatmap of the CCA angles for each station pair for one time.
+
+    Parameters
+    ----------
+    corr_lag_mat : xarray.Dataset
+        The values to be plotted; coordinates are 'first_st' and 'second_st'.
+    a_b : {'a', 'b'}
+        Plot angles for weight 'a' or weight 'b'.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Heatmap of the values.
+    """
+
+    # take weight a or b
+    cca_ang = cca_ang.loc[dict(a_b = a_b)]
+
+    # relabel the coordinates so it will plot properly
+    stations = cca_ang.first_st.values
+    rns = range(len(stations))
+    cc = cca_ang.assign_coords(first_st = rns, second_st = rns)
+
+    # make title of heatmap
+    time = pd.to_datetime(cca_ang.time.values)
+    time_stamp = time.strftime('%Y.%m.%d %H:%M')
+    title = 'CCA Angles at ' + time_stamp
+
+    # plot heatmap
+    fig = plt.figure(figsize=(10,8))
+    cc.ang_data.plot.pcolormesh(yincrease = False,
+                                cmap = 'viridis',
+                                norm = plc.Normalize(0,180),
+                                cbar_kwargs={'label': 'Angle, degrees'})
+    fig.axes[-1].yaxis.label.set_size(20)
+    plt.title(title, fontsize=24)
+    plt.xlabel('Station 1', fontsize=20)
+    plt.xticks(rns, stations, rotation=0)
+    plt.ylabel('Station 2', fontsize=20)
+    plt.yticks(rns, stations, rotation=0)
 
     return fig
