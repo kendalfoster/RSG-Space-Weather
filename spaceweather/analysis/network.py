@@ -122,9 +122,8 @@ def num_edges(adj_matrix, avg=False, norm=True):
 
 def cluster_coeff(adj_matrix):
     '''
-    Find the average local clustering coefficient of each station in the network,
-    over time. Also calculates the network average clustering coefficient, also
-    averaged over time.
+    Find the average local clustering coefficient of each station in the network, over time.
+    Also calculates the network average clustering coefficient, also over time.
 
     Parameters
     ----------
@@ -135,13 +134,14 @@ def cluster_coeff(adj_matrix):
     -------
     xarray.Dataset
         Data_vars are: local_cc, net_avg_cc.\n
-        Coordinates are: station.
+        Coordinates are: station, win_start.
     '''
 
     # constants
     stations = adj_matrix.first_st.values
     nsta = len(stations)
-    ntime = len(adj_matrix.win_start)
+    win_st = adj_matrix.win_start.values
+    ntime = len(win_st)
 
     # initialize arrays
     cc = np.full(shape = (ntime, nsta), fill_value = np.nan)
@@ -172,22 +172,30 @@ def cluster_coeff(adj_matrix):
                 cc[t,i] = 2*nbr_edges/(deg*(deg-1))
 
     # calculate average local clustering coefficient for each station
-    local_cc = np.zeros(nsta)
+    time_avg_local_cc = np.zeros(nsta)
     for i in range(nsta):
-        local_cc[i] = np.nanmean(cc[:,i])
+        time_avg_local_cc[i] = np.nanmean(cc[:,i])
 
-    # calculate network average clustering coefficient
-    net_avg_cc = np.nanmean(local_cc)
+    # calculate network average clustering coefficient for each time
+    net_avg_cc = np.zeros(ntime)
+    for t in range(ntime):
+        net_avg_cc[t] = np.nanmean(cc[t,:])
 
     # construct DataArrays
-    local_cc_da = xr.DataArray(data = local_cc,
-                               coords = [stations],
-                               dims = ['station'])
-    net_avg_cc_da = xr.DataArray(data = net_avg_cc)
+    local_cc_da = xr.DataArray(data = cc,
+                               coords = [win_st, stations],
+                               dims = ['win_start', 'station'])
+    time_avg_local_cc_da = xr.DataArray(data = time_avg_local_cc,
+                                        coords = [stations],
+                                        dims = ['station'])
+    net_avg_cc_da = xr.DataArray(data = net_avg_cc,
+                                 coords = [win_st],
+                                 dims = ['win_start'])
 
     # merge DataArrays into one Dataset
     ds = xr.merge([local_cc_da.rename('local_cc'),
-                  net_avg_cc_da.rename('net_avg_cc')])
+                   time_avg_local_cc_da.rename('time_avg_local_cc'),
+                   net_avg_cc_da.rename('net_avg_cc')])
 
     return ds
 

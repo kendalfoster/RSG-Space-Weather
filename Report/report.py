@@ -33,8 +33,8 @@ event_am = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-adj-mat.nc')
 
 
 ##### Network Parameters -------------------------------------------------------
-# quiet_day_net_params = san.network_params(quiet_day_am, avg=True, norm=True)
-# quiet_day_net_params.to_netcdf(path = 'Report/Saved Datasets/quiet-day-net-params.nc')
+quiet_day_net_params = san.network_params(quiet_day_am, avg=True, norm=True)
+quiet_day_net_params.to_netcdf(path = 'Report/Saved Datasets/quiet-day-net-params.nc')
 quiet_day_net_params = xr.open_dataset('Report/Saved Datasets/quiet-day-net-params.nc')
 
 # event_net_params = san.network_params(event_am, avg=True, norm=True)
