@@ -59,12 +59,11 @@ def plot_adj_mat(adj_mat, stations, rns):
     return fig
 
 
-def plot_lag_mat_pair(lag_mat_pair, time_win, lag):
+def plot_lag_mat_pair(lag_mat_pair):
     """
     Plot a heatmap of correlations between two stations over time windows and lag.
 
-    This function is called from :func:`spaceweather.analysis.cca.lag_mat_pair`,
-    and is not intended for external use.
+    This function is called from :func:`spaceweather.analysis.cca.lag_mat_pair`.
 
     Parameters
     ----------
@@ -81,12 +80,17 @@ def plot_lag_mat_pair(lag_mat_pair, time_win, lag):
         Plot of the correlogram; ie heatmap of correlations.
     """
 
+    time_win = lag_mat_pair.time_win.values
+    lag = lag_mat_pair.lag.values
+
     # Produce heatmap
     x = np.arange(time_win[0], time_win[-1]+1)-0.5
     y = np.arange(lag[0], lag[-1]+1)-0.5
 
     # make title of heatmap
-    title = np.asscalar(lag_mat_pair.first_st.values) + ' & ' + np.asscalar(lag_mat_pair.second_st.values)
+    time = pd.to_datetime(lag_mat_pair.win_start.values[0])
+    time_stamp = time.strftime('%Y.%m.%d %H:%M')
+    title = np.asscalar(lag_mat_pair.first_st.values) + ' & ' + np.asscalar(lag_mat_pair.second_st.values) + ' at ' + time_stamp
 
     # Produce heatmap
     x = np.arange(time_win[0], time_win[-1]+1)-0.5

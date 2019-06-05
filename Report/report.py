@@ -33,13 +33,17 @@ event_am = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-adj-mat.nc')
 
 
 ##### Generate Lag Matrices for One Station Pair -------------------------------
-quiet_day_lm = sac.lag_mat_pair(quiet_day_ds)
-quiet_day_lm.to_netcdf(path = 'Report/Saved Datasets/quiet-day-lag-mat-pair.nc')
+# quiet_day_lm = sac.lag_mat_pair(quiet_day_ds)
+# quiet_day_lm.to_netcdf(path = 'Report/Saved Datasets/quiet-day-lag-mat-pair.nc')
 quiet_day_lm = xr.open_dataset('Report/Saved Datasets/quiet-day-lag-mat-pair.nc')
 
-event_lm = sac.lag_mat_pair(event_ds)
-event_lm.to_netcdf(path = 'Report/Saved Datasets/event-lag-mat-pair.nc')
+# event_lm = sac.lag_mat_pair(event_ds)
+# event_lm.to_netcdf(path = 'Report/Saved Datasets/event-lag-mat-pair.nc')
 event_lm = xr.open_dataset('Report/Saved Datasets/event-lag-mat-pair.nc')
+
+
+##### Plot Correlograms for One Station Pair -----------------------------------
+
 
 
 ##### Network Parameters -------------------------------------------------------
