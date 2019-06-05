@@ -190,3 +190,31 @@ def cluster_coeff(adj_matrix):
                   net_avg_cc_da.rename('net_avg_cc')])
 
     return ds
+
+
+def network_params(adj_matrix, avg=False, norm=True):
+    '''
+    Calculate all available network parameters and return them in one Dataset.
+
+    Parameters
+    ----------
+    adj_matrix : xarray.Dataset
+        Output of :func:`spaceweather.analysis.threshold.adjMat`.
+    avg : bool, optional
+        Return the average (over time) degree of each station. Default is False.
+    norm : bool, optional
+        Whether or not you want the average degree to be normalized in [0,1].
+        Default is True.
+
+    Returns
+    -------
+    xarray.Dataset
+        Data_vars are: degree, avg_deg, edges, avg_edge, local_cc, net_avg_cc.\n
+        Coordinates are: win_start, station.
+    '''
+
+    deg = degree(adj_matrix=adj_matrix, avg=avg, norm=norm)
+    nedges = num_edges(adj_matrix=adj_matrix, avg=avg, norm=norm)
+    cc = cluster_coeff(adj_matrix=adj_matrix)
+
+    return xr.merge([deg, nedges, cc])

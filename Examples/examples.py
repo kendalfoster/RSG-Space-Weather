@@ -180,6 +180,9 @@ avg_nedges = san.num_edges(adj_matrix, avg = True, norm = True)
 
 ##### cluster_coeff ------------------------------------------------------------
 clust_coef = san.cluster_coeff(adj_matrix)
+
+##### network_params -----------------------------------------------------------
+net_params = san.network_params(adj_matrix, avg = True, norm = True)
 ################################################################################
 
 
