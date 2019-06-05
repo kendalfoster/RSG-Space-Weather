@@ -167,14 +167,16 @@ corr_lag_mat = sat.corr_lag_mat(ds = ds2)
 
 ####################### network ################################################
 ds1 = sad.csv_to_Dataset('Data/20190403-00-22-supermag.csv', MLAT=True)
-ds2 = ds[dict(time = slice(177), station = slice(4))]
+ds2 = ds1[dict(time = slice(177), station = slice(4))]
 adj_matrix = sat.adj_mat(ds2)
 
-##### avg_degree ---------------------------------------------------------------
-avg_deg_ds = san.avg_degree(adj_matrix, norm = True)
+##### degree -------------------------------------------------------------------
+deg_ds = san.degree(adj_matrix, avg = False, norm = True)
+avg_deg_ds = san.degree(adj_matrix, avg = True, norm = True)
 
-##### avg_num_edges ------------------------------------------------------------
-avg_nedges = san.avg_num_edges(adj_matrix, norm = True)
+##### num_edges ----------------------------------------------------------------
+nedges = san.num_edges(adj_matrix, avg = False, norm = True)
+avg_nedges = san.num_edges(adj_matrix, avg = True, norm = True)
 
 ##### cluster_coeff ------------------------------------------------------------
 clust_coef = san.cluster_coeff(adj_matrix)

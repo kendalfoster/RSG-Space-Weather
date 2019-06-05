@@ -2,30 +2,28 @@
 Contents
 --------
 
-- avg_degree
-- avg_num_edges
+- degree
+- num_edges
 - cluster_coeff
 """
 
 ## Packages
 import numpy as np
 import xarray as xr # if gives error, just rerun
-# Local Packages
-import spaceweather.analysis.data_funcs as sad
-import spaceweather.analysis.cca as sac
-import spaceweather.analysis.threshold as sat
-import spaceweather.visualisation.heatmaps as svh
-import itertools
 
 
-def avg_degree(adj_matrix, norm=True):
+
+def degree(adj_matrix, avg=False, norm=True):
     '''
-    Find the average degree of each station in the network, over time.
+    Find the degree of each station in the network for each time.
+    Optionally, return the average (over time) degree of each station.
 
     Parameters
     ----------
     adj_matrix : xarray.Dataset
         Output of :func:`spaceweather.analysis.threshold.adjMat`.
+    avg : bool, optional
+        Return the average (over time) degree of each station. Default is False.
     norm : bool, optional
         Whether or not you want the average degree to be normalized in [0,1].
         Default is True.
@@ -33,61 +31,93 @@ def avg_degree(adj_matrix, norm=True):
     Returns
     -------
     xarray.Dataset
-        Data_vars are: avg_deg.\n
-        Coordinates are: station.
+        Data_vars are: degree, avg_deg.\n
+        Coordinates are: win_start, station.
     '''
 
     # constants
     stations = adj_matrix.first_st.values
     nsta = len(stations)
-    ntime = len(adj_matrix.win_start)
+    wins = adj_matrix.win_start
+    ntime = len(wins)
 
-    # sum up connections for each station
-    degs = np.zeros(nsta)
-    for i in range(nsta):
-        degs[i] = (np.sum(adj_matrix[dict(first_st = i)].adj_coeffs).values +
-                   np.sum(adj_matrix[dict(second_st = i)].adj_coeffs).values)/ntime
+    # initialize array
+    degs = np.full(shape = (ntime, nsta), fill_value = np.nan)
+
+    # loop through each time
+    for t in range(ntime):
+        am = adj_matrix[dict(win_start = t)]
+        # sum up connections for each station
+        for i in range(nsta):
+            degs[t,i] = np.sum(am[dict(first_st = i)].adj_coeffs).values + np.sum(am[dict(second_st = i)].adj_coeffs).values
 
     if norm:
         degs = degs/(nsta-1)
 
-    # construct a Dataset
-    ds = xr.Dataset(data_vars = {'avg_deg': (['station'], degs)},
-                    coords = {'station': stations})
+    # construct Dataset
+    ds = xr.Dataset(data_vars = {'degree': (['win_start', 'station'], degs)},
+                    coords = {'win_start': wins,
+                              'station': stations})
+
+    # optionally add average degree (over time)
+    if avg:
+        avg_degs = np.nanmean(degs, axis=0)
+        ds_ad = xr.Dataset(data_vars = {'avg_deg': (['station'], avg_degs)},
+                           coords = {'station': stations})
+        ds = xr.merge([ds, ds_ad])
 
     return ds
 
 
-def avg_num_edges(adj_matrix, norm=True):
+def num_edges(adj_matrix, avg=False, norm=True):
     '''
-    Find the average number of edges in the network, over time.
+    Find the number of edges in the network for each time.
+    Optionally, return the average (over time) number of edges in the network.
 
     Parameters
     ----------
     adj_matrix : xarray.Dataset
         Output of :func:`spaceweather.analysis.threshold.adjMat`.
+    avg : bool, optional
+        Return the average (over time) degree of each station. Default is False.
     norm : bool, optional
         Whether or not you want the average degree to be normalized in [0,1].
         Default is True.
 
     Returns
     -------
-    float
-        The average number of edges in the graph.
+    xarray.Dataset
+        Data_vars are: edges, avg_edge.\n
+        Coordinates are: win_start.
     '''
 
     # constants
     stations = adj_matrix.first_st.values
     nsta = len(stations)
-    ntime = len(adj_matrix.win_start)
+    wins = adj_matrix.win_start
+    ntime = len(wins)
 
-    # sum up connections for the network
-    nedges = np.sum(adj_matrix.adj_coeffs).values/ntime
+    # initialize array
+    nedges = np.full(shape = ntime, fill_value = np.nan)
+
+    # loop through each time
+    for t in range(ntime):
+        nedges[t] = np.sum(adj_matrix[dict(win_start = t)].adj_coeffs).values
 
     if norm:
         nedges = nedges/(nsta*(nsta-1))
 
-    return nedges
+    # construct Dataset
+    ds = xr.Dataset(data_vars = {'edges': (['win_start'], nedges)},
+                    coords = {'win_start': wins})
+
+    # optionally add average degree (over time)
+    if avg:
+        avg_edges = np.nanmean(nedges, axis=0)
+        ds_ad = xr.Dataset(data_vars = {'avg_edge': ([], avg_edges)})
+        ds = xr.merge([ds, ds_ad])
+
+    return ds
 
 
 def cluster_coeff(adj_matrix):

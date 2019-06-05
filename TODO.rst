@@ -33,9 +33,9 @@ Coding/Visualisations
   - |ss| heatmap (over time) of cca coefficients - thresholds |se|
 - flocking plots and numbers
 - get network parameters (for each minute)
-  - clustering coefficient
-  - average degree of each node
-  - average number of edges (normalised)
+  - |ss| clustering coefficient |se|
+  - |ss| average degree of each node |se|
+  - |ss| average number of edges (normalised) |se|
   - coloring?
   - other Dods suggestions...
     - average geodesic connection distance
