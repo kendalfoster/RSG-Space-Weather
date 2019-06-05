@@ -32,8 +32,6 @@ def plot_mag_data(ds):
 
     return fig
 
-cca_ang_ds = xr.open_dataset('Report/Saved Datasets/quiet-day-cca-ang.nc')
-cca_ang_ds = cca_ang_ds[dict(first_st=0, second_st=1)]
 
 def plot_cca_ang_pair(cca_ang_ds):
     """
@@ -58,3 +56,5 @@ def plot_cca_ang_pair(cca_ang_ds):
     plt.ylim(0, 180)
     plt.ylabel('Angle', fontsize = 20)
     plt.xlabel('Time', fontsize = 20)
+
+    return fig
