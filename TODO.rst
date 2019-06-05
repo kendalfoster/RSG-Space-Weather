@@ -28,10 +28,10 @@ Coding/Visualisations
 - |ss| network plot on globe (over time) |se|
   - |ss| lag magnitude represented by color |se|
   - |ss| lag direction (+/-) represented by arrow? |se|
-- plot of angles (over time)
+- |ss| plot of angles (over time) |se|
   - |ss| line plot of one pair over time (time vs angle) |se|
-  - heatmap of stations, color is angle
-  - animate heatmap
+  - |ss| heatmap of stations, color is angle |se|
+  - |ss| animate heatmap |se|
 - |ss| one chain, fixed longitude |se|
   - |ss| heatmap (over time) of cca coefficients - thresholds |se|
 - flocking plots and numbers
