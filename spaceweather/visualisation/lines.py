@@ -3,6 +3,7 @@ Contents
 --------
 
 - plot_mag_data
+- plot_cca_ang
 """
 
 
@@ -22,8 +23,38 @@ def plot_mag_data(ds):
 
     Yields
     -------
-    NoneType
+    matplotlib.figure.Figure
         One column of plots, where each plot shows the components of one station over time.
-
     """
+
+    fig = plt.figure(figsize = (16,4))
     ds.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1)
+
+    return fig
+
+cca_ang_ds = xr.open_dataset('Report/Saved Datasets/quiet-day-cca-ang.nc')
+cca_ang_ds = cca_ang_ds[dict(first_st=0, second_st=1)]
+
+def plot_cca_ang_pair(cca_ang_ds):
+    """
+    Plot CCA angles of data.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Output from :func:`spaceweather.analysis.cca.cca_anges`.
+
+    Yields
+    -------
+    matplotlib.figure.Figure
+        Plot showing the angle relative to the data for each weight.
+    """
+
+    tit = 'Station Pair: ' + cca_ang_ds.first_st.values.flatten()[0] + ' & ' + cca_ang_ds.second_st.values.flatten()[0]
+
+    fig = plt.figure(figsize = (16,4))
+    cca_ang_ds.ang_data.plot.line(x='time', hue='a_b')
+    plt.title(tit, fontsize = 30)
+    plt.ylim(0, 180)
+    plt.ylabel('Angle', fontsize = 20)
+    plt.xlabel('Time', fontsize = 20)

@@ -29,6 +29,9 @@ Coding/Visualisations
   - |ss| lag magnitude represented by color |se|
   - |ss| lag direction (+/-) represented by arrow? |se|
 - plot of angles (over time)
+  - line plot of one pair over time (time vs angle)
+  - heatmap of stations, color is angle
+  - animate heatmap
 - |ss| one chain, fixed longitude |se|
   - |ss| heatmap (over time) of cca coefficients - thresholds |se|
 - flocking plots and numbers
