@@ -13,6 +13,7 @@ Analysis
 - data_funcs
 - gen_data
 - threshold
+- network
 
 Visualisation
 -------------
@@ -32,6 +33,7 @@ import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.gen_data as sag
 import spaceweather.analysis.threshold as sat
+import spaceweather.analysis.network as san
 import spaceweather.visualisation.animations as sva
 import spaceweather.visualisation.static as svg
 import spaceweather.visualisation.heatmaps as svh
@@ -160,6 +162,22 @@ adj_mat = sat.adj_mat(ds = ds2, win_len = 128, lag_range = 10)
 
 ##### corr_lag_mat -------------------------------------------------------------
 corr_lag_mat = sat.corr_lag_mat(ds = ds2)
+################################################################################
+
+
+####################### network ################################################
+ds1 = sad.csv_to_Dataset('Data/20190403-00-22-supermag.csv', MLAT=True)
+ds2 = ds[dict(time = slice(177), station = slice(4))]
+adj_matrix = sat.adj_mat(ds2)
+
+##### avg_degree ---------------------------------------------------------------
+avg_deg_ds = san.avg_degree(adj_matrix, norm = True)
+
+##### avg_num_edges ------------------------------------------------------------
+avg_nedges = san.avg_num_edges(adj_matrix, norm = True)
+
+##### cluster_coeff ------------------------------------------------------------
+clust_coef = san.cluster_coeff(adj_matrix)
 ################################################################################
 
 
