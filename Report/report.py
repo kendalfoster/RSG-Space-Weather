@@ -46,6 +46,16 @@ event_lm = xr.open_dataset('Report/Saved Datasets/event-lag-mat-pair.nc')
 
 
 
+##### Generate Correlation-Threshold Datasets ----------------------------------
+quiet_day_corr_lag_mat = sat.corr_lag_mat(quiet_day_ds)
+quiet_day_corr_lag_mat.to_netcdf(path = 'Report/Saved Datasets/quiet-day-corr-lag.nc')
+quiet_day_corr_lag = xr.open_dataset('Report/Saved Datasets/quiet-day-corr-lag.nc')
+
+event_corr_lag = sat.corr_lag_mat(event_ds)
+event_corr_lag.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-corr-lag.nc')
+event_corr_lag = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-lag.nc')
+
+
 ##### Network Parameters -------------------------------------------------------
 # quiet_day_net_params = san.network_params(quiet_day_am, avg=True, norm=True)
 # quiet_day_net_params.to_netcdf(path = 'Report/Saved Datasets/quiet-day-net-params.nc')
