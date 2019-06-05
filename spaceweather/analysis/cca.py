@@ -15,7 +15,7 @@ import xarray as xr # if gives error, just rerun
 # Local Packages
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.visualisation.heatmaps as svh
-
+import warnings
 
 
 
@@ -43,6 +43,8 @@ def cca(X, Y, weights=True):
     numpy.ndarray
         Weight vector for Y
     """
+    n,p1 = X.shape
+    n,p2 = Y.shape
 
     # center X and Y
     meanX = X.mean(axis=0)
@@ -54,14 +56,36 @@ def cca(X, Y, weights=True):
     Qx, Rx = np.linalg.qr(X)
     Qy, Ry = np.linalg.qr(Y)
 
+    rankX = np.linalg.matrix_rank(Rx)
+    if rankX == 0:
+        raise Exception('Rank(X) = 0! Bad Data!')
+    elif rankX < p1:
+
+        warnings.warn("X not full rank. Cannot calculate weights, only returning coefficients (do not try to assign output to more than one object!)")
+        Qx = Qx[:,0:rankX]
+        Rx = Rx[0:rankX,0:rankX]
+        weights = False
+
+
+    rankY = np.linalg.matrix_rank(Ry)
+    if rankY == 0:
+        raise Exception('Rank(X) = 0! Bad Data!')
+    elif rankY < p2:
+
+        warnings.warn("Y not full rank. Cannot calculate weights, only returning coefficients (do not try to assign output to more than one object!)")
+        Qy = Qy[:,0:rankY]
+        Ry = Ry[0:rankY,0:rankY]
+        weights = False
+
+
     # apply singular value decomposition
     svdInput = np.dot(Qx.T,Qy)
-    U, s, Vt = np.linalg.svd(svdInput)
+    U, s, V = np.linalg.svd(svdInput)
 
-    # return coeff, a, b
     coeff = s[0]
+
     a = np.dot(np.linalg.inv(Rx), U[:,0])
-    b = np.dot(np.linalg.inv(Ry.T), U[:,0])
+    b = np.dot(np.linalg.inv(Ry), V[0,:])
 
     if weights:
         return coeff, a, b
@@ -384,4 +408,3 @@ def lag_mat(ds, lag_range=10, win_len=128, **kwargs):
     ds = ds2.transpose('time_win', 'lag', 'first_st', 'second_st', 'win_start')
 
     return ds
-
