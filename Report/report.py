@@ -14,29 +14,45 @@ import xarray as xr
 import numpy as np
 
 
-##### Read Data and Generate Adjacency Matrices --------------------------------
+##### Read Data ----------------------------------------------------------------
 quiet_day_ds = sad.csv_to_Dataset('Report/CSV Files/quiet-day-1998-02-02.csv', MLAT=True)
 svl.plot_mag_data(quiet_day_ds)
+
+event_ds = sad.csv_to_Dataset('Report/CSV Files/event-1997-11-05.csv', MLAT=True)
+svl.plot_mag_data(event_ds)
+
+
+##### Generate Adjacency Matrices ----------------------------------------------
 # quiet_day_am = sat.adj_mat(quiet_day_ds)
 # quiet_day_am.to_netcdf(path = 'Report/Saved Datasets/quiet-day-adj-mat.nc')
 quiet_day_am = xr.open_dataset('Report/Saved Datasets/quiet-day-adj-mat.nc')
 
-
-event_ds = sad.csv_to_Dataset('Report/CSV Files/event-1997-11-05.csv', MLAT=True)
-svl.plot_mag_data(event_ds)
 # event_am = sat.adj_mat(event_ds)
 # event_am.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-adj-mat.nc')
 event_am = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-adj-mat.nc')
 
 
 ##### Network Parameters -------------------------------------------------------
-quiet_day_net_params = san.network_params(quiet_day_am, avg=True, norm=True)
-quiet_day_net_params.to_netcdf(path = 'Report/Saved Datasets/quiet-day-net-params.nc')
+# quiet_day_net_params = san.network_params(quiet_day_am, avg=True, norm=True)
+# quiet_day_net_params.to_netcdf(path = 'Report/Saved Datasets/quiet-day-net-params.nc')
 quiet_day_net_params = xr.open_dataset('Report/Saved Datasets/quiet-day-net-params.nc')
 
-event_net_params = san.network_params(event_am, avg=True, norm=True)
-event_net_params.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-net-params.nc')
+# event_net_params = san.network_params(event_am, avg=True, norm=True)
+# event_net_params.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-net-params.nc')
 event_net_params = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-net-params.nc')
 
 
 ##### Plot Lag Networks --------------------------------------------------------
+quiet_day_lag_net = svg.plot_lag_network(quiet_day_am[dict(win_start=0)])
+
+event_lag_net = svg.plot_lag_network(event_am[dict(win_start=0)])
+
+
+##### CCA Angles ---------------------------------------------------------------
+# quiet_day_cca_ang = sac.cca_angles(quiet_day_ds)
+# quiet_day_cca_ang.to_netcdf(path = 'Report/Saved Datasets/quiet-day-cca-ang.nc')
+quiet_day_cca_ang = xr.open_dataset('Report/Saved Datasets/quiet-day-cca-ang.nc')
+
+# event_cca_ang = sac.cca_angles(event_ds)
+# event_cca_ang.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-cca-ang.nc')
+event_cca_ang = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-cca-ang.nc')

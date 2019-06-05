@@ -29,7 +29,7 @@ Coding/Visualisations
   - |ss| lag magnitude represented by color |se|
   - |ss| lag direction (+/-) represented by arrow? |se|
 - plot of angles (over time)
-- one chain, fixed longitude
+- |ss| one chain, fixed longitude |se|
   - |ss| heatmap (over time) of cca coefficients - thresholds |se|
 - flocking plots and numbers
 - get network parameters (for each minute)
@@ -40,5 +40,5 @@ Coding/Visualisations
   - other Dods suggestions...
     - average geodesic connection distance
     - number of connection in a latitudinal band
-- find good-looking event for report
+- |ss| find good-looking event for report |se|
   - compare to a "normal" day
