@@ -72,8 +72,7 @@ def data_globe_gif(ds, filepath='data_gif', filename='globe_data',
         if len(filename) > 4:
             filename = filename[:-4] # remove file extension
         else:
-            print('Error: please input filename without file extension')
-            return 'Error: please input filename without file extension'
+            raise ValueError('Error: please input filename without file extension')
 
     # get contstants
     if list_of_stations is None:
