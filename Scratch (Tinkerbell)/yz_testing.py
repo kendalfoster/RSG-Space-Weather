@@ -57,10 +57,40 @@ N110_ms = sad.mag_csv_to_Dataset(csv_file = "Data/N110.csv",
                             MLT = True, MLAT = True)
 
 
+quietday = sad.mag_csv_to_Dataset(csv_file = "Data/Report/quiet-day.csv", MLT = True, MLAT = True)
+quietday_ms = meansubtract(quietday, 150)
+quietday_ms.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1, figsize = (20, 40))
+
+
+everything(quietday_ms)
+
+
+
+
+
+reportstorm = sad.mag_csv_to_Dataset(csv_file = "Data/Report/event-1997-01-06.csv", MLT = True, MLAT = True)
+reportstorm_ms = meansubtract(reportstorm, 150)
+reportstorm_ms.measurements.plot.line(x='time', hue='component', col='station', col_wrap=1, figsize = (20, 40))
+
+
+everything(reportstorm_ms)
+
+
+
+
+
 test = sad.meansubtract(N110)
 
 plt.figure(figsize = (20, 8))
 plt.plot(test.measurements.loc[dict(station = "NAL", time = test.time[range(1500)])])
+
+
+
+
+data_ms = meansubtract(data, 170)
+data_ms.measurements.loc[dict(time = data_ms.time[300:650])].plot.line(x='time', hue='component', col='station', col_wrap=1, figsize = (10, 40))
+
+everything(data_ms.loc[dict(time = data_ms.time[300:650])])
 
 
 
@@ -97,11 +127,6 @@ def meansubtract(data, window_size = 200):
     return tempdata
 
 
-N110_ms.time
-N110.time
-
-
-
 N110_ms = meansubtract(N110, 100)
 plt.figure(figsize = (20, 8))
 plt.plot(N110_ms.measurements.loc[dict(station = "NAL", time = N110.time[range(100, 1100)])])
@@ -112,27 +137,6 @@ plt.plot(N110.measurements.loc[dict(station = "NAL", time = N110.time[range(100,
 
 
 
-
-
-
-fig3 = plt.figure(figsize = (20, 30))
-nplots = len(data2_ms.station) + 2
-pcm3 = plt.subplot(nplots, 1, 1)
-osp3 = plt.subplot(nplots, 1, 2) #order sub plot
-
-pcm3.pcolormesh(pcf2)
-# pcm.xlabel("time", fontsize = 20)
-# pcm.ylabel("r", fontsize = 20)
-# pcm.colorbar()
-osp3.plot(order2[100:619])
-
-for i in range(nplots-2):
-    s = data2_ms.station[i]
-    ax = plt.subplot(nplots, 1, i+3, sharex = pcm3)
-    ax.plot(data2_ms.measurements.loc[dict(station = s, time = data2_ms.time[range(100, 619)])])
-    ax.title.set_text(s.data)
-
-fig3.savefig("aaa.png")
 
 
 
@@ -217,42 +221,6 @@ def test(data, dr = 0.3):
 
 
 
-data_ms = meansubtract(data)
-
-trent = test(data_ms)
-ogtrent = test(data)
-trent_unnormed = test_unnormed(data_ms)
-trent_order = saf.order_params(data_ms)
-
-svl.plot_mag_data(data_ms)
-
-plt.figure(figsize = (20, 8))
-plt.pcolormesh(trent)
-plt.figure(figsize = (20, 8))
-plt.pcolormesh(ogtrent)
-
-trent_unnormed = test_unnormed(data_ms, np.linspace(0, 100, 21))
-plt.figure(figsize = (20, 8))
-plt.pcolormesh(trent_unnormed)
-
-
-stackedplot(data_ms, trent, trent_order)
-
-
-
-
-
-
-
-N110_ms = meansubtract(N110)
-
-pcf_N110 = test(N110_ms)
-plt.figure(figsize = (30, 8))
-plt.pcolormesh(pcf_N110)
-
-order_N110 = saf.order_params(N110_ms)
-
-stackedplot(N110_ms, pcf_N110, order_N110, "N110")
 
 
 
@@ -277,11 +245,7 @@ stackedplot(N110_ms, pcf_N110, order_N110, "N110")
 
 
 
-
-
-
-
-def test_unnormed(data, r_range = np.linspace(0, 200, 21)):
+def test_unnormed(data, r_range = np.linspace(1, 200, 21)):
     normeddata = data.copy(deep = True)
     # r_range = np.linspace(0, 200, 21)
     dr = r_range[2] - r_range[1]
@@ -303,6 +267,8 @@ def test_unnormed(data, r_range = np.linspace(0, 200, 21)):
                 diff = normeddata.measurements.loc[dict(station = s1, time = t)] - normeddata.measurements.loc[dict(station = s2, time = t)]
                 dists[i, j] = np.sqrt(np.nansum(diff**2))
 
+        R = np.max(dists)/2 #radius of system???
+
         for r_index in range(len(r_range)):
             r = r_range[r_index]
             count = 0
@@ -313,11 +279,9 @@ def test_unnormed(data, r_range = np.linspace(0, 200, 21)):
                 for j in range(i+1, N):
                     count += (x1[i, j] == x2[i, j])
 
-            results[r_index, time_index] = (r*count)/(3*dr*N**2)
+            results[r_index, time_index] = (R**3*count)/(3*dr*(N*r)**2)
 
     return results
-
-
 
 
 
@@ -326,16 +290,18 @@ def test_unnormed(data, r_range = np.linspace(0, 200, 21)):
 def stackedplot(data, pcf, order):
     nplots = len(data.station)+ 2
 
-    fig = plt.figure(figsize = (40, 60))
+    fig = plt.figure(figsize = (20, 30))
 
     pcm = plt.subplot(nplots, 1, 1)
-    osp = plt.subplot(nplots, 1, 2) #order sub plot
+    osp = plt.subplot(nplots, 1, 2, sharex = pcm) #order sub plot
 
-    pcm.pcolormesh(pcf)
-    # pcm.set_xlabel("time", fontsize = 20)
+    pcm.pcolormesh(pcf, cmap = "binary")
+    pcm.set_xlabel("time", fontsize = 20)
     pcm.set_ylabel("r, dr = " + "%s" %0.3, fontsize = 20)
-    # pcm.colorbar()
+    pcm.set_xlim([100, len(order)-100])
+    # fig.colorbar(im, ax = pcm)
     osp.plot(order)
+    osp.set_ylabel("Order parameter φ", fontsize = 20)
 
     for i in range(nplots-2):
         s = data.station[i]
@@ -344,16 +310,25 @@ def stackedplot(data, pcf, order):
         ax.title.set_text(s.data)
 
     filename = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    fig.savefig("%s.png" %filename)
+    fig.savefig(fname = "%s.pdf" %filename, dpi = "figure", format = "pdf")
 
 
 
 
 
+stackedplot(N110_ms, pcf_N110, order_N110)
 
-def everything(data, r_range = np.linspace(0, 2, 21), dr = 0.3, normalised = 1):
-    #first calculates pcf
+
+
+
+
+def pcf_everything(data, steps, dr, normalised):
     normeddata = data.copy(deep = True)
+    if normalised:
+        r_range = np.linspace(0, 2, steps)
+    else:
+        r_range = np.linspace(0, 200, steps)
+
     if dr == 0:
         dr = r_range[2] - r_range[1]
     N = len(data.station) #number of stations
@@ -387,29 +362,41 @@ def everything(data, r_range = np.linspace(0, 2, 21), dr = 0.3, normalised = 1):
 
             pcf[r_index, time_index] = (r*count)/(3*dr*N**2)
 
+    return pcf
+
+
+def everything(data, steps = 101, dr = 0, normalised = 0):
+    #first calculates pcf
+    pcf = pcf_everything(data, steps, dr, normalised)
+
     #get order parameters
     order = saf.order_params(data)
 
+    stackedplot(data, pcf, order)
 
-    #plotting bit
-    nplots = len(data.station)+ 2
-
-    fig = plt.figure(figsize = (40, 60))
-
-    pcm = plt.subplot(nplots, 1, 1)
-    osp = plt.subplot(nplots, 1, 2) #order sub plot
-
-    pcm.pcolormesh(pcf)
+    # nplots = len(data.station)+ 2
+    #
+    # fig = plt.figure(figsize = (40, 60))
+    #
+    # pcm = plt.subplot(nplots, 1, 1)
+    # osp = plt.subplot(nplots, 1, 2) #order sub plot
+    #
+    # pcm.pcolormesh(pcf, cmap = "binary")
     # pcm.set_xlabel("time", fontsize = 20)
-    pcm.ylabel("r, dr = " + "%s" %dr, fontsize = 20)
-    # pcm.colorbar()
-    osp.plot(order)
+    # pcm.set_ylabel("r, dr = " + "%s" %0.3, fontsize = 20)
+    # # fig.colorbar(im, ax = pcm)
+    # osp.plot(order)
+    #
+    # for i in range(nplots-2):
+    #     s = data.station[i]
+    #     ax = plt.subplot(nplots, 1, i+3, sharex = pcm)
+    #     ax.plot(data.measurements.loc[dict(station = s)])
+    #     ax.title.set_text(s.data)
+    #
+    # filename = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # fig.savefig(fname = "%s.pdf" %filename, dpi = "figure", format = "pdf")
 
-    for i in range(nplots-2):
-        s = data.station[i]
-        ax = plt.subplot(nplots, 1, i+3, sharex = pcm)
-        ax.plot(data.measurements.loc[dict(station = s)])
-        ax.title.set_text(s.data)
 
-    filename = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    fig.savefig("%s.png" %filename)
+, time = data_ms.time[range(200, 700)]
+everything(data_ms.loc[dict(station = data_ms.station[range(6)])], steps = 101, dr = 4)
+everything(data_ms.loc[dict(station = data_ms.station[range(6)])], normalised = 1)
