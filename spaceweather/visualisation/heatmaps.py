@@ -21,22 +21,14 @@ from matplotlib.colors import ListedColormap
 
 
 
-def plot_adj_mat(adj_mat, stations, rns):
+def plot_adj_mat(adj_mat):
     """
-    Plot the adjacency matrix as a heatmap for a set of stations.
-
-    This function is currently not in use.
-    This function is called from :func:`spaceweather.analysis.threshold.adj_mat`,
-    and is not intended for external use.
+    Plot the adjacency matrix as a heatmap for a set of stations at one time.
 
     Parameters
     ----------
     adj_mat : xarray.Dataset
         The adjacency matrix to be plotted.
-    stations : numpy.ndarray
-        Numpy array of three-letter station codes.
-    rns : range
-        A range of the length of stations, explicitly rns = range(len(stations)).
 
     Returns
     -------
@@ -44,13 +36,25 @@ def plot_adj_mat(adj_mat, stations, rns):
         Plot of the adjacency matrix.
     """
 
+    # constants
+    stations = adj_mat.first_st.values
+    rns = range(len(stations))
+
+    # make title of heatmap
+    time = pd.to_datetime(adj_mat.win_start.values)
+    time_stamp = time.strftime('%Y.%m.%d %H:%M')
+    title = 'Adjacency Matrix at ' + time_stamp
+
     # relabel the coordinates so it will plot properly
     adj_mat = adj_mat.assign_coords(first_st = rns, second_st = rns)
 
     fig = plt.figure(figsize=(10,8))
-    adj_mat.adj_coeffs.plot.pcolormesh(yincrease=False, cbar_kwargs={'label': 'CCA Threshold'})
+    adj_mat.adj_coeffs.plot.pcolormesh(yincrease = False,
+                                       cmap = 'Greys',
+                                       norm = plc.Normalize(0,1),
+                                       cbar_kwargs = {'label': 'Adjacency'})
     fig.axes[-1].yaxis.label.set_size(20)
-    plt.title('Adjacency Matrix', fontsize=30)
+    plt.title(title, fontsize=24)
     plt.xlabel('Station 1', fontsize=20)
     plt.xticks(rns, stations, rotation=0)
     plt.ylabel('Station 2', fontsize=20)
@@ -180,15 +184,13 @@ def plot_corr_thresh(corr_lag_mat):
     newcolors = np.vstack((top(np.linspace(0, 1, 128)),
                            bottom(np.linspace(0, 1, 128))))
     newcmap = ListedColormap(newcolors, name='OrangeBlue')
-    norm = plc.Normalize(-1,1)
+    norm = plc.Normalize(0,1)
 
     # must run all following code simultaneously
     fig = plt.figure(figsize=(10,8))
     g = corr_lag_mat.corr_thresh.plot.pcolormesh(yincrease=False,
-                                            cmap=newcmap,
-                                            norm=norm,
                                             cbar_kwargs={'label': 'Correlation Coefficient - Threshold'})
-    plt.title('Correlation Heatmap at %s' %timestamp, fontsize = 30)
+    plt.title('Correlation Heatmap at %s' %timestamp, fontsize = 24)
     plt.xlabel('Station 1', fontsize=20)
     plt.xticks(ticks=range(num_st), labels=stations, rotation=0)
     plt.ylabel('Station 2', fontsize=20)

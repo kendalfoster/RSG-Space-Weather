@@ -313,7 +313,7 @@ def lag_mat_pair(ds, station1=None, station2=None, lag_range=10, win_len=128,
     # plot correlogram heatmap
     if plot:
 
-        fig = svh.plot_lag_mat_pair(lag_mat = lag_mat)
+        fig = svh.plot_lag_mat_pair(lag_mat_pair = lag_mat)
         return lag_mat, fig
     else:
         return lag_mat

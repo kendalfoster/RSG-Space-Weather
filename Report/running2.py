@@ -6,6 +6,7 @@ import spaceweather.analysis.cca as sac
 import spaceweather.analysis.data_funcs as sad
 import spaceweather.analysis.gen_data as sag
 import spaceweather.analysis.threshold as sat
+import spaceweather.analysis.network as san
 import spaceweather.visualisation.animations as sva
 import spaceweather.visualisation.static as svg
 import spaceweather.visualisation.heatmaps as svh
@@ -15,35 +16,34 @@ import spaceweather.supermag as sm
 import xarray as xr
 import numpy as np
 
-from PIL import Image
 
-cca_ang_ds = xr.open_dataset('Report/Saved Datasets/quiet-day-cca-ang.nc')
-sva.cca_ang_gif(quiet_day_cca_ang, a_b = 'a',
-                filepath = 'Report/Images/cca_ang_gif',
-                filename = 'cca_ang')
+quiet_day_ds = sad.csv_to_Dataset('Report/CSV Files/quiet-day-1998-02-02.csv', MLAT=True)
+event_ds = sad.csv_to_Dataset('Report/CSV Files/event-1997-11-05.csv', MLAT=True)
 
-filepath = 'Report/Images/cca_ang_gif'
-filename = 'cca_ang'
-im_filepath = filepath + '/images_for_giffing'
-# get constants
-times = cca_ang_ds.time.values
-num_times = len(times)
 
-# initialize the list of names of image files
-names = []
 
-# plot the connections for each win_start value in the adjacency matrix
-for i in range(num_times):
-    im_name = im_filepath + '/%s.png' %i
-    names.append(im_name) # add name of image file to list
-len(names)
+quiet_day_corr_lag = sat.corr_lag_mat(quiet_day_ds.loc[dict(time=slice('1998-02-02T11:00','1998-02-02T17:00'))])
+quiet_day_corr_lag.to_netcdf(path = 'Report/Saved Datasets/quiet-day-corr-lag-part2.nc')
+quiet_day_corr_lag = xr.open_dataset('Report/Saved Datasets/quiet-day-corr-lag-part2.nc')
 
-images = []
-for n in names:
-    images.append(Image.open(n))
+event_corr_lag = sat.corr_lag_mat(event_ds.loc[dict(time=slice('1997-11-05T9:00','1997-11-05T15:00'))])
+event_corr_lag.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-corr-lag-part2.nc')
+event_corr_lag = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-lag-part2.nc')
 
-# make gif file and save it in filepath
-images[0].save(filepath + '/%s.gif' %filename,
-               save_all = True,
-               append_images = images[1:],
-               duration = 50, loop = 0)
+
+
+values = quiet_day_corr_lag.corr_thresh.values
+values[values > 0] = 1
+values[values <= 0] = 0
+quiet_day_corr_lag.values = values
+qd_cr_am = quiet_day_corr_lag.rename(corr_thresh = 'adj_coeffs')
+qd_cc = san.cluster_coeff(qd_cr_am)
+np.nanmean(qd_cc.time_avg_local_cc)
+
+values = event_corr_lag.corr_thresh.values
+values[values > 0] = 1
+values[values <= 0] = 0
+event_corr_lag.values = values
+e_cr_am = event_corr_lag.rename(corr_thresh = 'adj_coeffs')
+e_cc = san.cluster_coeff(e_cr_am)
+np.nanmean(e_cc.time_avg_local_cc)

@@ -165,7 +165,7 @@ def cluster_coeff(adj_matrix):
                 nbr_edges = 0
                 for n1 in range(len(nbrs)-1):
                     for n2 in range(1, len(nbrs)):
-                        if am[dict(first_st = n1, second_st = n2)].adj_coeffs.values == 1 or am[dict(first_st = n2, second_st = n1)].adj_coeffs.values == 1:
+                        if am[dict(first_st = n1, second_st = n2)].adj_coeffs.values == 1:# or am[dict(first_st = n2, second_st = n1)].adj_coeffs.values == 1:
                             nbr_edges += 1
 
                 # calculate local clustering coefficient
