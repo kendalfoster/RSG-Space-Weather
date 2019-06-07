@@ -184,11 +184,13 @@ def plot_corr_thresh(corr_lag_mat):
     newcolors = np.vstack((top(np.linspace(0, 1, 128)),
                            bottom(np.linspace(0, 1, 128))))
     newcmap = ListedColormap(newcolors, name='OrangeBlue')
-    norm = plc.Normalize(0,1)
+    norm = plc.Normalize(-0.5,0.5)
 
     # must run all following code simultaneously
     fig = plt.figure(figsize=(10,8))
     g = corr_lag_mat.corr_thresh.plot.pcolormesh(yincrease=False,
+                                            cmap=newcmap,
+                                            norm=norm,
                                             cbar_kwargs={'label': 'Correlation Coefficient - Threshold'})
     plt.title('Correlation Heatmap at %s' %timestamp, fontsize = 24)
     plt.xlabel('Station 1', fontsize=20)
