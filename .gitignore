@@ -5,3 +5,5 @@ __pycache__/
 lib\__pycache__
 **/*.gif
 **/*.png
+Report/Saved\ Datasets/event-1997-11-05-lag-mat-pair.nc
+Report/Saved\ Datasets/quiet-day-lag-mat-pair.nc

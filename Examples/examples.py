@@ -234,7 +234,9 @@ adj_mat = sat.adj_mat(ds2)
 lag_net = svg.plot_lag_network(adj_mat[dict(win_start=3)])
 ################################################################################
 
-
+import spaceweather.analysis.cca as sac
+import spaceweather.analysis.data_funcs as sad
+import spaceweather.visualisation.heatmaps as svh
 ####################### animations #############################################
 ds1 = sad.csv_to_Dataset(csv_file = "Old Presentations/Poster/poster_supermag_data.csv", MLAT = True)
 ds2 = ds1[dict(time = slice(150), station = range(4))]
@@ -251,9 +253,9 @@ sva.connections_globe_gif(adj_mat_ds = adj_mat,
                           filepath = 'Scratch (Tinkerbell)/connections_gif',
                           filename = 'globe_connections')
 
-##### lag_mat_gif_time ---------------------------------------------------------
-lag_mat = sac.lag_mat(ds2)
-sva.lag_mat_gif_time(lag_ds = lag_mat,
+##### lag_mat_pair_gif ---------------------------------------------------------
+lag_mat = sac.lag_mat(ds2[dict(station = slice(2))])
+sva.lag_mat_pair_gif(lag_ds = lag_mat,
                      filepath = 'Scratch (Tinkerbell)/lag_mat_gif',
                      filename = 'lag_mat')
 
@@ -268,6 +270,11 @@ corr_lag_mat = sat.corr_lag_mat(ds2)
 sva.corr_thresh_gif(corr_thresh_ds = corr_lag_mat,
                     filepath = 'Scratch (Tinkerbell)/corr_thresh_gif',
                     filename = 'corr_thresh')
+##### cca_ang_gif --------------------------------------------------------------
+cca_ang_ds = sac.cca_angles(ds2)
+sva.cca_ang_gif(cca_ang_ds, a_b = 'a',
+                filepath = 'Scratch (Tinkerbell)/cca_ang_gif',
+                filename = 'cca_ang')
 ################################################################################
 
 
@@ -283,9 +290,7 @@ fig = svh.plot_adj_mat(adj_mat = sat.adj_mat(ds = ds1[dict(time = slice(40))], t
 ##### plot_lag_mat_pair (correlogram) ------------------------------------------
 ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
 lag_mat_pair = sac.lag_mat_pair(ds2, station1 = 'TAL', station2 = 'BLC')
-fig = svh.plot_lag_mat_pair(lag_mat_pair = lag_mat_pair,
-                            time_win = lag_mat_pair.time_win.values,
-                            lag = lag_mat_pair.lag.values)
+fig = svh.plot_lag_mat_pair(lag_mat_pair = lag_mat_pair)
 
 ##### plot_lag_mat_time --------------------------------------------------------
 ds2 = ds1[dict(time = slice(177))] # slice must be at least win_len+2*lag_range
@@ -297,6 +302,12 @@ lag_mat_fig = svh.plot_lag_mat_time(lm)
 ds2 = ds1[dict(time = slice(177), station = range(4))]
 corr_lag_mat = sat.corr_lag_mat(ds2)
 corr_thresh = svh.plot_corr_thresh(corr_lag_mat[dict(win_start=3)])
+
+##### plot_cca_ang -------------------------------------------------------------
+ds2 = ds1[dict(time = slice(177), station = range(4))]
+cca_ang_ds = sac.cca_angles(ds2)
+cca_ang_ds = cca_ang_ds[dict(time = 0)]
+cca_ang_hm = plot_cca_ang(cca_ang_ds, a_b = 'a')
 ################################################################################
 
 

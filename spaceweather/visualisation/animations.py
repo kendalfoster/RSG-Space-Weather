@@ -7,6 +7,7 @@ Contents
 - lag_mat_gif_time
 - lag_network_gif
 - corr_thresh_gif
+- cca_ang_gif
 """
 
 
@@ -71,8 +72,7 @@ def data_globe_gif(ds, filepath='data_gif', filename='globe_data',
         if len(filename) > 4:
             filename = filename[:-4] # remove file extension
         else:
-            print('Error: please input filename without file extension')
-            return 'Error: please input filename without file extension'
+            raise ValueError('Error: please input filename without file extension')
 
     # get contstants
     if list_of_stations is None:
@@ -110,7 +110,7 @@ def data_globe_gif(ds, filepath='data_gif', filename='globe_data',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def connections_globe_gif(adj_mat_ds,
@@ -191,7 +191,7 @@ def connections_globe_gif(adj_mat_ds,
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
@@ -256,7 +256,7 @@ def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def lag_network_gif(adj_matrix_ds, filepath='lag_network_gif',
@@ -321,7 +321,7 @@ def lag_network_gif(adj_matrix_ds, filepath='lag_network_gif',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def corr_thresh_gif(corr_thresh_ds, filepath='corr_thresh_gif',
@@ -387,4 +387,72 @@ def corr_thresh_gif(corr_thresh_ds, filepath='corr_thresh_gif',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
+
+
+def cca_ang_gif(cca_ang_ds, a_b, filepath='cca_ang_gif',
+                filename='cca_ang', **kwargs):
+    '''
+    Animates a CCA angle heatmap over time.
+
+    Parameters
+    ----------
+    cca_ang_ds : xarray.Dataset
+        Dataset whose coordinates are time, first_st, second_st, a_b;
+        and whose data variables are corr_thresh.
+    a_b : {'a', 'b'}
+        Plot angles for weight 'a' or weight 'b'.
+    filepath : str, optional
+        File path for storing the image files and gif. Default is
+        'corr_thresh_gif' folder to be made in the current working directory.
+    filename : str, optional
+        File name for the gif, without file extension. Default is 'corr_thresh'.
+
+    Returns
+    -------
+    .png
+        png image files used to make the gif animation, saved in filepath/images_for_giffing.
+    .gif
+        gif animation of the png image files, saved in filepath/gif.
+    '''
+
+    # check filepaths
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+
+    im_filepath = filepath + '/images_for_giffing'
+    if not os.path.exists(im_filepath):
+        os.makedirs(im_filepath)
+
+    # check filename
+    if '.' in filename:
+        if len(filename) > 4:
+            filename = filename[:-4] # remove file extension
+        else:
+            raise ValueError('Error: please input filename without file extension')
+
+    # get constants
+    times = cca_ang_ds.time.values
+    num_times = len(times)
+
+    # initialize the list of names of image files
+    names = []
+
+    # plot the connections for each win_start value in the adjacency matrix
+    for i in range(num_times):
+        cam = cca_ang_ds[dict(time = i)]
+        fig = svh.plot_cca_ang(cca_ang = cam, a_b = a_b, **kwargs)
+        im_name = im_filepath + '/%s.png' %i
+        fig.savefig(im_name) # save image file
+        names.append(im_name) # add name of image file to list
+
+    # append plots to each other
+    images = []
+    for n in names:
+        images.append(Image.open(n))
+
+    # make gif file and save it in filepath
+    images[0].save(filepath + '/%s.gif' %filename,
+                   save_all = True,
+                   append_images = images[1:],
+                   duration = 100, loop = 0)
