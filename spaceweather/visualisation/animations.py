@@ -110,7 +110,7 @@ def data_globe_gif(ds, filepath='data_gif', filename='globe_data',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def connections_globe_gif(adj_mat_ds,
@@ -191,7 +191,7 @@ def connections_globe_gif(adj_mat_ds,
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
@@ -256,7 +256,7 @@ def lag_mat_gif_time(lag_ds, filepath='lag_mat_gif',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def lag_network_gif(adj_matrix_ds, filepath='lag_network_gif',
@@ -321,7 +321,7 @@ def lag_network_gif(adj_matrix_ds, filepath='lag_network_gif',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def corr_thresh_gif(corr_thresh_ds, filepath='corr_thresh_gif',
@@ -387,7 +387,7 @@ def corr_thresh_gif(corr_thresh_ds, filepath='corr_thresh_gif',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)
 
 
 def cca_ang_gif(cca_ang_ds, a_b, filepath='cca_ang_gif',
@@ -455,4 +455,4 @@ def cca_ang_gif(cca_ang_ds, a_b, filepath='cca_ang_gif',
     images[0].save(filepath + '/%s.gif' %filename,
                    save_all = True,
                    append_images = images[1:],
-                   duration = 50, loop = 0)
+                   duration = 100, loop = 0)

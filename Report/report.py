@@ -113,7 +113,7 @@ quiet_day_corr_lag = xr.open_dataset('Report/Saved Datasets/quiet-day-corr-lag-p
 values = quiet_day_corr_lag.corr_thresh.values
 values[values > 0] = 1
 values[values <= 0] = 0
-quiet_day_corr_lag.values = values
+quiet_day_corr_lag.corr_thresh.values = values
 qd_cr_am = quiet_day_corr_lag.rename(corr_thresh = 'adj_coeffs')
 quiet_day_net_params = san.network_params(qd_cr_am, avg=True, norm=True)
 # quiet_day_net_params = san.network_params(quiet_day_am, avg=True, norm=True)
@@ -125,7 +125,7 @@ event_corr_lag = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-la
 values = event_corr_lag.corr_thresh.values
 values[values > 0] = 1
 values[values <= 0] = 0
-event_corr_lag.values = values
+event_corr_lag.corr_thresh.values = values
 e_cr_am = event_corr_lag.rename(corr_thresh = 'adj_coeffs')
 event_net_params = san.network_params(e_cr_am, avg=True, norm=True)
 # event_net_params.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-net-params.nc')
@@ -172,18 +172,28 @@ sva.data_globe_gif(event_ds, filepath='Report/Images/data_vectors_gif/event', fi
 
 
 ##### Correlation-Threshold Gif ------------------------------------------------
-quiet_day_corr_lag = xr.open_dataset('Report/Saved Datasets/quiet-day-corr-lag.nc')
+quiet_day_corr_lag = xr.open_dataset('Report/Saved Datasets/quiet-day-corr-lag-part2.nc')
 sva.corr_thresh_gif(quiet_day_corr_lag, filepath='Report/Images/corr_thresh_gif/quiet_day', filename='quiet_day_corr_thresh')
 
-event_corr_lag = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-lag.nc')
+event_corr_lag = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-lag-part2.nc')
 sva.corr_thresh_gif(event_corr_lag, filepath='Report/Images/corr_thresh_gif/event', filename='event_corr_thresh')
 
 
 ##### Lag Network Gif ----------------------------------------------------------
-quiet_day_am = xr.open_dataset('Report/Saved Datasets/quiet-day-adj-mat.nc')
+quiet_day_am = xr.open_dataset('Report/Saved Datasets/quiet-day-corr-lag-part2.nc')
+values = quiet_day_am.corr_thresh.values
+values[values > 0] = 1
+values[values <= 0] = 0
+quiet_day_am.corr_thresh.values = values
+quiet_day_am = quiet_day_am.rename(corr_thresh = 'adj_coeffs')
 sva.lag_network_gif(quiet_day_am, filepath='Report/Images/lag_network_gif/quiet_day', filename='quiet_day_lag_network')
 
-event_am = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-adj-mat.nc')
+event_am = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-lag-part2.nc')
+values = event_am.corr_thresh.values
+values[values > 0] = 1
+values[values <= 0] = 0
+event_am.corr_thresh.values = values
+event_am = event_am.rename(corr_thresh = 'adj_coeffs')
 sva.lag_network_gif(event_am, filepath='Report/Images/lag_network_gif/event', filename='event_lag_network')
 
 
