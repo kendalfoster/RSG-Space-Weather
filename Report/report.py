@@ -23,6 +23,8 @@ avg_meas = np.nanmean(np.nanmean(quiet_day_plot.measurements.values, axis=0))
 event_ds = sad.csv_to_Dataset('Report/CSV Files/event-1997-11-05.csv', MLAT=True)
 event_plot = event_ds.loc[dict(station='RAN')]
 
+
+##### Plot Time Series ---------------------------------------------------------
 fig, axs = plt.subplots(2, figsize=(16,8))
 # fig.suptitle('Big Title')
 axs[0].set_title('Station RAN: Quiet Day 1998-02-02')
@@ -36,10 +38,6 @@ for i in range(3):
     axs[1].plot(event_plot.time.values, event_plot[dict(component=i)].measurements.values)
 axs[0].legend(labels=['N', 'E', 'Z'], title='Component', bbox_to_anchor=(1.1, 0.1))
 fig.savefig('Report/Images/quiet_vs_event_plot.png')
-fig
-
-qd_plot = svl.plot_mag_data(quiet_day_ds.loc[dict(station=['BLC', 'RAN'])])
-e_plot = svl.plot_mag_data(event_ds.loc[dict(station=['BLC', 'RAN'])])
 
 
 ##### Generate Adjacency Matrices ----------------------------------------------
@@ -118,14 +116,10 @@ values[values <= 0] = 0
 quiet_day_corr_lag.values = values
 qd_cr_am = quiet_day_corr_lag.rename(corr_thresh = 'adj_coeffs')
 quiet_day_net_params = san.network_params(qd_cr_am, avg=True, norm=True)
-quiet_day_net_params.data_vars
-quiet_day_net_params.time_avg_local_cc
-
 # quiet_day_net_params = san.network_params(quiet_day_am, avg=True, norm=True)
 # quiet_day_net_params.to_netcdf(path = 'Report/Saved Datasets/quiet-day-net-params.nc')
 quiet_day_net_params = xr.open_dataset('Report/Saved Datasets/quiet-day-net-params.nc')
 qdnp = quiet_day_net_params.loc[dict(win_start=slice('1998-02-02T11:00','1998-02-02T17:00'), station = ['BLC', 'RAN'])]
-
 
 event_corr_lag = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-lag-part2.nc')
 values = event_corr_lag.corr_thresh.values
@@ -137,8 +131,6 @@ event_net_params = san.network_params(e_cr_am, avg=True, norm=True)
 # event_net_params.to_netcdf(path = 'Report/Saved Datasets/event-1997-11-05-net-params.nc')
 # event_net_params = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-net-params.nc')
 enp = event_net_params.loc[dict(win_start=slice('1997-11-05T9:00','1997-11-05T15:00'), station = ['BLC', 'RAN'])]
-event_net_params.data_vars
-event_net_params.time_avg_local_cc
 
 
 ##### Plot Lag Networks --------------------------------------------------------
@@ -165,3 +157,39 @@ quiet_day_cca_ang_png.savefig('Report/Images/quiet_day_cca_ang.png')
 event_cca_ang = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-cca-ang.nc')
 event_cca_ang_png = svl.plot_cca_ang_pair(event_cca_ang[dict(first_st=0, second_st=1)])
 event_cca_ang_png.savefig('Report/Images/event_cca_ang.png')
+
+
+
+
+####################### Animations #############################################
+
+##### Data Vectors Gif ---------------------------------------------------------
+quiet_day_ds = sad.csv_to_Dataset('Report/CSV Files/quiet-day-1998-02-02.csv', MLAT=True)
+sva.data_globe_gif(quiet_day_ds, filepath='Report/Images/data_vectors_gif/quiet_day', filename='quiet_day_data_vectors')
+
+event_ds = sad.csv_to_Dataset('Report/CSV Files/event-1997-11-05.csv', MLAT=True)
+sva.data_globe_gif(event_ds, filepath='Report/Images/data_vectors_gif/event', filename='event_data_vectors')
+
+
+##### Correlation-Threshold Gif ------------------------------------------------
+quiet_day_corr_lag = xr.open_dataset('Report/Saved Datasets/quiet-day-corr-lag.nc')
+sva.corr_thresh_gif(quiet_day_corr_lag, filepath='Report/Images/corr_thresh_gif/quiet_day', filename='quiet_day_corr_thresh')
+
+event_corr_lag = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-corr-lag.nc')
+sva.corr_thresh_gif(event_corr_lag, filepath='Report/Images/corr_thresh_gif/event', filename='event_corr_thresh')
+
+
+##### Lag Network Gif ----------------------------------------------------------
+quiet_day_am = xr.open_dataset('Report/Saved Datasets/quiet-day-adj-mat.nc')
+sva.lag_network_gif(quiet_day_am, filepath='Report/Images/lag_network_gif/quiet_day', filename='quiet_day_lag_network')
+
+event_am = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-adj-mat.nc')
+sva.lag_network_gif(event_am, filepath='Report/Images/lag_network_gif/event', filename='event_lag_network')
+
+
+##### CCA Angles Gif -----------------------------------------------------------
+quiet_day_cca_ang = xr.open_dataset('Report/Saved Datasets/quiet-day-cca-ang.nc')
+sva.cca_ang_gif(quiet_day_cca_ang, a_b='a', filepath='Report/Images/cca_ang_gif/quiet_day', filename='quiet_day_cca_ang')
+
+event_cca_ang = xr.open_dataset('Report/Saved Datasets/event-1997-11-05-cca-ang.nc')
+sva.cca_ang_gif(event_cca_ang, a_b='a', filepath='Report/Images/cca_ang_gif/event', filename='event_cc_ang')
