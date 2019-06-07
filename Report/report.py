@@ -29,6 +29,7 @@ axs[0].set_title('Station RAN: Quiet Day 1998-02-02')
 axs[1].set_title('Station RAN: Event Day 1997-11-05')
 axs[0].set_ylabel('Measurement, nT')
 axs[1].set_ylabel('Measurement, nT')
+axs[1].set_xlabel('Time')
 # handles = np.full(shape=3, fill_value=np.nan)
 for i in range(3):
     axs[0].plot(quiet_day_plot.time.values, quiet_day_plot[dict(component=i)].measurements.values, label=i)
