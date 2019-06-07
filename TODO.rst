@@ -15,12 +15,12 @@ To-Do List
 
 Report
 ------
-- introduction
-  - motivation (national risk thing, satellites)
-  - physics background
-  - other approaches that have been tried (Dods)
-- theory
-  - all the stuff
+- |ss| introduction |se|
+  - |ss| motivation (national risk thing, satellites) |se|
+  - |ss| physics background |se|
+  - |ss| other approaches that have been tried (Dods) |se|
+- |ss| theory |se|
+  - |ss| all the stuff |se|
 
 
 Coding/Visualisations
@@ -34,8 +34,8 @@ Coding/Visualisations
   - |ss| animate heatmap |se|
 - |ss| one chain, fixed longitude |se|
   - |ss| heatmap (over time) of cca coefficients - thresholds |se|
-- flocking plots and numbers
-- get network parameters (for each minute)
+- |ss| flocking plots and numbers |se|
+- |ss| get network parameters (for each minute) |se|
   - |ss| clustering coefficient |se|
   - |ss| average degree of each node |se|
   - |ss| average number of edges (normalised) |se|
@@ -44,4 +44,4 @@ Coding/Visualisations
     - average geodesic connection distance
     - number of connection in a latitudinal band
 - |ss| find good-looking event for report |se|
-  - compare to a "normal" day
+  - |ss| compare to a "normal" day |se|
